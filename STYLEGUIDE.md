@@ -1,9 +1,5 @@
 # Code & Engineering Style Guide - 2026 MAIC Hacksgiving
 
-This guide defines the engineering conventions and quality standards for our hackathon project. While hackathons demand high velocity, maintaining consistent conventions saves countless hours debugging syntax errors, type mismatches, and merge conflicts.
-
----
-
 ## 1. General Principles
 
 * **Readability Over Cleverness:** Write code that any team member can read and understand in 30 seconds.
