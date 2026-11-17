@@ -121,11 +121,69 @@ If you have an idea to add, copy and paste this template at the bottom of the fi
 
 ---
 
+## Out-of-the-Box & Unique Concepts
+
+### 9. CalmSignal: Real-Time Audio De-escalation Assistant
+
+- **Category:** Audio Processing and Violence Interruption
+- **The Problem:** ComforceMKE violence interruption teams step into heated neighborhood disputes and family arguments. In high-adrenaline situations, even trained workers can feel stressed, and saying the wrong phrase can make a tense argument worse.
+- **Interface & User Experience:** A minimal mobile screen designed to be glanced at on a phone or smartwatch. It displays simple visual status rings (green, yellow, red) and short, three-word de-escalation tips ("Lower vocal pitch," "Ask open question," "Take one step back").
+- **The AI Component:** An on-device audio model that analyzes volume, speech rate, and pitch changes from the microphone. It does not record or save conversations. When it detects rising tension in vocal cadence, an LLM suggests a practical calming phrase to help the responder keep the situation under control.
+- **Security and Privacy:** Crucial privacy protections. Audio stays in device memory and is never uploaded to a cloud server or saved to disk. Responders and residents must be confident that the tool is an assistant, not an eavesdropping tool.
+- **Hackathon Scope (MVP):** A browser app using the Web Audio API that analyzes microphone input volume and pitch, transitions a ring from green to red when loud shouting is detected, and displays a recommended calming prompt.
+
+---
+
+### 10. SilentWitness: Disguised Crisis Intake for Domestic Safety
+
+- **Category:** Operational Security and Crisis Intake
+- **The Problem:** People living with abusive partners or in dangerous home situations often cannot search for help safely. If an abusive person checks their phone or browser history, searching for crisis help can lead to immediate physical danger.
+- **Interface & User Experience:** The web app looks completely ordinary, like a basic Milwaukee bus schedule or a utility calculator. Entering a secret input (such as typing a specific number formula into the calculator) unlocks a hidden, encrypted chat screen connected to ComforceMKE staff. A red "Quick Exit" button in the corner instantly swaps the screen back to a normal bus schedule and wipes all local session data.
+- **The AI Component:** A crisis intake agent that chats with the user in plain language, helps them make a quick safety plan, and figures out how urgent their situation is without asking repetitive questions.
+- **Security and Privacy:** Directly tied to cybersecurity and operational security (OpSec). Zero browser cookies, zero local storage, zero search history, and end-to-end encryption for all messages.
+- **Hackathon Scope (MVP):** A functional calculator page that unlocks an encrypted chat window after entering a secret passcode, with an instant-exit button that clears the screen back to the calculator.
+
+---
+
+### 11. BeaconMesh: Offline Browser-to-Browser Crisis Network
+
+- **Category:** Offline Mesh and Disaster Recovery
+- **The Problem:** Severe Milwaukee winter storms or power grid failures can knock out home internet and overload local cell towers. During bad emergencies, people who need emergency heat, a portable generator, or medical help cannot connect to traditional websites.
+- **Interface & User Experience:** A peer-to-peer web bulletin board that works without internet. Neighbors connect their phones or laptops to a local Wi-Fi hotspot or use browser-to-browser WebRTC connections. Users see a local board with categories like "Need Warm Clothes," "Have Generator Power," and "Elderly Check-in Needed."
+- **The AI Component:** An offline, browser-based small language model running locally on the laptop or phone (using WebGPU). Because it runs completely on the local device without sending requests to cloud APIs, it can organize local aid requests and answer basic winter safety questions even when the internet is completely down.
+- **Security and Privacy:** Cryptographic message signing so neighbors can verify that an update about a warming shelter comes from a known ComforceMKE coordinator, even without internet access.
+- **Hackathon Scope (MVP):** A local peer-to-peer web page that synchronizes emergency posts between two browser tabs over WebRTC, paired with an offline triage script running locally on a laptop.
+
+---
+
+### 12. FoodSwap AI: Computer Vision Expiration Matcher for Local Pantries
+
+- **Category:** Computer Vision and Food Relief
+- **The Problem:** ComforceMKE connects families with emergency food, but Milwaukee food pantries face constant supply mismatches. One pantry might receive a bulk donation of 400 cartons of milk that will spoil in three days, while another pantry three miles away has empty dairy shelves. Pantry workers are too busy to call around and negotiate trades manually.
+- **Interface & User Experience:** A mobile camera app where a pantry worker snaps a photo of incoming boxes. The app displays recognized food items, estimated shelf life, and a list of nearby pantries that need those specific items.
+- **The AI Component:** A multimodal vision model (such as Gemini 1.5 Flash Vision). It examines the photo, reads box labels and expiration dates, categorizes the food types (produce, dairy, canned goods), and checks a local database to find nearby pantries that need those exact goods.
+- **Security and Privacy:** Only registered pantry coordinators can view inventory data. Location data is restricted to verified organization addresses, not individual homes.
+- **Hackathon Scope (MVP):** A photo upload box where you upload a picture of grocery boxes, an AI vision call that identifies the food items, and a matching card that shows which mock Milwaukee pantry could take the surplus.
+
+---
+
+### 13. MemoryKeeper: Oral History and Grief Tribute Archive
+
+- **Category:** Audio Processing and Grief Support
+- **The Problem:** When violence claims a life in Milwaukee, ComforceMKE steps in to support the grieving family. Families often want to preserve stories and memories of their loved one, but they are overwhelmed by funeral planning and legal paperwork. On top of that, public social media posts often get hit by internet trolls or spam.
+- **Interface & User Experience:** A gentle, dignified web page where family members and friends can record short voice memos or write memories. It turns those memories into a private digital memorial booklet and audio reel that the family can keep.
+- **The AI Component:** A voice transcription and moderation model. It transcribes audio recordings, cleans up filler words, organizes the memories by life themes (childhood, sports, family moments), and strictly filters out any abusive, trolling, or spam content before the family sees it.
+- **Security and Privacy:** High emotional safety. Memorial collections are private by default and protected by family access keys. No public comments can be posted without human or automated moderation approval.
+- **Hackathon Scope (MVP):** An audio recording widget that transcribes a spoken story, filters out inappropriate language, and formats the memory into a clean memorial card.
+
+---
+
 ## Next Steps for the Team
 
-1. Look through both the 3D options and the web/mobile/SMS options.
+1. Look through the 3D options, the web/mobile/SMS options, and the unique out-of-the-box concepts.
 2. Consider what each team member wants to build:
    - If our frontend developers want to build a 3D scene, **ComForce Pulse** or **SearchTrack 3D** are great picks.
    - If we want to focus on high accessibility and mobile reach, **ComForce SMS Relay** or **RapidDispatch** are strong alternatives.
-   - If we want to emphasize cybersecurity and trust, **SafeAlert MKE** or **TrustFund MKE** stand out.
+   - If we want to emphasize cybersecurity, OpSec, and trust, **SilentWitness**, **SafeAlert MKE**, or **TrustFund MKE** stand out.
+   - If we want unique AI and audio engineering, **CalmSignal**, **BeaconMesh**, or **FoodSwap AI** will catch the judges' attention.
 3. Align on our direction during our team check-in before Thursday evening kickoff.
