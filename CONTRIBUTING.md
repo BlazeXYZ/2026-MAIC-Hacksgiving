@@ -1,11 +1,5 @@
 # Contribution Guide - 2026 MAIC Hacksgiving
 
-Welcome to our team's collaboration guide for **Hacksgiving 2026**! 
-
-Hackathons move rapidly, and effective team coordination is what separates winning projects from stressful last-minute merge disasters. Follow these lightweight standards to keep everyone productive, aligned, and code-freeze ready.
-
----
-
 ## The Four Golden Rules
 
 1. **Protect `main`:** The `main` branch must always remain in a clean, runnable, and demo-ready state.
