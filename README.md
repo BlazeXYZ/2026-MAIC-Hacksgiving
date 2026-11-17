@@ -171,11 +171,11 @@ Ensure the following checklist is completed prior to the Sunday deadline:
 
 | Name | Role | Responsibilities | Contact |
 | :--- | :--- | :--- | :--- |
-| **Team Member 1** | ... | ... | `@github_handle` |
-| **Team Member 2** | ... | ... | `@github_handle` |
-| **Team Member 3** | ... | ... | `@github_handle` |
-| **Team Member 4** | ... | ... | `@github_handle` |
-| **Team Member 5** | ... | ... | `@github_handle` |
+| **Avery B** | ... | ... | `@Akiisqt` |
+| **Chris B** | ... | ... | `@BlazeXYZ` |
+| **Hayden F** | ... | ... | `@github_handle` |
+| **Paxson G** | ... | ... | `@TNTwise` |
+| **Sam F** | ... | ... | `@samfreund` |
 
 ---
 
