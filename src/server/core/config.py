@@ -4,9 +4,10 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Locate repository root and load .env
+# Locate repository root and server root, and load .env from either location
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 load_dotenv(REPO_ROOT / ".env")
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 class Settings:
     APP_NAME: str = "ComForce Community API"

@@ -12,7 +12,7 @@
 - [ ] Tested locally and verified it runs without errors.
 - [ ] No API keys, secrets, or `.env` files are in this pull request.
 - [ ] Jupyter notebook outputs were cleared before committing.
-- [ ] If you updated the 3D scene or UI, attach a screenshot or short video below.
+- [ ] If you updated the client UI or map views, attach a screenshot or short video below.
 
 ## Screenshots / Demo Notes (Optional)
 <!-- Attach a screenshot or terminal output showing your work in action -->

@@ -163,7 +163,7 @@ uv venv
 uv sync
 
 # Run backend development server
-uv run python -m src.server.main
+uv run python main.py
 ```
 
 Using standard `pip`:
@@ -172,7 +172,7 @@ Using standard `pip`:
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 pip install -r ../../requirements.txt
-python -m src.server.main
+python main.py
 ```
 
 The API will be available at `http://localhost:8000`.

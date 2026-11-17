@@ -48,9 +48,9 @@ git checkout -b <type>/<short-description>
 
 | Prefix | What it is for | Example |
 | :--- | :--- | :--- |
-| `feat/` | A new feature or screen | `feat/r3f-city-map`, `feat/gemini-parser` |
+| `feat/` | A new feature or screen | `feat/community-hub`, `feat/gemini-parser` |
 | `fix/` | Fixing a bug or broken route | `fix/api-cors-error`, `fix/marker-click-crash` |
-| `exp/` | Quick experiments or testing ideas | `exp/three-lighting`, `exp/whisper-test` |
+| `exp/` | Quick experiments or testing ideas | `exp/heatmap-model`, `exp/leaflet-map` |
 | `docs/` | Slides, diagrams, or markdown updates | `docs/slide-deck-outline`, `docs/setup-steps` |
 | `chore/` | Updating packages or build tools | `chore/add-lucide-icons`, `chore/ruff-lint` |
 
@@ -88,7 +88,7 @@ Use simple, conventional commit prefixes so everyone knows what changed from the
    * Run `git status` and `git diff` before opening a pull request to make sure no junk files (like `.env`, `__pycache__`, or local test files) got staged.
 2. **Open the PR:**
    * Write two or three sentences explaining what you added or fixed.
-   * If you made a visual change in React or Three.js, paste a screenshot or quick screen recording in the description.
+   * If you made a visual change in the client, paste a screenshot or quick screen recording in the description.
 3. **Quick Peer Review:**
    * At least one other teammate needs to review the PR before merging.
    * In a hackathon, reviews should be fast. Make sure it runs, doesn't break the build, and looks clean.
@@ -104,7 +104,7 @@ Use simple, conventional commit prefixes so everyone knows what changed from the
   * Pick our primary idea from `IDEAS.md`.
   * Make sure everyone has cloned the repo, created their `.env` file, and verified they can run both the frontend and backend locally.
 * **Friday Afternoon (Core Skeleton):**
-  * Build the initial user interface (whether a 3D canvas, a mobile view, or an SMS simulator).
+  * Build the initial user interface in React and Capacitor.
   * Define the JSON API endpoints in FastAPI so the frontend and backend can be built at the same time using mock responses.
 * **Saturday Afternoon (Full Integration):**
   * Connect the real AI backend to the client interface.
@@ -182,7 +182,7 @@ Use simple, conventional commit prefixes so everyone knows what changed from the
 
 * Notebooks in `notebooks/` are for quick tests, prompt experiments, and looking at data.
 * **Clear all outputs before committing.** Click `Kernel -> Restart & Clear Output` before you commit any `.ipynb` file. This stops massive JSON diffs from cluttering git.
-* Once a piece of code works well in a notebook, copy it into a Python module in `src/` so the rest of the team can use it.
+* Once a piece of code works well in a notebook, copy it into a Python module under `src/server/` so the rest of the team can use it.
 
 ---
 

@@ -5,7 +5,12 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-from src.server.core.config import settings
+from pathlib import Path
+
+try:
+    from src.server.core.config import settings
+except ModuleNotFoundError:
+    from core.config import settings
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -164,8 +169,9 @@ def calculate_safe_path(request: SafeRouteRequest):
     )
 
 if __name__ == "__main__":
+    app_module = "src.server.main:app" if Path("src/server").exists() else "main:app"
     uvicorn.run(
-        "src.server.main:app",
+        app_module,
         host=settings.HOST,
         port=settings.PORT,
         reload=settings.DEBUG,
