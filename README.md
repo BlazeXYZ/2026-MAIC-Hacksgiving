@@ -35,9 +35,9 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 
 - **Project Title:** ComForce MKE Community Hub
 - **Summary:** A combined web and mobile application (exported through Capacitor) that makes connecting with ComforceMKE initiatives interactive and responsive instead of just filling out static web forms.
-- **Client Stack:** React, TypeScript, Vite, Capacitor (iOS and Android export), Tailwind CSS
+- **Client Stack:** React, TypeScript, Vite, Capacitor (iOS and Android export), OpenStreetMap, Tailwind CSS
 - **Server Stack:** Python 3.10+, FastAPI, `uv` package manager, Uvicorn
-- **AI Models:** Transformer-based need heatmaps, LLM pantry stocking advisors, safe route planning, and smart volunteer dispatch.
+- **AI Models:** Transformer-based need heatmaps, small classifier for content moderation and triage, and LLM recommendations
 
 ---
 
@@ -230,13 +230,13 @@ Before the Sunday deadline:
 
 ## Team Members
 
-| Name | Role | Responsibilities | Contact |
-| :--- | :--- | :--- | :--- |
-| **Avery B** | Frontend / UI | React views and mobile layouts | `@Akiisqt` |
-| **Chris B** | Backend / Security | FastAPI endpoints, security, and AI pipeline | `@BlazeXYZ` |
-| **Hayden F** | Full Stack Dev | Data handling and service integration | `@github_handle` |
-| **Paxson G** | Client / Capacitor | Mobile packaging and component design | `@TNTwise` |
-| **Sam F** | Pitch & Product | Presentation deck, user testing, and demo | `@samfreund` |
+| Name | GitHub |
+| :--- | :--- |
+| **Avery B** | `@Akiisqt` |
+| **Chris B** | `@BlazeXYZ` |
+| **Hayden F** | `@github_handle` |
+| **Paxson G** | `@TNTwise` |
+| **Sam F** | `@samfreund` |
 
 ---
 
