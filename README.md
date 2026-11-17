@@ -234,7 +234,7 @@ Before the Sunday deadline:
 | :--- | :--- | :--- | :--- |
 | **Avery B** | ... | ... | `@Akiisqt` |
 | **Chris B** | ... | ... | `@BlazeXYZ` |
-| **Hayden F** | ... | ... | `@github_handle` |
+| **Hayden F** | ... | ... | `@Fonsh19` |
 | **Paxson G** | ... | ... | `@TNTwise` |
 | **Sam F** | ... | ... | `@samfreund` |
 
