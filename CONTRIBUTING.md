@@ -104,10 +104,10 @@ Use simple, conventional commit prefixes so everyone knows what changed from the
   * Pick our primary idea from `IDEAS.md`.
   * Make sure everyone has cloned the repo, created their `.env` file, and verified they can run both the frontend and backend locally.
 * **Friday Afternoon (Core Skeleton):**
-  * Build the initial 3D scene in React Three Fiber.
+  * Build the initial user interface (whether a 3D canvas, a mobile view, or an SMS simulator).
   * Define the JSON API endpoints in FastAPI so the frontend and backend can be built at the same time using mock responses.
 * **Saturday Afternoon (Full Integration):**
-  * Connect the real AI backend to the 3D scene.
+  * Connect the real AI backend to the client interface.
   * Handle edge cases, like when the AI returns bad JSON or when an API request times out.
 * **Sunday Morning (Hard Code Freeze, 2 Hours Before Presentations):**
   * **No new features.** Stop writing new code. Focus only on critical bug fixes and demo polish.
@@ -144,8 +144,8 @@ Use simple, conventional commit prefixes so everyone knows what changed from the
 ### TypeScript and React Rules
 
 * Use TypeScript types or interfaces for all props, API responses, and state objects.
-* Keep components small and focused. For Three.js components, put each 3D object (such as a map marker, terrain mesh, or camera rig) in its own file under `src/components/3d/`.
-* Separate 3D rendering from 2D UI panels. Keep 2D overlays (like header bars, side drawers, and chat boxes) in standard React components positioned above the canvas.
+* Keep components small and focused. Organize standard views by feature under `src/components/ui/`.
+* If our chosen idea uses Three.js, put each 3D object (such as a map marker, terrain mesh, or camera rig) in its own file under `src/components/3d/`. Keep 2D overlays (like header bars and drawers) in standard HTML/React layers over the canvas.
 
 ---
 

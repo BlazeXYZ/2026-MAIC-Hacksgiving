@@ -55,15 +55,14 @@ See [IDEAS.md](IDEAS.md) for our list of active project concepts and the templat
 
 ## Planned Tech Stack
 
-Our team is building an interactive 3D web application paired with an AI backend:
+Our team is keeping our options open across several directions outlined in [IDEAS.md](IDEAS.md), including 3D web graphics, fast mobile web apps, and low-bandwidth SMS tools paired with an AI backend:
 
-| Layer | Tools |
+| Layer | Tools & Options |
 | :--- | :--- |
-| **Frontend** | TypeScript, React, Vite, Tailwind CSS |
-| **3D Graphics** | Three.js, React Three Fiber (R3F), `@react-three/drei` |
+| **Frontend & UI** | TypeScript, React, Vite, Tailwind CSS (optional 3D with Three.js / React Three Fiber) |
 | **Backend & API** | Python 3.10+, FastAPI, Uvicorn |
 | **AI & Models** | Google Gemini API, OpenAI API, Anthropic Claude API |
-| **Data & Storage** | ChromaDB or SQLite for local caching and vector search |
+| **Data & Storage** | ChromaDB, SQLite, or PostgreSQL for local caching and search |
 | **Code Quality** | Git, Ruff for Python formatting, ESLint and Prettier for TypeScript |
 
 ---
@@ -71,12 +70,12 @@ Our team is building an interactive 3D web application paired with an AI backend
 ## System Architecture
 
 ```
-[React + Three.js Client]
-  ├── Interactive 3D Scene (City grid, emergency markers, search zones)
-  ├── UI Overlay (Incident filters, status cards, plain-language chat)
+[Client Interface: Web, 3D Canvas, or Mobile]
+  ├── Interactive View (3D city scene, mobile incident board, or SMS thread)
+  ├── User Controls (Incident filters, verified alert feed, plain-language chat)
   └── Local State (Active selection, user preferences)
             │
-            ▼ HTTP / JSON
+            ▼ HTTP / JSON / Webhook
 [FastAPI Python Backend]
   ├── Input Sanitization & Privacy Guard (Strips personal names & private numbers)
   ├── AI Service Layer (Parses incident reports, classifies needs, summarizes tips)
