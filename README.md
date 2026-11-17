@@ -92,8 +92,7 @@
 ├── tests/                    # Unit and integration test suites
 ├── .env.example              # Environment variables template
 ├── .gitignore                # Git ignore rules for data, models, and secrets
-├── CONTRIBUTING.md           # Collaboration and branch workflow guidelines
-├── STYLEGUIDE.md             # Code quality, naming, and engineering conventions
+├── CONTRIBUTING.md           # Collaboration, branch workflow, and style guide
 └── README.md                 # Primary project documentation
 ```
 
