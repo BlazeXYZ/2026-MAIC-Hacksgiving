@@ -1,8 +1,8 @@
-# Project Documentation & Pitch Assets
+# Project Documentation and Pitch Assets
 
-Store pitch presentation decks, architecture diagrams, research notes, and judging deliverables in this directory.
+Store presentation decks, architecture diagrams, notes, and judging files in this folder.
 
-### Hackathon Pitch Checklist
-* **Presentation Slides:** Place PDF or web presentation link here.
-* **Architecture Diagram:** Visual diagram illustrating user flow and AI components.
-* **Backup Demo Recording:** MP4 video or unlisted video link showcasing the working app.
+### Pitch Deliverables Checklist
+* **Presentation Slides:** Put your PDF slides or link to Google Slides here.
+* **Architecture Diagram:** A simple diagram showing how the 3D frontend connects to the backend and the AI model.
+* **Backup Demo Recording:** A short video file or unlisted link showing the application working during testing.

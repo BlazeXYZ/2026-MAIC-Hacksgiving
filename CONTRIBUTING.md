@@ -1,47 +1,42 @@
 # Contributing & Style Guide - 2026 MAIC Hacksgiving
 
-Welcome to our team's unified collaboration, git workflow, and engineering style guide for **Hacksgiving 2026**!
+This guide covers how our team works together on GitHub for Hacksgiving 2026. 
 
-Hackathons demand high velocity, but team coordination and consistent standards are what prevent last-minute merge conflicts, broken builds, and lost progress. Follow these guidelines to keep our codebase clean, reproducible, and demo-ready throughout the sprint.
+Hackathons move fast. When five people are writing code at the same time, bad habits lead to broken code and merge conflicts right before the final presentation. Following these simple rules keeps our project running smoothly and saves us from headaches on Sunday.
 
 ---
 
 ## Table of Contents
 
 - [The Four Golden Rules](#the-four-golden-rules)
-- [Team Git & Collaboration Workflow](#team-git--collaboration-workflow)
+- [Git Workflow](#git-workflow)
   - [Branching Strategy](#branching-strategy)
-  - [Commit Message Conventions](#commit-message-conventions)
-  - [Pull Request (PR) Workflow](#pull-request-pr-workflow)
+  - [Commit Messages](#commit-messages)
+  - [Pull Requests](#pull-requests)
   - [Sprint Milestones & Code Freeze](#sprint-milestones--code-freeze)
-- [Engineering & Code Standards](#engineering--code-standards)
-  - [General Principles](#general-principles)
-  - [Python Conventions](#python-conventions)
-  - [Type Annotations & Schemas](#type-annotations--schemas)
-  - [Import Organization](#import-organization)
-- [AI & LLM Integration Guidelines](#ai--llm-integration-guidelines)
-  - [Centralized Prompt Management](#centralized-prompt-management)
-  - [Defensive Parsing & Fallbacks](#defensive-parsing--fallbacks)
-  - [Rate Limiting & Timeouts](#rate-limiting--timeouts)
-- [Jupyter Notebook Best Practices](#jupyter-notebook-best-practices)
-- [Security, Privacy & Data Handling](#security-privacy--data-handling)
+- [Coding Standards](#coding-standards)
+  - [Python Rules](#python-rules)
+  - [TypeScript and React Rules](#typescript-and-react-rules)
+  - [AI & Prompt Engineering Rules](#ai--prompt-engineering-rules)
+  - [Jupyter Notebooks](#jupyter-notebooks)
+- [Security and Data Privacy](#security-and-data-privacy)
 
 ---
 
 ## The Four Golden Rules
 
-1. **Protect `main`:** The `main` branch must always remain in a clean, runnable, and demo-ready state.
-2. **Never Commit Secrets:** Double-check `.gitignore` before every commit. Never commit `.env` files, API keys, passwords, or personal credentials.
-3. **Commit Early and Push Regularly:** Avoid sitting on large local changes. Small, modular commits make merges seamless and prevent duplicate effort.
-4. **Communicate Before Branching:** Check in with teammates before initiating major structural refactors, database schema changes, or API contract modifications.
+1. **Keep `main` working at all times.** Anyone should be able to clone `main` right now and run it without errors. Never push broken experiments directly to `main`.
+2. **Never commit secrets or personal data.** Always check `.gitignore` before you run `git add`. Never commit `.env` files, API keys, passwords, or personal phone numbers.
+3. **Commit often and push early.** Do not sit on two days of code on your laptop. Making small, clear commits makes merging easier and prevents lost work.
+4. **Talk to the team before making big changes.** If you plan to change an API route name, rewrite a database schema, or swap out a core library, tell everyone in our group chat first.
 
 ---
 
-## Team Git & Collaboration Workflow
+## Git Workflow
 
 ### Branching Strategy
 
-We follow a feature-branch workflow. All work begins from an updated `main` branch:
+We use short-lived feature branches. Always start by pulling the latest changes from `main`:
 
 ```bash
 git checkout main
@@ -49,224 +44,150 @@ git pull origin main
 git checkout -b <type>/<short-description>
 ```
 
-#### Branch Naming Conventions
+#### Branch Name Prefixes
 
-| Prefix | Purpose | Example |
+| Prefix | What it is for | Example |
 | :--- | :--- | :--- |
-| `feat/` | New functionality or user-facing feature | `feat/gemini-rag-pipeline`, `feat/chat-interface` |
-| `fix/` | Bug fixes and edge case resolutions | `fix/api-rate-limit-retry`, `fix/cors-headers` |
-| `exp/` | Prototyping, notebooks, or exploratory ML models | `exp/clustering-experiments`, `exp/whisper-eval` |
-| `docs/` | Documentation, pitch notes, or presentation assets | `docs/architecture-diagrams`, `docs/pitch-outline` |
-| `chore/` | Dependency updates, tooling, or repository setup | `chore/add-pydantic-settings`, `chore/setup-ruff` |
+| `feat/` | A new feature or screen | `feat/r3f-city-map`, `feat/gemini-parser` |
+| `fix/` | Fixing a bug or broken route | `fix/api-cors-error`, `fix/marker-click-crash` |
+| `exp/` | Quick experiments or testing ideas | `exp/three-lighting`, `exp/whisper-test` |
+| `docs/` | Slides, diagrams, or markdown updates | `docs/slide-deck-outline`, `docs/setup-steps` |
+| `chore/` | Updating packages or build tools | `chore/add-lucide-icons`, `chore/ruff-lint` |
 
 ---
 
-### Commit Message Conventions
+### Commit Messages
 
-We adhere to clear, conventional commit messages:
+Use simple, conventional commit prefixes so everyone knows what changed from the git log:
 
 ```text
-<type>(<scope>): <concise summary in imperative mood>
-
-[optional body explaining context or rationale]
+<type>: <short summary in plain language>
 ```
 
-#### Commit Types
-* `feat`: A new capability or feature.
-* `fix`: A defect resolution.
-* `refactor`: Code reorganization without functional changes.
-* `docs`: Documentation, README, or markdown updates.
-* `style`: Formatting, whitespace, or linting cleanup.
+#### Common Types
+* `feat`: A new feature or capability.
+* `fix`: A bug fix.
+* `docs`: Documentation, README, or slide deck updates.
+* `refactor`: Cleaning up code without changing what it does.
+* `style`: Fixing formatting, indentation, or lint warnings.
 * `test`: Adding or updating test cases.
-* `chore`: Build scripts, dependencies, or configuration tweaks.
+* `chore`: Updating dependencies, packages, or config files.
 
-#### Good Commit Examples
-* `feat(services): implement vector retrieval with MMR reranking`
-* `fix(api): handle missing partner token gracefully with 401 error`
-* `docs(readme): update local setup guide and environment variable list`
+#### Examples of Good Commits
+* `feat: add 3D emergency marker component with pulse animation`
+* `fix: handle missing API key with a helpful console warning`
+* `docs: add ComforceMKE partner notes to README`
+* `refactor: move prompt templates into src/core/prompts.py`
 
 ---
 
-### Pull Request (PR) Workflow
+### Pull Requests
 
-1. **Self-Review:**
-   * Verify all tests and lint checks pass locally.
-   * Run `git status` and `git diff` to confirm no unintended files (such as `.env`, `__pycache__`, or raw datasets) are staged.
-
-2. **Open a PR:**
-   * Fill out the provided PR template with a concise summary of changes.
-   * Include a screenshot or terminal output showing working functionality.
-
-3. **Peer Review:**
-   * At least one teammate should review and approve the PR before merging.
-   * In a hackathon setting, reviews should be rapid—focus on verifying that it runs cleanly, does not break `main`, and aligns with shared API contracts.
-
-4. **Merge & Clean Up:**
-   * Use **Squash and Merge** or **Rebase and Merge** to maintain a clean linear history on `main`.
-   * Delete the feature branch on GitHub and locally after merging.
+1. **Check your work locally:**
+   * Run the app and make sure your new code works without breaking other pages.
+   * Run `git status` and `git diff` before opening a pull request to make sure no junk files (like `.env`, `__pycache__`, or local test files) got staged.
+2. **Open the PR:**
+   * Write two or three sentences explaining what you added or fixed.
+   * If you made a visual change in React or Three.js, paste a screenshot or quick screen recording in the description.
+3. **Quick Peer Review:**
+   * At least one other teammate needs to review the PR before merging.
+   * In a hackathon, reviews should be fast. Make sure it runs, doesn't break the build, and looks clean.
+4. **Merge:**
+   * Use **Squash and Merge** so our commit history on `main` stays clean and easy to read.
+   * Delete your branch after merging it.
 
 ---
 
 ### Sprint Milestones & Code Freeze
 
-* **Milestone 1: Kickoff & Scope Lock (Thursday Evening)**
-  * Define core user stories and minimum viable product (MVP).
-  * Assign component ownership (UI, API, Data/Model, Deck).
-  * Establish base environment and verify all team members can clone and run `main`.
-
-* **Milestone 2: Technical Spine (Friday Afternoon)**
-  * Establish data schemas and mock API contracts so frontend and backend work in parallel.
-  * Verify external model API connectivity.
-
-* **Milestone 3: Integration & Polish (Saturday Afternoon)**
-  * Connect frontend interface to real backend endpoints.
-  * Implement error handling, fallback responses, and input sanitization.
-  * Build out sample workflows and demo prompts.
-
-* **Milestone 4: Code Freeze & Expo Prep (Sunday Morning, 2 Hours Before Pitch)**
-  * **Hard Code Freeze:** Stop adding new features. Only critical bug fixes are permitted.
-  * **Fresh Clone Test:** Have one teammate clone the repository into a clean temporary directory and follow `README.md` step-by-step.
-  * **Offline Backup:** Record a crisp 2-minute screen recording of the complete user flow in case of venue Wi-Fi instability.
-  * **Slide & Pitch Alignment:** Ensure the live demo aligns precisely with the slides in `docs/`.
+* **Thursday Night (Kickoff & Setup):**
+  * Pick our primary idea from `IDEAS.md`.
+  * Make sure everyone has cloned the repo, created their `.env` file, and verified they can run both the frontend and backend locally.
+* **Friday Afternoon (Core Skeleton):**
+  * Build the initial 3D scene in React Three Fiber.
+  * Define the JSON API endpoints in FastAPI so the frontend and backend can be built at the same time using mock responses.
+* **Saturday Afternoon (Full Integration):**
+  * Connect the real AI backend to the 3D scene.
+  * Handle edge cases, like when the AI returns bad JSON or when an API request times out.
+* **Sunday Morning (Hard Code Freeze, 2 Hours Before Presentations):**
+  * **No new features.** Stop writing new code. Focus only on critical bug fixes and demo polish.
+  * **Fresh clone test:** One person clones the repo into a brand new folder and follows the setup steps in `README.md` from scratch. If it doesn't work out of the box, we fix the instructions immediately.
+  * **Backup demo recording:** Record a 2-minute video showing the app working on a laptop. If the venue Wi-Fi in Diercks Hall slows down during judging, we play the video instead of stressing over network timeouts.
+  * **Rehearse the pitch:** Make sure the live demo matches our presentation slides.
 
 ---
 
-## Engineering & Code Standards
+## Coding Standards
 
-### General Principles
+### Python Rules
 
-* **Readability Over Cleverness:** Write code that any team member can read and understand in 30 seconds.
-* **Fail Gracefully:** External AI APIs can experience rate limits, latency spikes, or connectivity drops. Always wrap network calls in defensive error handling.
-* **Modular Architecture:** Keep components decoupled. UI components should consume API contracts; business logic should not depend directly on UI rendering.
-
----
-
-### Python Conventions
-
-#### Formatting & Linting
-* We target **Python 3.10+**.
-* Code formatting follows **PEP 8** standards with an 88-character maximum line length.
-* Use [Ruff](https://github.com/astral-sh/ruff) or [Black](https://github.com/psf/black) for automated formatting:
+* We use **Python 3.10 or newer**.
+* Follow standard **PEP 8** formatting. We use **Ruff** for fast linting and formatting:
   ```bash
-  # Format code
-  ruff format .
-  # Check for errors and lint violations
+  # Check for errors and formatting issues
   ruff check .
+  # Automatically format code
+  ruff format .
+  ```
+* Use `snake_case` for function and file names (`parse_incident_report.py`, `get_coordinates()`).
+* Use `PascalCase` for classes (`CrisisReport`, `IncidentService`).
+* Use `UPPER_SNAKE_CASE` for constants (`DEFAULT_TIMEOUT_SECONDS`, `MAX_RETRIES`).
+* Write type hints on function arguments and return values so everyone knows what types are expected:
+  ```python
+  def parse_report(raw_text: str, max_items: int = 5) -> dict[str, str]:
+      """Parse user message and extract basic fields."""
+      ...
   ```
 
-#### Naming Conventions
-* **Modules and Packages:** `snake_case` (e.g., `vector_store.py`, `prompt_templates.py`)
-* **Classes:** `PascalCase` (e.g., `DocumentRetriever`, `EmbeddingService`)
-* **Functions and Methods:** `snake_case` (e.g., `query_model()`, `parse_pdf_payload()`)
-* **Variables and Attributes:** `snake_case` (e.g., `user_query`, `chunk_size`)
-* **Constants:** `UPPER_SNAKE_CASE` (e.g., `DEFAULT_TEMPERATURE`, `MAX_RETRIES`)
+---
+
+### TypeScript and React Rules
+
+* Use TypeScript types or interfaces for all props, API responses, and state objects.
+* Keep components small and focused. For Three.js components, put each 3D object (such as a map marker, terrain mesh, or camera rig) in its own file under `src/components/3d/`.
+* Separate 3D rendering from 2D UI panels. Keep 2D overlays (like header bars, side drawers, and chat boxes) in standard React components positioned above the canvas.
 
 ---
 
-### Type Annotations & Schemas
+### AI & Prompt Engineering Rules
 
-Use Python type hints for all public functions, method signatures, and data contracts:
+* **Do not scatter prompt strings everywhere.** Keep all system prompts and templates in a single file or folder (like `src/core/prompts.py`).
+* **Handle bad JSON safely.** LLMs sometimes add chatty text or forget a closing bracket. Always use a try-except block when parsing JSON from a model response so the server doesn't crash:
+  ```python
+  import json
+  import logging
 
-```python
-from typing import Sequence
-from pydantic import BaseModel, Field
+  logger = logging.getLogger(__name__)
 
-class AnalysisRequest(BaseModel):
-    query: str = Field(..., min_length=1, description="User search query")
-    max_results: int = Field(default=5, ge=1, le=20)
-
-class SearchResult(BaseModel):
-    document_id: str
-    content: str
-    similarity_score: float
-
-def execute_search(
-    request: AnalysisRequest, 
-    corpus_indices: Sequence[str]
-) -> list[SearchResult]:
-    """Execute similarity search against vector index."""
-    ...
-```
-
----
-
-### Import Organization
-
-Group imports in the following order, separated by a single blank line:
-1. Standard library modules (`os`, `sys`, `pathlib`, `typing`)
-2. Third-party packages (`fastapi`, `pydantic`, `google-genai`, `openai`)
-3. Local application imports (`from src.core.config import settings`)
-
-Avoid wildcard imports (e.g., `from module import *`).
+  def safe_parse_json(text: str) -> dict:
+      """Safely extract JSON from model output."""
+      cleaned = text.strip()
+      if cleaned.startswith("```json"):
+          cleaned = cleaned[7:]
+      if cleaned.startswith("```"):
+          cleaned = cleaned[3:]
+      if cleaned.endswith("```"):
+          cleaned = cleaned[:-3]
+      try:
+          return json.loads(cleaned.strip())
+      except json.JSONDecodeError:
+          logger.warning("Model returned invalid JSON. Falling back to default.")
+          return {"status": "error", "raw": text}
+  ```
+* **Always set a timeout.** External model APIs can hang when network connections are slow. Set a clear timeout (like 10 or 15 seconds) on every outbound request.
 
 ---
 
-## AI & LLM Integration Guidelines
+### Jupyter Notebooks
 
-### Centralized Prompt Management
-* Never embed raw prompt strings directly inside API route handlers or UI files.
-* Store prompt templates in a dedicated module (e.g., `src/services/prompts.py` or `src/prompts/`).
-* Clearly delineate System Prompts, Few-Shot Examples, and Dynamic User Inputs.
-
-```python
-# Good: Dedicated template with parameter validation
-SYSTEM_PROMPT = """You are an AI assistant designed to help nonprofit case managers.
-Answer concisely, maintain a compassionate tone, and cite verified sources from context."""
-
-def build_partner_prompt(context: str, query: str) -> str:
-    return f"""Context Information:
-{context}
-
-User Question: {query}
-
-Provide a direct answer based strictly on the context above."""
-```
-
-### Defensive Parsing & Fallbacks
-* LLMs may produce conversational text even when structured output (JSON) is requested.
-* Always enforce structured schemas (e.g., with Pydantic, Instructor, or native function calling) and implement fallback parsing to avoid runtime crashes.
-
-```python
-import json
-import logging
-
-logger = logging.getLogger(__name__)
-
-def parse_model_json(raw_text: str) -> dict:
-    cleaned = raw_text.strip()
-    if cleaned.startswith("```json"):
-        cleaned = cleaned[7:]
-    if cleaned.startswith("```"):
-        cleaned = cleaned[3:]
-    if cleaned.endswith("```"):
-        cleaned = cleaned[:-3]
-    
-    try:
-        return json.loads(cleaned.strip())
-    except json.JSONDecodeError as err:
-        logger.error("Failed to parse JSON response: %s", err)
-        return {"error": "Failed to parse model response", "raw": raw_text}
-```
-
-### Rate Limiting & Timeouts
-* Set explicit HTTP client timeouts (e.g., `timeout=15.0`) on all external AI model calls.
-* Implement basic exponential backoff retry loops for transient 429 (Rate Limit) or 503 (Overloaded) responses.
+* Notebooks in `notebooks/` are for quick tests, prompt experiments, and looking at data.
+* **Clear all outputs before committing.** Click `Kernel -> Restart & Clear Output` before you commit any `.ipynb` file. This stops massive JSON diffs from cluttering git.
+* Once a piece of code works well in a notebook, copy it into a Python module in `src/` so the rest of the team can use it.
 
 ---
 
-## Jupyter Notebook Best Practices
+## Security and Data Privacy
 
-Notebooks in `notebooks/` are intended for rapid data exploration and proof-of-concept modeling:
-
-* **Clear Outputs Before Committing:** Run `Kernel -> Restart & Clear Output` prior to committing `.ipynb` files to git to prevent multi-megabyte JSON diffs.
-* **Top-to-Bottom Execution:** Notebooks must run predictably from top to bottom without relying on out-of-order cell execution.
-* **Graduate Code to `src/`:** As soon as an algorithm, data loader, or prompt is validated, refactor it into a reusable Python module in `src/`.
-
----
-
-## Security, Privacy & Data Handling
-
-* **Zero Hardcoded Secrets:** All API keys, database credentials, and session tokens must be loaded through environment variables (using `python-dotenv` or `pydantic-settings`).
-* **Nonprofit Data Privacy:** If our partner provides real or sensitive operational datasets:
-  * Do not upload real identifying client/patient data to public repositories.
-  * Use anonymized sample mock data in `data/samples/` for testing and demonstration.
+* **Zero hardcoded API keys.** All keys must come from the `.env` file using `os.getenv()`.
+* **Protect partner and resident data.** ComforceMKE helps real people in tough situations. Do not put real phone numbers, real names, or private street addresses in public test files. Use fake sample data in `data/` for our demos.
+* **Input validation:** Validate and clean all incoming text before passing it to AI models or database queries.

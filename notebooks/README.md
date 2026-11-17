@@ -1,8 +1,8 @@
 # Notebooks
 
-Use this folder for exploratory data analysis (EDA), prompt experimentation, and model validation.
+Use this folder for quick data tests, prompt experiments, and trying out AI responses.
 
 ### Best Practices
-* Clear outputs (`Kernel -> Restart & Clear Output`) before committing `.ipynb` files to avoid repository bloat.
-* Number notebooks sequentially (e.g. `01_data_prep.ipynb`, `02_model_eval.ipynb`).
-* Once logic is validated, migrate production code into Python modules under `src/`.
+* Clear all cell outputs (`Kernel -> Restart & Clear Output`) before committing any `.ipynb` file to git. This keeps our git diffs small.
+* Number notebooks in order (such as `01_data_test.ipynb`, `02_prompt_eval.ipynb`).
+* Once your code works, move it into Python modules under `src/` so teammates can use it in the main app.
