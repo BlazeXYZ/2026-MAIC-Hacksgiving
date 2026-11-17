@@ -19,8 +19,9 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 
 - [Project Overview](#project-overview)
 - [The Partner & Community Mission](#the-partner--community-mission)
-- [Planned Tech Stack](#planned-tech-stack)
-- [System Architecture](#system-architecture)
+- [Platform Architecture](#platform-architecture)
+- [Core Features & Modular Communities](#core-features--modular-communities)
+- [Milwaukee Data Sources](#milwaukee-data-sources)
 - [Repository Structure](#repository-structure)
 - [Getting Started](#getting-started)
 - [Hackathon Schedule](#hackathon-schedule)
@@ -32,55 +33,78 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 
 ## Project Overview
 
-- **Project Title:** *[Selected Project Name from IDEAS.md]*
-- **Summary:** *[A one-sentence summary of what the app does and how it helps]*
-- **Live Demo:** *[Link to deployed app]*
-- **Slide Deck:** *[Link to presentation slides]*
-- **Demo Video:** *[Link to backup video recording]*
-
-### Project Summary
-> *Describe what our application does, the specific problem it solves for ComforceMKE or Milwaukee residents, and how AI helps people.*
+- **Project Title:** ComForce MKE Community Hub
+- **Summary:** A combined web and mobile application (exported through Capacitor) that makes connecting with ComforceMKE initiatives interactive and responsive instead of just filling out static web forms.
+- **Client Stack:** React, TypeScript, Vite, Capacitor (iOS and Android export), Tailwind CSS
+- **Server Stack:** Python 3.10+, FastAPI, `uv` package manager, Uvicorn
+- **AI Models:** Transformer-based need heatmaps, LLM pantry stocking advisors, safe route planning, and smart volunteer dispatch.
 
 ---
 
 ## The Partner & Community Mission
 
-- **Community Partner:** ComforceMKE (Community Task Force MKE)
-- **Their Focus:** 24/7 grassroots crisis response, missing persons search coordination, violence interruption, family grief support, and emergency food and housing connections in Milwaukee.
-- **Our Goal:** Build an accessible, real-time application that helps ComforceMKE coordinators and residents handle emergencies without confusion.
+ComforceMKE is a resident-led group founded in 2014 that works 24/7 on crisis response, violence interruption, missing persons searches, family grief support, and emergency food and housing across Milwaukee.
 
-See [IDEAS.md](IDEAS.md) for our list of active project concepts and the template to submit a new one.
+Right now, many organizations rely on static web forms that feel slow and impersonal during an emergency. Our platform brings ComforceMKE's services into an interactive, community-driven interface accessible on both desktop web browsers and mobile phones.
 
 ---
 
-## Planned Tech Stack
+## Platform Architecture
 
-Our team is keeping our options open across several directions outlined in [IDEAS.md](IDEAS.md), including 3D web graphics, fast mobile web apps, and low-bandwidth SMS tools paired with an AI backend:
-
-| Layer | Tools & Options |
-| :--- | :--- |
-| **Frontend & UI** | TypeScript, React, Vite, Tailwind CSS (optional 3D with Three.js / React Three Fiber) |
-| **Backend & API** | Python 3.10+, FastAPI, Uvicorn |
-| **AI & Models** | Google Gemini API, OpenAI API, Anthropic Claude API |
-| **Data & Storage** | ChromaDB, SQLite, or PostgreSQL for local caching and search |
-| **Code Quality** | Git, Ruff for Python formatting, ESLint and Prettier for TypeScript |
-
----
-
-## System Architecture
+The project lives in a single GitHub repository with separate `client` and `server` folders under `src/`:
 
 ```
-[Client Interface: Web, 3D Canvas, or Mobile]
-  ├── Interactive View (3D city scene, mobile incident board, or SMS thread)
-  ├── User Controls (Incident filters, verified alert feed, plain-language chat)
-  └── Local State (Active selection, user preferences)
+[Web Browser & Capacitor Mobile Client] (src/client)
+  ├── Modular Community Selector (Domestic Safety, Missing Persons, Pantries)
+  ├── Urgent Priority Alert Banner (Overrides screens during critical searches)
+  ├── Safe Route Planner (Routes to MSOE Public Safety or Sojourner Peace Center)
+  ├── Volunteer Support Ticket Board (Claim tickets, review priority tasks)
+  └── District Statistics Dashboard (Third Ward, Juneautown, Near West Side)
             │
-            ▼ HTTP / JSON / Webhook
-[FastAPI Python Backend]
-  ├── Input Sanitization & Privacy Guard (Strips personal names & private numbers)
-  ├── AI Service Layer (Parses incident reports, classifies needs, summarizes tips)
-  └── Database / Vector Store (Stores community resources and verified updates)
+            ▼ HTTP / REST / JSON
+[FastAPI Python Backend] (src/server, managed with uv)
+  ├── AI Moderation & Question Finding (Cleans messages, links to verified aid)
+  ├── Smart Volunteer Dispatch (Identifies who can help without blasting spam)
+  ├── Safe Path Generator (Calculates verified routes to public services)
+  ├── Heatmap & Google API Ingestion (Processes location & need density)
+  └── Pantry Stocking Advisor (LLM recommendations for high-need supplies)
 ```
+
+---
+
+## Core Features & Modular Communities
+
+The platform is designed around **Modular Communities**. Every community shares core tools (threads, maps, verified posts, and volunteer tickets), but each community can enable custom tools:
+
+### 1. Domestic Abuse Support (Initial Flagship Community)
+* **Safe Walk & Routing:** If you are on the MSOE campus, it automatically plans a route along lit paths to MSOE Public Safety at 1025 N Broadway. In the city, it directs to Sojourner Family Peace Center.
+* **Quick Exit (Safe Mode):** Tapping the red Quick Exit button immediately swaps the screen to an ordinary Milwaukee bus schedule and wipes all local session data.
+* **Confidential Support Tickets:** Residents can request discrete check-ins without sharing their full contact details publicly.
+
+### 2. Missing Persons Search Network
+* **Priority Alert Override:** When an active search begins, an urgent banner appears across the app, alerting nearby volunteers regardless of which community tab they are viewing.
+* **Search Grid Coordinator:** Volunteers can join search parties and mark map sectors as "searching," "cleared," or "lead found" in real time.
+
+### 3. Food Pantry & Mutual Aid
+* **Interactive Pantry Finder:** Displays open emergency pantries, mobile markets, and hours pulled from local open data.
+* **Pantry Owner AI Advisor:** An LLM reviews district need patterns and recommends what high-demand items pantry coordinators should stock (such as infant formula or warm winter clothing).
+
+### 4. Smart Volunteer Dispatch & District Dashboard
+* **Targeted Notification AI:** Instead of sending annoying push notifications to hundreds of inactive volunteers, an AI filter identifies which volunteers are active and close enough to help.
+* **Coordinator Dashboard:** Visualizes open aid requests by Milwaukee district (such as Juneautown versus the Third Ward) so coordinators can see where resources are needed most.
+
+---
+
+## Milwaukee Data Sources
+
+Our team is reviewing real Milwaukee open data to ground the app in actual local resources:
+
+1. **IMPACT 2-1-1 & Milwaukee Food Environment GIS:** Public ArcGIS datasets covering every emergency food pantry, meal site, and grocery access point in Milwaukee County.
+2. **Hunger Task Force Site Data:** Verified locations and operating hours of emergency food sites and mobile food markets.
+3. **Domestic Violence Crisis Services:** Verified coordinates and 24/7 hotline numbers for Sojourner Family Peace Center and the Milwaukee Women's Center.
+4. **City of Milwaukee Open Data Portal:** Civic neighborhood boundaries (Juneautown, Historic Third Ward, Near West Side) and community centers.
+5. **Google Places API:** Community points of interest, public libraries, and verified public service facilities.
+6. **MSOE Campus Geography:** Campus walkways, Diercks Hall (1025 N Milwaukee St), and MSOE Public Safety (1025 N Broadway).
 
 ---
 
@@ -94,15 +118,22 @@ Our team is keeping our options open across several directions outlined in [IDEA
 │   └── processed/            # Cleaned mock data for testing
 ├── docs/                     # Pitch notes, slides, and diagrams
 ├── notebooks/                # Jupyter notebooks for data tests and prompt trials
-├── src/                      # Backend application source code
-│   ├── core/                 # Config, settings, and security helpers
-│   └── main.py               # Main FastAPI server entry point
+├── src/
+│   ├── client/               # React + TypeScript + Vite + Capacitor app
+│   │   ├── src/              # React UI components and views
+│   │   ├── capacitor.config.ts  # Capacitor mobile build settings
+│   │   ├── package.json      # Client dependencies
+│   │   └── vite.config.ts    # Vite bundler config with API proxy
+│   └── server/               # FastAPI Python backend managed with uv
+│       ├── core/             # Settings and configuration
+│       ├── pyproject.toml    # Modern Python dependencies for uv
+│       └── main.py           # FastAPI entry point and routes
 ├── tests/                    # Backend unit tests
 ├── .env.example              # Template for API keys and environment variables
 ├── .gitignore                # Git ignore rules for virtualenvs, keys, and data
 ├── CONTRIBUTING.md           # Branch rules, commit styles, and code conventions
 ├── IDEAS.md                  # Project brainstorms and idea submission template
-├── requirements.txt          # Python dependencies
+├── requirements.txt          # Python dependencies (pip fallback)
 └── README.md                 # Main project guide
 ```
 
@@ -111,44 +142,64 @@ Our team is keeping our options open across several directions outlined in [IDEA
 ## Getting Started
 
 ### Prerequisites
-* Python 3.10 or newer
+* Python 3.10 or newer (with [`uv`](https://github.com/astral-sh/uv) or pip)
 * Node.js 18 or newer (with npm)
 * Git installed and configured
-* An API key for your chosen AI provider (such as Gemini or OpenAI)
 
-### Local Setup
+---
 
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/blazexyz/2026-MAIC-Hacksgiving.git
-   cd 2026-MAIC-Hacksgiving
-   ```
+### 1. Setting Up the Server (FastAPI + `uv`)
 
-2. **Set up the Python backend:**
-   ```bash
-   # Windows (PowerShell)
-   python -m venv .venv
-   .\.venv\Scripts\Activate.ps1
+Change to the server directory:
 
-   # macOS / Linux
-   python3 -m venv .venv
-   source .venv/bin/activate
+```bash
+cd src/server
+```
 
-   # Install Python packages
-   pip install -r requirements.txt
-   ```
+Using `uv` (recommended):
+```bash
+# Create and sync virtual environment
+uv venv
+uv sync
 
-3. **Set up your environment variables:**
-   ```bash
-   cp .env.example .env
-   ```
-   Open `.env` in your editor and add your personal API keys. Never commit your `.env` file to git.
+# Run backend development server
+uv run python -m src.server.main
+```
 
-4. **Run the backend server:**
-   ```bash
-   python -m src.main
-   ```
-   Open your browser to `http://localhost:8000` to verify the health check endpoint returns `{"status":"healthy"}`.
+Using standard `pip`:
+```bash
+# Windows (PowerShell)
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+pip install -r ../../requirements.txt
+python -m src.server.main
+```
+
+The API will be available at `http://localhost:8000`.
+
+---
+
+### 2. Setting Up the Client (React + Capacitor)
+
+In a separate terminal, switch to the client directory:
+
+```bash
+cd src/client
+
+# Install frontend dependencies
+npm install
+
+# Run the web development server
+npm run dev
+```
+
+Open your browser to `http://localhost:3000`.
+
+To build and sync for mobile with Capacitor:
+```bash
+npm run build
+npx cap sync
+```
 
 ---
 
@@ -159,8 +210,8 @@ All times are in Central Time at Diercks Hall:
 | Date & Time | Event | Focus |
 | :--- | :--- | :--- |
 | **Thursday, Nov 19 (6:30 PM - 7:30 PM)** | **Kick-off** | Partner problem details, team check-in, scope lock |
-| **Friday, Nov 20 (3:00 PM - 7:00 PM)** | **Hacking Day 1** | Base 3D scene, API contracts, mock data |
-| **Saturday, Nov 21 (10:00 AM - 2:00 PM)** | **Hacking Day 2** | Connect AI to 3D scene, UI buildout, testing |
+| **Friday, Nov 20 (3:00 PM - 7:00 PM)** | **Hacking Day 1** | Wireframe client, implement API endpoints, load sample data |
+| **Saturday, Nov 21 (10:00 AM - 2:00 PM)** | **Hacking Day 2** | AI model integration, mobile build test, ticket flow |
 | **Sunday, Nov 22 (10:00 AM - 4:00 PM)** | **Finals & Expo** | Code freeze, rehearse pitch, live judge demos |
 
 ---
@@ -169,11 +220,11 @@ All times are in Central Time at Diercks Hall:
 
 Before the Sunday deadline:
 
-- [ ] The app runs on a clean laptop following the steps in this README.
-- [ ] We have a recorded 2-minute backup demo video in case the hall Wi-Fi has issues.
+- [ ] Both `src/client` and `src/server` run cleanly following these instructions.
+- [ ] A 2-minute backup video demo is recorded showing the web and mobile views.
 - [ ] Presentation slides are exported to PDF and saved in `docs/`.
 - [ ] No API keys, passwords, or private resident data are in the git history.
-- [ ] The live demo shows both our 3D interface and our AI backend working together.
+- [ ] The live demo shows both community ticket claiming and safe route planning.
 
 ---
 
@@ -181,10 +232,10 @@ Before the Sunday deadline:
 
 | Name | Role | Responsibilities | Contact |
 | :--- | :--- | :--- | :--- |
-| **Avery B** | Frontend / UI | 3D visual components and React views | `@Akiisqt` |
-| **Chris B** | Backend / Security | API endpoints, security, and AI pipeline | `@BlazeXYZ` |
+| **Avery B** | Frontend / UI | React views and mobile layouts | `@Akiisqt` |
+| **Chris B** | Backend / Security | FastAPI endpoints, security, and AI pipeline | `@BlazeXYZ` |
 | **Hayden F** | Full Stack Dev | Data handling and service integration | `@github_handle` |
-| **Paxson G** | 3D Graphics / R3F | Three.js scene setup and animations | `@TNTwise` |
+| **Paxson G** | Client / Capacitor | Mobile packaging and component design | `@TNTwise` |
 | **Sam F** | Pitch & Product | Presentation deck, user testing, and demo | `@samfreund` |
 
 ---

@@ -74,10 +74,10 @@ Use simple, conventional commit prefixes so everyone knows what changed from the
 * `chore`: Updating dependencies, packages, or config files.
 
 #### Examples of Good Commits
-* `feat: add 3D emergency marker component with pulse animation`
+* `feat: add community selector component with urgent alert banner`
 * `fix: handle missing API key with a helpful console warning`
 * `docs: add ComforceMKE partner notes to README`
-* `refactor: move prompt templates into src/core/prompts.py`
+* `refactor: move prompt templates into src/server/core/prompts.py`
 
 ---
 
@@ -141,17 +141,17 @@ Use simple, conventional commit prefixes so everyone knows what changed from the
 
 ---
 
-### TypeScript and React Rules
+### TypeScript, React, and Capacitor Rules
 
 * Use TypeScript types or interfaces for all props, API responses, and state objects.
-* Keep components small and focused. Organize standard views by feature under `src/components/ui/`.
-* If our chosen idea uses Three.js, put each 3D object (such as a map marker, terrain mesh, or camera rig) in its own file under `src/components/3d/`. Keep 2D overlays (like header bars and drawers) in standard HTML/React layers over the canvas.
+* Keep components small and focused. Organize components by feature under `src/client/src/components/`.
+* When adding mobile-specific behaviors, use standard Capacitor plugins (like `@capacitor/haptics` or `@capacitor/app`) so the same codebase runs in a browser and as a compiled mobile app.
 
 ---
 
 ### AI & Prompt Engineering Rules
 
-* **Do not scatter prompt strings everywhere.** Keep all system prompts and templates in a single file or folder (like `src/core/prompts.py`).
+* **Do not scatter prompt strings everywhere.** Keep all system prompts and templates in a single file or folder (like `src/server/core/prompts.py`).
 * **Handle bad JSON safely.** LLMs sometimes add chatty text or forget a closing bracket. Always use a try-except block when parsing JSON from a model response so the server doesn't crash:
   ```python
   import json
