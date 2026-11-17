@@ -1,9 +1,5 @@
 # 2026 MAIC Hacksgiving: AI for Good
 
-Welcome to the project repository for the **4th Annual MAIC Hacksgiving Hackathon**, hosted by the **MSOE Artificial Intelligence Club (MAIC)** at the **Milwaukee School of Engineering (MSOE)** in Dwight and Dian Diercks Hall.
-
-This repository serves as our team's codebase, documentation hub, and submission workspace for developing an impactful, AI-powered solution for our community partner.
-
 ---
 
 ## Table of Contents
@@ -67,7 +63,7 @@ This repository serves as our team's codebase, documentation hub, and submission
 
 ---
 
-## Tech Stack
+## Example Tech Stack
 
 | Layer | Technologies |
 | :--- | :--- |
@@ -107,13 +103,13 @@ This repository serves as our team's codebase, documentation hub, and submission
 
 ## Getting Started
 
-### Prerequisites
+### Example Prerequisites
 * Python 3.10+ installed
 * Git installed and configured
 * Node.js 18+ (if developing a JavaScript/TypeScript frontend)
 * Valid API keys for chosen AI providers (e.g., Gemini, OpenAI, Claude)
 
-### Local Environment Setup
+### Example Local Environment Setup
 
 1. **Clone the repository:**
    ```bash
@@ -178,10 +174,11 @@ Ensure the following checklist is completed prior to the Sunday deadline:
 
 | Name | Role | Responsibilities | Contact |
 | :--- | :--- | :--- | :--- |
-| **Team Member 1** | Team Lead / ML | AI pipeline, model integration, prompting | `@github_handle` |
-| **Team Member 2** | Full Stack Dev | Backend API endpoints, database setup | `@github_handle` |
-| **Team Member 3** | Frontend / UX | UI implementation, user experience, styling | `@github_handle` |
-| **Team Member 4** | Pitch & Product | Presentation, user research, data analysis | `@github_handle` |
+| **Team Member 1** | ... | ... | `@github_handle` |
+| **Team Member 2** | ... | ... | `@github_handle` |
+| **Team Member 3** | ... | ... | `@github_handle` |
+| **Team Member 4** | ... | ... | `@github_handle` |
+| **Team Member 5** | ... | ... | `@github_handle` |
 
 ---
 
