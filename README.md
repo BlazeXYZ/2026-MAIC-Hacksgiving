@@ -230,13 +230,13 @@ Before the Sunday deadline:
 
 ## Team Members
 
-| Name | GitHub |
-| :--- | :--- |
-| **Avery B** | `@Akiisqt` |
-| **Chris B** | `@BlazeXYZ` |
-| **Hayden F** | `@github_handle` |
-| **Paxson G** | `@TNTwise` |
-| **Sam F** | `@samfreund` |
+| Name | Role | Responsibilities | Contact |
+| :--- | :--- | :--- | :--- |
+| **Avery B** | ... | ... | `@Akiisqt` |
+| **Chris B** | ... | ... | `@BlazeXYZ` |
+| **Hayden F** | ... | ... | `@github_handle` |
+| **Paxson G** | ... | ... | `@TNTwise` |
+| **Sam F** | ... | ... | `@samfreund` |
 
 ---
 
