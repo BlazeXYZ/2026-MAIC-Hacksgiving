@@ -1,7 +1,5 @@
 # 2026 MAIC Hacksgiving: AI for Good
 
----
-
 ## Table of Contents
 
 - [Project Overview](#project-overview)
