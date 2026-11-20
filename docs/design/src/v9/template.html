@@ -11,7 +11,7 @@
 :root{
   --stage:#0C3A24; --stage-fg:#EEF3EC; --stage-mute:#A9C2B1; --stage-line:rgba(238,243,236,.16); --stage-accent:#E4F23A; --stage-accent-fg:#16201B;
   --stage-font:"Bricolage Grotesque",system-ui,sans-serif;
-  --paper:#F4F5F0; --card:#FFFFFF; --sunk:#ECEEE6; --line:#E1E4DA; --line-2:#C8CDBF;
+  --paper:#E6ECE3; --card:#FDFDF9; --sunk:#E4EAE0; --line:#D2DBCD; --line-2:#B5C1B0;
   --ink:#16201B; --ink-2:#45524A; --ink-3:#6C776F;
   --green:#0F6B3A; --green-2:#2E9A5C; --green-wash:#E4F0E6; --green-ink:#174A2C;
   --red:#D8322B; --red-deep:#A61D19; --red-wash:#FCEAE7;
@@ -250,7 +250,7 @@ body{background-image:repeating-linear-gradient(45deg,transparent 0 21px,rgba(23
 #home[data-mode="new"] .dnav .esc{animation:esc-ring 1.8s ease-out infinite}
 @keyframes esc-ring{0%{box-shadow:0 0 0 0 rgba(216,50,43,.5)}100%{box-shadow:0 0 0 10px rgba(216,50,43,0)}}
 /* hub page */
-.hubhead{background:var(--green);color:#fff;padding:32px 48px 0;background-image:repeating-linear-gradient(45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px),repeating-linear-gradient(-45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px)}
+.hubhead{background:var(--green);color:#fff;padding:32px 48px 0;background-image:var(--fence-dark)}
 .hubhead .crumb{font-size:13px;font-weight:600;opacity:.8}
 .hubhead .row{display:flex;align-items:flex-end;gap:24px}
 .hubhead h1{margin-top:8px;font-weight:800;font-stretch:80%;font-size:44px;line-height:1;letter-spacing:-.02em}
@@ -401,7 +401,7 @@ body{background-image:repeating-linear-gradient(45deg,transparent 0 21px,rgba(23
 .stepper .meta{white-space:nowrap}
 .ob h1{font-family:var(--f-voice);font-weight:500;font-size:32px;line-height:1.08;letter-spacing:-.02em}
 .ob .lede{margin-top:12px;font-size:16px;color:var(--ink-2)}
-.hero{position:relative;background:var(--green);color:#fff;padding:0 24px 28px;background-image:repeating-linear-gradient(45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px),repeating-linear-gradient(-45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px)}
+.hero{position:relative;background:var(--green);color:#fff;padding:0 24px 28px;background-image:var(--fence-dark)}
 .hero .lang{display:flex;justify-content:flex-end;gap:4px;padding-top:4px}
 .hero .lang button{border:0;background:none;color:#fff;opacity:.75;font-size:13px;font-weight:600;padding:6px 8px;border-radius:6px;cursor:pointer}
 .hero .lang button[aria-pressed="true"]{opacity:1;background:rgba(255,255,255,.18)}
@@ -418,7 +418,7 @@ body{background-image:repeating-linear-gradient(45deg,transparent 0 21px,rgba(23
 .choice button[aria-pressed="true"]{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
 .choice button[aria-pressed="true"] .radio{border:6px solid var(--green)}
 .locbtn{display:flex;align-items:center;gap:12px;width:100%;height:56px;padding:0 16px;margin-top:24px;border-radius:var(--r);border:1.5px solid var(--green);background:var(--card);color:var(--green);font-weight:700;font-size:16px;cursor:pointer}
-.or{margin:16px 0 12px;font-size:13.5px;font-weight:600;color:var(--ink-3)}
+.ui .or{margin:16px 0 12px;font-size:13.5px;font-weight:600;color:var(--ink-3)}
 .chips{display:flex;flex-wrap:wrap;gap:8px}
 .chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line-2);background:var(--card);font-size:14px;font-weight:600;cursor:pointer}
 .chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
@@ -473,6 +473,7 @@ body{background-image:repeating-linear-gradient(45deg,transparent 0 21px,rgba(23
 .inputbar{position:absolute;left:0;right:0;bottom:0;z-index:40;display:flex;gap:8px;padding:12px 16px 30px;background:var(--card);border-top:1px solid var(--line)}
 .inputbar input{flex:1;height:44px;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:var(--paper);font-size:15px}
 .inputbar button{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:var(--sunk);color:var(--ink)}
+.inputbar button.listening{background:var(--red);color:#fff}
 .inputbar button.send{background:var(--green);color:#fff}
 /* route */
 .sheet{position:absolute;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-radius:24px 24px 0 0;padding:12px 20px 34px;box-shadow:0 -12px 32px -12px rgba(22,32,27,.35)}
@@ -492,10 +493,10 @@ body{background-image:repeating-linear-gradient(45deg,transparent 0 21px,rgba(23
 .floattop{position:absolute;top:54px;left:16px;right:16px;z-index:20;display:flex;align-items:center;gap:8px}
 .floattop .pill{flex:1;min-width:0;background:var(--card);border-radius:12px;padding:8px 12px;box-shadow:0 8px 20px -10px rgba(22,32,27,.45)}
 .floattop .pill .meta{display:block;font-size:12px}
-.floattop .pill b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.floattop .pill b{display:block;font-size:15px;line-height:1.2}
 .floattop .iconbtn{box-shadow:0 8px 20px -10px rgba(22,32,27,.45)}
 /* search */
-.redhead{background:var(--red);color:#fff;padding-bottom:20px;background-image:repeating-linear-gradient(45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px),repeating-linear-gradient(-45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px)}
+.redhead{background:var(--red);color:#fff;padding-bottom:20px;background-image:var(--fence-dark)}
 .redhead .back{background:rgba(255,255,255,.18);border:0;color:#fff}
 .redhead .exit{background:#fff;color:var(--red-deep)}
 .redhead .ph-head .meta{color:#fff;opacity:.85}
@@ -600,7 +601,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
 .inbox small{display:block;margin-top:2px;font-size:13.5px;color:var(--ink-2);line-height:1.35}
 .inbox .meta{white-space:nowrap;font-size:12.5px}
 .inbox a.unread b::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:2px}
-.evhero{position:relative;padding:20px;border-radius:var(--r);background:#5B3B86;color:#fff;overflow:hidden;background-image:repeating-linear-gradient(45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px),repeating-linear-gradient(-45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px)}
+.evhero{position:relative;padding:20px;border-radius:var(--r);background:#5B3B86;color:#fff;overflow:hidden;background-image:var(--fence-dark)}
 .evhero .meta{color:#E2D6F2}
 .evhero h2{margin-top:8px;font-family:var(--f-voice);font-weight:500;font-size:28px;line-height:1.08}
 .evdate{display:flex;gap:16px;margin-top:16px}
@@ -632,7 +633,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
 /* hubs directory */
 .dirgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
 .hubcard{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
-.hubcard .band{height:72px;display:flex;align-items:flex-end;padding:0 20px;position:relative;background-image:repeating-linear-gradient(45deg,transparent 0 15px,rgba(255,255,255,.08) 15px 17px),repeating-linear-gradient(-45deg,transparent 0 15px,rgba(255,255,255,.08) 15px 17px)}
+.hubcard .band{height:72px;display:flex;align-items:flex-end;padding:0 20px;position:relative;background-image:var(--fence-dark)}
 .hubcard .band .sw{transform:translateY(18px);border:3px solid var(--card);width:44px;height:44px;border-radius:12px}
 .hubcard .band .flag2{position:absolute;top:12px;right:12px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,.92);color:var(--ink)}
 .hubcard .band .flag2.hot{background:#fff;color:var(--red-deep)}
@@ -646,10 +647,77 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
 .hubcard.left .btn.joined{background:var(--card);border-color:var(--line-2);color:var(--ink)}
 .hubcard.left .btn.joined .ic,.hubhead.left .acts .btn .ic{display:none}
 .hubcard .btn.joined{background:var(--green-wash);border-color:var(--green-wash);color:var(--green-ink)}
+
+/* ---------- art details: the same chain-link, hi-vis and halftone language, used sparingly ---------- */
+:root{
+  --fence-base:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 0L24 24M24 0L0 24M-4 4L4 -4M20 28L28 20M-4 20L4 28M20 -4L28 4' stroke='%230F6B3A' stroke-opacity='.06' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+  --fence-light:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 0L24 24M24 0L0 24M-4 4L4 -4M20 28L28 20M-4 20L4 28M20 -4L28 4' stroke='%230F6B3A' stroke-opacity='.11' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+  --fence-dark:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 0L24 24M24 0L0 24M-4 4L4 -4M20 28L28 20M-4 20L4 28M20 -4L28 4' stroke='%23fff' stroke-opacity='.13' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+}
+/* a patch of fence behind the top of a page, fading out before the content gets busy */
+.desk{isolation:isolate}
+.desk .dpage{position:relative}
+.desk .dpage::before{content:"";position:absolute;left:0;right:0;top:0;height:340px;z-index:-1;background:var(--fence-light);-webkit-mask-image:linear-gradient(#000 0%,transparent 100%);mask-image:linear-gradient(#000 0%,transparent 100%);pointer-events:none}
+.hubhead+.dpage::before{display:none}
+.screen.ui>.scroll::before{content:"";position:absolute;left:0;right:0;top:0;height:260px;z-index:-1;background:var(--fence-light);-webkit-mask-image:linear-gradient(#000 0%,transparent 100%);mask-image:linear-gradient(#000 0%,transparent 100%);pointer-events:none}
+.ob-body{background:linear-gradient(var(--paper),var(--paper)) padding-box}
+.ob>.statusbar,.ob>.stepper{position:relative}
+.ob::before{content:"";position:absolute;left:0;right:0;top:0;height:240px;z-index:-1;background:var(--fence-light);-webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent);pointer-events:none}
+.ob-body{background:none}
+/* green and red surfaces get the fence, like the hub header */
+.alert-strip,.need4 .g,.needs a.primary .sq,.statuscard,.mine-card,.dnav.staff{background-image:var(--fence-dark)}
+.ontask{background-image:var(--fence-light)}
+/* missing-person cards read like a screen-printed poster: halftone fading in from the corner */
+.alertcard{position:relative}
+.alertcard::after{content:"";position:absolute;right:0;bottom:0;width:220px;height:140px;background:radial-gradient(circle,rgba(216,50,43,.2) 1.3px,transparent 1.8px) 0 0/7px 7px;-webkit-mask-image:radial-gradient(circle at 100% 100%,#000 0%,transparent 72%);mask-image:radial-gradient(circle at 100% 100%,#000 0%,transparent 72%);pointer-events:none}
+.alertcard>*{position:relative;z-index:1}
+.sp-who{position:relative;overflow:hidden}
+.sp-who::after{content:"";position:absolute;right:0;top:0;bottom:0;width:120px;background:radial-gradient(circle,rgba(216,50,43,.18) 1.2px,transparent 1.7px) 0 0/6px 6px;-webkit-mask-image:linear-gradient(90deg,transparent,#000);mask-image:linear-gradient(90deg,transparent,#000);pointer-events:none}
+/* hi-vis highlighter on phone section headings, the same mark as the active nav item */
+.ph-h h2{display:inline;background:linear-gradient(transparent 64%,var(--hivis) 64% 92%,transparent 92%)}
+/* desktop footer sits on a strip of green fence */
+.dfoot{background:var(--green) var(--fence-dark);color:#CFE3D6;border-top:0}
+.dfoot b{color:#fff}
+
+/* ---------- background and panels with character ---------- */
+/* sage paper with the fence running faintly across the whole app, stronger patches at the top of pages */
+.ui.desk,.screen.ui{background-color:var(--paper);background-image:var(--fence-base)}
+/* phones: the base fence lives on the scrolling content so it moves with everything on it */
+.screen.ui:has(>.scroll){background-image:none}
+.screen.ui>.scroll{background-image:var(--fence-base);background-attachment:local}
+.desk .dpage::before{height:420px}
+/* panels sit on the page like printed cards: green-tinted edge and a solid drop, like the green buttons */
+.ui .card,.ui .mod,.ui .req,.ui .hubcard,.ui .setlist,.ui .pick,.ui .mapcard,.ui .alertcard,.ui .need4>a,.ui .choice button,.ui .stats3 div,.ui .ht,.ui .kpi,.ui .addsafe,.ui .dispatch{box-shadow:0 3px 0 rgba(15,74,40,.13)}
+.ui .card,.ui .mod,.ui .req,.ui .hubcard,.ui .setlist,.ui .pick,.ui .mapcard,.ui .need4>a,.ui .choice button,.ui .stats3 div{border-color:#C9D4C4}
+.ui .alertcard{box-shadow:0 3px 0 rgba(166,29,25,.25)}
+.ui .need4>.g{box-shadow:0 3px 0 #0A3D22}
+.ui .ht{background:var(--sunk);background-image:var(--fence-light)}
+/* panel headers become a fenced green strip, so a page of panels reads as sections, not white boxes */
+.mod>.mod-h{padding:14px 24px;background-color:#EEF4EB;background-image:var(--fence-light);border-bottom:1px solid var(--line);border-radius:var(--r) var(--r) 0 0}
+.mod>.mod-h h2::before{content:"";display:inline-block;width:8px;height:8px;margin-right:10px;border-radius:2px;background:var(--green);vertical-align:2px}
+.mod>.mod-h+.mod-sub{padding-top:12px}
+/* tickets: the stub side gets a whisper of fence so the tear line reads */
+.take{background-image:var(--fence-light)}
+.req.taken .take{background-image:var(--fence-dark)}
+
+/* ---------- one continuous fence ----------
+   Rule: the chain-link is a single fence behind the whole screen. Any surface that shows it (headers, tiles,
+   stubs, bands, fading patches) uses the same 24 px tile and is shifted by its own position, so its lines
+   continue the background's lines exactly. --fx / --fy are set from layout (see alignFence in the script). */
+.hubhead,.hero,.redhead,.evhero,.hubcard .band,.alert-strip,.need4 .g,.needs a.primary .sq,.statuscard,.mine-card,.dnav.staff,.ontask,.ui .ht,.mod>.mod-h,.take,.dfoot{background-position:var(--fx,0px) var(--fy,0px)!important}
+.desk .dpage::before,.ob::before{background-position:var(--fx,0px) var(--fy,0px)!important}
+/* Milwaukee, lightly: a skyline silhouette in two green bands, nothing else */
+.hero{padding-bottom:56px}
+.hero .city{position:absolute;left:0;right:0;bottom:0;width:100%;height:46px;fill:rgba(0,0,0,.2);pointer-events:none}
+.hubhead{position:relative;overflow:hidden}
+.hubhead>.city{position:absolute;right:40px;bottom:44px;width:520px;height:90px;fill:rgba(0,0,0,.2);pointer-events:none}
+.hubhead>*:not(.city){position:relative}
+.dfoot .made{font-weight:700;color:#fff}
 @media (prefers-reduced-motion:reduce){.live,.mini .x,.dnav .esc{animation:none!important}}
 </style>
 
 %%DEFS%%
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><symbol id="skyline" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice"><path d="M0 120V98H36V120ZM36 120V80H80V120ZM80 120V86H104V120ZM104 120V98H134V120ZM134 120V98H152V120ZM152 120V80H196V120ZM196 120V80H220V120ZM220 120V92H250V120ZM250 120V98H274V120ZM274 120V102H310V120ZM310 120V86H328V120ZM328 120V106H358V120ZM358 120V92H388V120ZM388 120V80H412V120ZM412 120V80H430V120ZM430 120V98H474V120ZM474 120V102H498V120ZM498 120V92H534V120ZM534 120V86H570V120ZM570 120V102H600V120ZM600 120V80H630V120ZM630 120V92H654V120ZM654 120V106H698V120ZM698 120V92H716V120ZM716 120V80H752V120ZM752 120V106H796V120ZM796 120V98H832V120ZM832 120V106H850V120ZM850 120V102H868V120ZM868 120V102H886V120ZM886 120V80H904V120ZM904 120V106H928V120ZM928 120V86H972V120ZM972 120V92H996V120ZM996 120V98H1040V120ZM1040 120V86H1084V120ZM1084 120V92H1102V120ZM1102 120V80H1146V120ZM1146 120V92H1190V120ZM1190 120V102H1214V120ZM250 120V68H320V120ZM262 120V60H308V120ZM268 60L274 52L280 60ZM290 60L296 52L302 60ZM278 120V28H294V120ZM276 28L286 2L296 28ZM430 120V24H464V120ZM470 120V48H496V120ZM500 120V16H540V120ZM546 120V56H568V120ZM380 120V62H410V120ZM760 120V86H830V120ZM786 120V28H804V120ZM786 28L795 16L804 28ZM785 42a10 10 0 1 0 20 0a10 10 0 1 0-20 0ZM1010 120V106H1130V120ZM1068 106L1000 58L1004 54L1074 104ZM1072 106L1140 58L1136 54L1066 104ZM1066 106L1070 72L1074 106Z"/></symbol></defs></svg>
 
 <div class="wrap">
   <header class="st-intro" id="top">
@@ -685,6 +753,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
       <li><b>One 8-point spacing scale:</b> 24px inside cards, 24px between cards, 48px between page sections, 20px phone margins.</li>
       <li><b>Few borders and boxes.</b> Rows divide with hairlines, and cards never sit inside cards.</li>
       <li><b>Tap targets are at least 44px,</b> and body text is at least 15px.</li>
+      <li><b>One continuous fence.</b> Anything that shows the chain-link pattern uses the same tile, lined up with the background's, so the lines run unbroken from the page into headers, tiles and stubs.</li>
     </ul></section>
   </section>
 
@@ -714,7 +783,8 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
                 <div class="statusbar" style="padding-left:10px;padding-right:6px"><span>6:02</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
                 <div class="lang" role="group" aria-label="Language"><button aria-pressed="true" data-seg>English</button><button aria-pressed="false" data-seg>Español</button><button aria-pressed="false" data-seg>Hmoob</button></div>
                 <span class="mark" aria-hidden="true"><svg><use href="#logo-mark"/></svg></span>
-                <h1 class="voice">Neighbors helping neighbors, all across Milwaukee.</h1>
+                <h1 class="voice">Neighbors helping neighbors, all across the 414.</h1>
+                <svg class="city" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
               </div>
               <div style="padding:24px 24px 0">
                 <p style="font-size:16px;font-weight:700">What brings you here today?</p>
@@ -841,7 +911,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
             <div class="right"><button class="btn sm" data-toggle-class="#home|editing" data-on="Done"><svg class="ic"><use href="#i-grip"/></svg><span data-label>Customize</span></button></div>
           </div>
           <div class="greet only-new">
-            <div><span class="kicker">Westown · Wednesday evening</span><h1>Welcome, Jordan. <em>Glad you're here.</em></h1><p>ComForce MKE has helped 10,000+ Milwaukee residents with 300+ volunteers and partners. Here's what's happening near you.</p></div>
+            <div><span class="kicker">Westown · Wednesday evening</span><h1>Welcome, Jordan. <em>Glad you're here.</em></h1><p>ComForce MKE has helped 10,000+ Milwaukee residents with 300+ volunteers and partners, from Sherman Park to the lakefront. Here's what's happening near you.</p></div>
           </div>
 
           <section class="card start only-new" aria-label="Get set up">
@@ -869,10 +939,10 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
               </div>
             </article>
             <article class="mod c4 needs" aria-label="What do you need">
-              <div class="mod-h" style="padding-bottom:16px"><h2>What do you need?</h2></div>
+              <div class="mod-h"><h2>What do you need?</h2></div>
               <a class="primary" href="#p-ask"><span class="sq"><svg class="ic"><use href="#i-plus"/></svg></span><span><b>Ask for help</b><small>Food, a ride, a check-in</small></span><svg class="ic chev"><use href="#i-chev"/></svg></a>
               <a href="#p-route"><span class="sq"><svg class="ic"><use href="#i-shield"/></svg></span><span><b>Get somewhere safe</b><small>A lit walking route, right now</small></span><svg class="ic chev"><use href="#i-chev"/></svg></a>
-              <a href="#p-safe"><span class="sq"><svg class="ic"><use href="#i-flame"/></svg></span><span><b>Get warm</b><small>3 places open · 24°F tonight</small></span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a href="#p-safe"><span class="sq"><svg class="ic"><use href="#i-flame"/></svg></span><span><b>Get warm</b><small>3 places open · 24°F off the lake</small></span><svg class="ic chev"><use href="#i-chev"/></svg></a>
               <a href="#p-search"><span class="sq"><svg class="ic"><use href="#i-msg"/></svg></span><span><b>Share a tip</b><small>About a search · name optional</small></span><svg class="ic chev"><use href="#i-chev"/></svg></a>
               <div class="sos"><svg class="ic"><use href="#i-phone"/></svg>In danger? Call 911 · 24/7 line 414-395-0552</div>
             </article>
@@ -915,14 +985,14 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
               <div class="mod-h"><h2>Safe places nearby</h2><a class="more" href="#p-safe">Add one</a></div>
               <p class="mod-sub only-new">Places neighbors and ComForce trust: lit, open and staffed. The safe-route planner walks you to these.</p>
               <div class="mod-b rows">
-                <div class="safe"><b>Central Library lobby</b><span class="confirm">12 neighbors confirm</span><p>814 W Wisconsin Ave · warm, staffed, restrooms</p></div>
+                <div class="safe"><b>Central Library lobby</b><span class="confirm">12 neighbors confirm</span><p>814 W Wisconsin Ave · warm, staffed, restrooms, a bubbler</p></div>
                 <div class="safe"><b>MSOE Public Safety</b><span class="confirm">Verified</span><p>MSOE campus, near N Broadway</p></div>
                 <div class="safe"><b>Sojourner Family Peace Center</b><span class="confirm">Verified</span><p>619 W Walnut St · domestic violence help, 24/7</p></div>
               </div>
             </article>
           </div>
         </main>
-        <footer class="dfoot"><span><b>ComForce MKE</b> · Community Task Force MKE · Milwaukee, WI · 24/7: 414-395-0552</span><span>About · Privacy · Accessibility</span><span>Prototype · sample data</span></footer>
+        <footer class="dfoot"><span><b>ComForce MKE</b> · Community Task Force MKE · Milwaukee, WI · 24/7: 414-395-0552</span><span>About · Privacy · Accessibility</span><span><span class="made">Made in Milwaukee</span> · prototype, sample data</span></footer>
       </div></div>
     </div></div></div>
     <div class="notes2"><div><span><b>One alert, one place</b>The missing-person alert is the only red block on the page. It disappears when the search ends or you're out of range.</span></div><div><span><b>Same actions as the phone</b>"What do you need?" mirrors the four phone tiles, so habits carry over between devices.</span></div><div><span><b>Tickets you can tear off</b>"Take it" is a stub on the right of every request. Taking one turns it green and reveals details privately.</span></div><div><span><b>Teach, then step back</b>First-visit explanations and the setup checklist hide once you're set up, or when you click Hide.</span></div></div>
@@ -940,7 +1010,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
           <div class="scroll" data-live>
             <div class="statusbar"><span>6:12</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
             <div class="ph-top"><a class="logo" href="#top"><svg><use href="#logo-mark"/></svg><b>ComForce <span>MKE</span></b></a><a class="iconbtn" href="#p-alerts" aria-label="Notifications"><svg class="ic"><use href="#i-bell"/></svg><span class="badge"></span></a><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
-            <div class="ph-greet"><span class="kicker">Wed Nov 18 · 24°F · Westown</span><h1>Evening, <span class="hl">Jordan</span>.</h1></div>
+            <div class="ph-greet"><span class="kicker">Wed Nov 18 · 24°F off the lake · Westown</span><h1>Evening, <span class="hl">Jordan</span>.</h1></div>
             <div class="ph-pad" style="margin-top:24px">
               <article class="alertcard p-alert">
                 <div class="alert-strip"><span class="live"></span><span>Missing · 1.3 mi</span><span>5:42 PM</span></div>
@@ -966,6 +1036,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
               <div class="strip">
                 <div class="card"><span class="meta">Missing Persons · 6:41 PM</span><b>Rally point moved to N 27th &amp; W Wells</b><p>Bring a flashlight.</p></div>
                 <div class="card"><span class="meta">Food · 5:10 PM</span><b>Coat and glove drop, 7–8 PM</b><p>Sample event.</p></div>
+                <div class="card"><span class="meta">Food · Friday</span><b>Fish fry at the block club, pay what you can</b><p>Sample event. Cod, rye bread, coleslaw.</p></div>
                 <div class="card"><span class="meta">Youth · Thursday</span><b>Cycle Breakers circle, 6 PM</b><p>Sample event.</p></div>
               </div>
             </div>
@@ -1000,7 +1071,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
             </div>
             <div class="endpad"></div>
           </div>
-          <div class="inputbar"><button aria-label="Speak instead"><svg class="ic"><use href="#i-mic"/></svg></button><input aria-label="Message" placeholder="Add more, or say it another way…"><button class="send" aria-label="Send"><svg class="ic"><use href="#i-send"/></svg></button></div>
+          <div class="inputbar"><button aria-label="Speak instead" data-mic><svg class="ic"><use href="#i-mic"/></svg></button><input aria-label="Message" placeholder="Add more, or say it another way…"><button class="send" aria-label="Send" data-send><svg class="ic"><use href="#i-send"/></svg></button></div>
         </div></div></div></div>
         <figcaption><b>5 · Ask for help</b><p>A short line up top answers the newcomer's real worry: will a person see this? What the AI understood can be <strong>fixed with one tap</strong>. Privacy is on by default and explained in plain words. A mic button is there for people who'd rather talk than type.</p></figcaption>
       </figure>
@@ -1060,7 +1131,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
           <div data-live style="position:absolute;inset:0">
             <svg class="map" id="map-route" viewBox="330 -80 560 560" data-px="470" preserveAspectRatio="xMidYMin slice" style="position:absolute;inset:0;width:100%;height:470px" role="img" aria-label="Walking route along W Walnut St to Sojourner Family Peace Center"><use href="#basemap"/></svg>
             <div class="statusbar" style="position:relative;z-index:21"><span>6:20</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
-            <div class="floattop"><a class="iconbtn" href="#p-home" aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></a><div class="pill"><span class="meta">Safe route</span><b>To Sojourner Family Peace Center</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="floattop"><a class="iconbtn" href="#p-home" aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></a><div class="pill"><span class="meta">Safe route to</span><b>Sojourner Family Peace Center</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
             <div class="sheet" data-walk>
               <div class="grab"></div>
               <div class="eta"><b>%%SOJ_MIN%% min</b><span>%%SOJ_MI%% mi walk · 619 W Walnut St</span></div>
@@ -1085,14 +1156,14 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
             <div class="ph-head"><a class="back" href="#p-route" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><div class="t"><span class="meta">Safe Threads</span><b>Safe places near you</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
             <div class="ph-pad"><div class="mapcard"><div class="mapwrap"><svg class="map" id="map-safe" viewBox="610 240 460 300" data-px="350" role="img" aria-label="Safe places in Westown, Haymarket and Juneautown"><use href="#basemap"/></svg><span class="attrib osm">© OpenStreetMap contributors</span></div></div></div>
             <div class="ph-pad" style="margin-top:16px"><div class="card rows" style="padding:16px">
-              <div class="safe"><b>Central Library lobby</b><span class="confirm">12 confirm</span><p>814 W Wisconsin Ave</p><div class="chips"><span>Warm</span><span>Staffed</span><span>Restrooms</span><span>Well lit</span></div></div>
+              <div class="safe"><b>Central Library lobby</b><span class="confirm">12 confirm</span><p>814 W Wisconsin Ave</p><div class="chips"><span>Warm</span><span>Staffed</span><span>Restrooms</span><span>Bubbler</span><span>Well lit</span></div></div>
               <div class="safe"><b>Sojourner Family Peace Center</b><span class="confirm">Verified</span><p>619 W Walnut St</p><div class="chips"><span>24/7 help</span><span>Staffed</span></div></div>
               <div class="safe"><b>MSOE Public Safety</b><span class="confirm">Verified</span><p>MSOE campus, near N Broadway</p><div class="chips"><span>Staffed</span><span>Well lit</span></div></div>
             </div></div>
             <div class="ph-sec ph-pad">
               <div class="addsafe">
                 <b>Know a safe place?</b>
-                <div class="field"><label for="safe-name">Where is it?</label><input id="safe-name" value="Gas station on the corner, cashier is always in"></div>
+                <div class="field"><label for="safe-name">Where is it?</label><input id="safe-name" value="Corner gas station, cashier always in"></div>
                 <div class="tickrow" role="group" aria-label="What makes it safe">
                   <button class="chip" aria-pressed="true" data-tick><svg class="ic"><use href="#i-lamp"/></svg>Well lit</button>
                   <button class="chip" aria-pressed="true" data-tick><svg class="ic"><use href="#i-clock"/></svg>Open late</button>
@@ -1246,10 +1317,11 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
           </div>
         </header>
         <div class="hubhead">
+          <svg class="city" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
           <span class="crumb">Hubs › Community relief</span>
           <div class="row">
             <div><h1>Food &amp; Mutual Aid</h1><p>Find open pantries, share what you have, and see what your block is short on.</p><div class="facts"><span>245 members</span><span>·</span><span>3 pantries open now</span><span>·</span><span>Run by ComForce volunteers</span></div></div>
-            <div class="acts"><button class="btn out"><svg class="ic"><use href="#i-bell"/></svg>Alerts: important only</button><button class="btn" data-toggle-class=".hubhead|left" data-on="Join hub"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div>
+            <div class="acts"><button class="btn out" data-cycle="Alerts: important only|Alerts: everything|Alerts: off"><svg class="ic"><use href="#i-bell"/></svg><span data-label>Alerts: important only</span></button><button class="btn" data-toggle-class=".hubhead|left" data-on="Join hub"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div>
           </div>
           <div class="hubtabs" role="tablist">
             <button role="tab" class="on" aria-selected="true" data-tab="threads"><svg class="ic"><use href="#i-msg"/></svg>Threads</button>
@@ -1278,7 +1350,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
             </article>
             <div class="c4 stack">
               <article class="mod" aria-label="Open now">
-                <div class="mod-h" style="padding-bottom:16px"><h2>Open now</h2><button class="more" style="border:0;background:none;cursor:pointer;font:inherit;font-weight:700;color:var(--green)" data-tab="map">Full map</button></div>
+                <div class="mod-h"><h2>Open now</h2><button class="more" style="border:0;background:none;cursor:pointer;font:inherit;font-weight:700;color:var(--green)" data-tab="map">Full map</button></div>
                 <div class="mapwrap"><svg class="map" id="map-hub" viewBox="560 160 520 300" data-px="379" role="img" aria-label="Pantries between Westown and Haymarket"><use href="#basemap"/></svg><span class="attrib osm">© OpenStreetMap contributors</span></div>
                 <div class="rows">
                   <div class="pantry"><b>Block club porch shelf</b><span class="open">Till 9 PM</span><p>Sample · bread, produce</p></div>
@@ -1300,7 +1372,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
           <!-- pantry map -->
           <div class="g12" data-view="map" hidden>
             <article class="mod c8"><div class="mapwrap"><svg class="map" id="map-pan" viewBox="430 130 780 430" data-px="781" role="img" aria-label="Pantries near Westown and Haymarket"><use href="#basemap"/></svg><span class="attrib osm">© OpenStreetMap contributors</span></div></article>
-            <article class="mod c4"><div class="mod-h" style="padding-bottom:12px"><h2>3 pantries</h2><span class="count">sample listings</span></div>
+            <article class="mod c4"><div class="mod-h"><h2>3 pantries</h2><span class="count">sample listings</span></div>
               <div class="rows">
                 <div class="pantry"><b>Block club porch shelf</b><span class="open">Open till 9 PM</span><p>Bread, produce · posted by a store</p></div>
                 <div class="pantry"><b>Church basement pantry</b><span class="open">Open till 8 PM</span><p>Formula, canned protein</p></div>
@@ -1320,7 +1392,8 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
             <article class="mod c8"><div class="mod-h"><h2>News</h2></div><div class="mod-b rows">
               <div class="bc"><span class="sq" style="background:var(--green-wash);color:var(--green)"><svg class="ic"><use href="#i-food"/></svg></span><div><span class="meta">5:10 PM · from ComForce</span><b>Coat and glove drop tonight, 7–8 PM</b><p>Sample event. Location shared with members.</p></div></div>
               <div class="bc"><span class="sq" style="background:var(--green-wash);color:var(--green)"><svg class="ic"><use href="#i-mega"/></svg></span><div><span class="meta">Monday · from ComForce</span><b>Formula is short in Juneautown this week</b><p>Drop off at any open pantry on the map before Friday.</p></div></div>
-            </div></article>
+            
+              <div class="bc"><span class="sq" style="background:var(--green-wash);color:var(--green)"><svg class="ic"><use href="#i-food"/></svg></span><div><span class="meta">Friday · Near West Side block club</span><b>Fish fry, pay what you can</b><p>Sample event. Volunteers needed to fry and serve, 4–8 PM.</p></div></div></div></article>
           </div>
           <!-- stocking advisor -->
           <div class="g12" data-view="stock" hidden>
@@ -1370,7 +1443,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
           </div>
           <div class="g12">
             <article class="mod c7" aria-label="Needs your decision">
-              <div class="mod-h" style="padding-bottom:12px"><h2>Needs your decision</h2><span class="count">5</span><span class="meta" style="margin-left:auto">AI sorted · you decide</span></div>
+              <div class="mod-h"><h2>Needs your decision</h2><span class="count">5</span><span class="meta" style="margin-left:auto">AI sorted · you decide</span></div>
               <div class="rows" style="border-top:1px solid var(--line)">
                 <div class="q" data-done-row><div><span class="type" style="color:var(--red-deep)"><svg class="ic"><use href="#i-search"/></svg>Search · volunteers</span><h3>Sector G needs 8 people. Notify the 11 most likely to come?</h3><p class="why"><svg class="ic"><use href="#i-spark"/></svg><span>Within 1 mile of N 27th &amp; W Wells, usually free Wednesday evenings, not pinged in 48 hours. Sending in pairs: <b data-police-near style="font-style:normal">several</b> police reports within 2 blocks of G in the last 30 days.</span></p><div class="people"><i style="background:#0F6B3A">AM</i><i style="background:#2F5D9E">TL</i><i style="background:#7A4FA0">RK</i><i style="background:#B5651D">JS</i><i style="background:#4B5850">+7</i></div></div><div class="acts"><button class="btn sm primary" data-once="Sent · 4 on their way"><svg class="ic"><use href="#i-send"/></svg><span data-label>Notify 11</span></button></div></div>
                 <div class="q" data-done-row><div><span class="type"><svg class="ic"><use href="#i-shield"/></svg>Domestic Safety · private</span><h3>"My ex is outside my building again"</h3><p class="why"><svg class="ic"><use href="#i-spark"/></svg>Matched the Sojourner 24/7 line and a private check-in. Sent privately, never posted.</p></div><div class="acts"><button class="btn sm primary" data-once="Approved"><span data-label>Approve</span></button></div></div>
@@ -1381,7 +1454,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
             </article>
             <div class="c5 stack">
               <article class="mod" aria-label="Where help is short">
-                <div class="mod-h" style="padding-bottom:16px"><h2>Where help is short</h2></div>
+                <div class="mod-h"><h2>Where help is short</h2></div>
                 <div class="mapwrap">
                   <div class="mapchips">
                     <button class="mapchip" aria-pressed="true" data-layer-chip="heat" data-map="map-coord"><i style="background:var(--red)"></i>Open requests</button>
@@ -1576,6 +1649,44 @@ HUB.init(H => {
   H.safePlaces('map-safe');
   H.pantryMap('map-food');
   H.sectorMap('map-search');
+});
+// One continuous fence: shift every fenced surface by its offset from the fence's origin (the screen,
+// or the scrolling content on phones), measured in unscaled pixels, so its lines continue the background's.
+const FENCED = '.hubhead,.hero,.redhead,.evhero,.hubcard .band,.alert-strip,.need4 .g,.needs a.primary .sq,.statuscard,.mine-card,.dnav.staff,.ontask,.ui .ht,.mod>.mod-h,.take,.dfoot,.desk .dpage,.ob';
+function alignFence() {
+  document.querySelectorAll('.ui.desk, .screen.ui').forEach(root => {
+    const rr = root.getBoundingClientRect(); if (!rr.width) return;
+    const s = rr.width / root.offsetWidth;
+    root.querySelectorAll(FENCED).forEach(el => {
+      const er = el.getBoundingClientRect(); if (!er.width) return;
+      const scroller = el.closest('.scroll'), o = scroller && root.contains(scroller) ? scroller : root, or = o.getBoundingClientRect();
+      const x = (er.left - or.left) / s + el.clientLeft + (o === root ? 0 : o.scrollLeft) - o.clientLeft;
+      const y = (er.top - or.top) / s + el.clientTop + (o === root ? 0 : o.scrollTop) - o.clientTop;
+      el.style.setProperty('--fx', (-x).toFixed(2) + 'px'); el.style.setProperty('--fy', (-y).toFixed(2) + 'px');
+    });
+  });
+}
+let fenceQueued = false;
+const queueFence = () => { if (fenceQueued) return; fenceQueued = true; requestAnimationFrame(() => { fenceQueued = false; alignFence(); }); };
+['click', 'hub:tab'].forEach(ev => document.addEventListener(ev, () => setTimeout(queueFence, 0)));
+window.addEventListener('resize', queueFence);
+if (document.fonts) document.fonts.ready.then(queueFence);
+window.addEventListener('load', queueFence);
+queueFence();
+// chat: send adds your message; the mic toggles a listening state; alert level cycles
+document.addEventListener('click', e => {
+  const send = e.target.closest('[data-send]');
+  if (send) {
+    const scr = send.closest('.screen'), inp = scr.querySelector('.inputbar input'), chat = scr.querySelector('.chat');
+    const msg = inp.value.trim() || 'My youngest also needs size 4 diapers.';
+    const b = document.createElement('div'); b.className = 'bubble me'; b.textContent = msg;
+    const last = chat.querySelector('.setrow'); chat.insertBefore(b, last); inp.value = '';
+    b.scrollIntoView({ block: 'nearest' }); return;
+  }
+  const mic = e.target.closest('[data-mic]');
+  if (mic) { const on = mic.classList.toggle('listening'); mic.setAttribute('aria-label', on ? 'Stop listening' : 'Speak instead'); mic.closest('.inputbar').querySelector('input').placeholder = on ? 'Listening…' : 'Add more, or say it another way…'; return; }
+  const cyc = e.target.closest('[data-cycle]');
+  if (cyc) { const opts = cyc.dataset.cycle.split('|'), lab = cyc.querySelector('[data-label]'); lab.textContent = opts[(opts.indexOf(lab.textContent) + 1) % opts.length]; }
 });
 // list filters: a [data-fgroup] of [data-f] buttons filters the nearest [data-fitems] list by data-ftags
 document.addEventListener('click', e => {
