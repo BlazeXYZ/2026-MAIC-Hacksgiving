@@ -1,223 +1,120 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { EyeOff } from 'lucide-react';
+import { clearSampleTickets } from './api/intake';
+import { EmergencyBar } from './components/shell/EmergencyBar';
+import { LanguageSelector } from './components/survey/LanguageSelector';
+import { AskScreen } from './screens/AskScreen';
+import { CommunitiesDemo } from './screens/CommunitiesDemo';
+import { StatusScreen } from './screens/StatusScreen';
+import { QuickExitProvider, useQuickExit } from './state/quickExit';
+import { SurveyProvider, useSurvey } from './state/survey';
+import { useTripleTap } from './state/useTripleTap';
+import './components/shell/shell.css';
 
-interface Community {
-  id: string;
-  name: string;
-  tag: string;
-  description: string;
-  members: number;
-  openTickets: number;
-}
-
-const COMMUNITIES: Community[] = [
-  {
-    id: 'domestic-safety',
-    name: 'Domestic Abuse Support',
-    tag: 'Crisis Support',
-    description: 'Confidential safety planning, rapid safe routing, and discreet emergency contact.',
-    members: 128,
-    openTickets: 4,
-  },
-  {
-    id: 'missing-persons',
-    name: 'Missing Persons Search Network',
-    tag: 'Emergency Response',
-    description: 'Coordinate volunteer search parties, share verified sighting tips, and map cleared search sectors.',
-    members: 310,
-    openTickets: 1,
-  },
-  {
-    id: 'food-pantry',
-    name: 'Food Pantry & Mutual Aid',
-    tag: 'Community Relief',
-    description: 'Find open food pantries, post surplus groceries, and get AI recommendations on high-need items.',
-    members: 245,
-    openTickets: 6,
-  },
-];
+type Screen = 'home' | 'ask' | 'status';
 
 export default function App() {
-  const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
-  const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
-  const [claimedTicketId, setClaimedTicketId] = useState<number | null>(null);
+  return (
+    <QuickExitProvider>
+      <Root />
+    </QuickExitProvider>
+  );
+}
 
-  if (quickExitTriggered) {
-    return (
-      <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-        <h2>Milwaukee Transit Schedule - Route 30</h2>
-        <p>Next bus arriving at N Broadway & E State St in 6 minutes.</p>
-        <button
-          onClick={() => setQuickExitTriggered(false)}
-          style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}
-        >
-          Return to Portal
-        </button>
-      </div>
-    );
-  }
+function Root() {
+  const { exited, session, onExit } = useQuickExit();
 
-  const active = COMMUNITIES.find((c) => c.id === selectedCommunity) || COMMUNITIES[0];
+  useEffect(() => onExit(clearSampleTickets), [onExit]);
+
+  if (exited) return <DisguiseStandIn />;
+  // A new key after every exit throws away all survey answers and screen state below it (#10).
+  return (
+    <SurveyProvider key={session}>
+      <Shell />
+    </SurveyProvider>
+  );
+}
+
+function Shell() {
+  const { exit } = useQuickExit();
+  const { t } = useSurvey();
+  const [screen, setScreen] = useState<Screen>('ask');
+  const [token, setToken] = useState<string | null>(null);
+  const showEmergency = screen !== 'home';
+
+  const nav: Array<[Screen, string]> = [
+    ['home', 'Home'],
+    ['ask', t('ask.kicker')],
+    ['status', t('status.title')],
+  ];
 
   return (
-    <div style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', color: '#0f172a' }}>
-      {/* Top Emergency Priority Banner */}
-      <div style={{ backgroundColor: '#dc2626', color: '#ffffff', padding: '0.75rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <strong>URGENT ALERT:</strong> Active Missing Person Search near 27th & Wisconsin Ave. Volunteer search parties are currently forming.
+    <>
+      <div className="chrome">
+        <div className="appbar">
+          <a className="logo" href="/" onClick={(e) => (e.preventDefault(), setScreen('home'))}>
+            ComForce <span>MKE</span>
+          </a>
+          <nav className="appnav" aria-label="Main">
+            {nav.map(([id, label]) => (
+              <button key={id} type="button" aria-current={screen === id ? 'page' : undefined} onClick={() => setScreen(id)}>
+                {label}
+              </button>
+            ))}
+          </nav>
+          <span className="spacer" />
+          {screen !== 'ask' && <LanguageSelector compact />}
+          {/* Stand-in trigger until #8 adds the real Quick Exit button and the Esc shortcut. */}
+          <button type="button" className="exit-standin" onClick={exit}>
+            <EyeOff aria-hidden="true" />
+            Exit
+          </button>
         </div>
-        <button
-          onClick={() => setSelectedCommunity('missing-persons')}
-          style={{ backgroundColor: '#ffffff', color: '#dc2626', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          View Search Grid
-        </button>
+        {showEmergency && <EmergencyBar />}
       </div>
 
-      {/* Main Header */}
-      <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>ComForce MKE Community Hub</h1>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Connected through Community Task Force MKE & MSOE</p>
-        </div>
-        <button
-          onClick={() => setQuickExitTriggered(true)}
-          style={{ backgroundColor: '#ef4444', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
-        >
-          Quick Exit (Safe Mode)
-        </button>
+      {screen === 'home' && <CommunitiesDemo />}
+      {screen === 'ask' && (
+        <AskScreen
+          onSubmitted={(code) => {
+            setToken(code);
+            setScreen('status');
+          }}
+        />
+      )}
+      {screen === 'status' && <StatusScreen token={token} onToken={setToken} onNewRequest={() => setScreen('ask')} />}
+    </>
+  );
+}
+
+/**
+ * Stand-in disguise until #9 builds the real MCTS schedule. It only exists so the #10 return gesture
+ * can be used: three deliberate taps on the blue bar bring the app back.
+ */
+function DisguiseStandIn() {
+  const { restore } = useQuickExit();
+  const tripleTap = useTripleTap(restore);
+
+  useEffect(() => {
+    const previous = document.title;
+    document.title = 'MCTS Route 30 Schedule';
+    return () => {
+      document.title = previous;
+    };
+  }, []);
+
+  return (
+    <div className="disguise">
+      <header className="disguise-bar" {...tripleTap}>
+        <h1>Transit Schedule</h1>
+        <p>Route 30 · Sherman–Wisconsin · Eastbound</p>
       </header>
-
-      {/* Main Container */}
-      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem' }}>
-        {/* Community Tabs */}
-        <section style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1rem', color: '#475569', marginBottom: '0.75rem' }}>Active Initiatives & Communities</h2>
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {COMMUNITIES.map((c) => {
-              const isSelected = c.id === selectedCommunity;
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedCommunity(c.id)}
-                  style={{
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '8px',
-                    border: isSelected ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                    backgroundColor: isSelected ? '#eff6ff' : '#ffffff',
-                    color: isSelected ? '#1e40af' : '#1e293b',
-                    fontWeight: isSelected ? 'bold' : 'normal',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b' }}>{c.tag}</div>
-                  <div>{c.name}</div>
-                </button>
-              );
-            })}
-          </div>
-        </section>
-
-        {/* Selected Community Details */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
-          {/* Main Card */}
-          <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>{active.name}</h3>
-            <p style={{ color: '#475569', margin: '0 0 1.25rem 0' }}>{active.description}</p>
-
-            {/* Custom initiative tool based on selection */}
-            {active.id === 'domestic-safety' && (
-              <div style={{ backgroundColor: '#f1f5f9', padding: '1rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>Safe Route Planner</h4>
-                <p style={{ fontSize: '0.9rem', color: '#475569' }}>
-                  If on the MSOE campus, this automatically routes along well-lit paths to MSOE Public Safety at 1025 N Broadway. In the wider city, it guides you to Sojourner Family Peace Center.
-                </p>
-                <button style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>
-                  Calculate Safe Walk Route
-                </button>
-              </div>
-            )}
-
-            {active.id === 'missing-persons' && (
-              <div style={{ backgroundColor: '#f1f5f9', padding: '1rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>Volunteer Search Party Grid</h4>
-                <p style={{ fontSize: '0.9rem', color: '#475569' }}>
-                  Coordinate volunteer sectors in real time. Click a sector to view volunteer status or mark as searched.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', margin: '1rem 0' }}>
-                  {['Sector A (Active)', 'Sector B (Searching)', 'Sector C (Cleared)', 'Sector D (Pending)'].map((sec, i) => (
-                    <div key={i} style={{ padding: '0.75rem', backgroundColor: i === 2 ? '#dcfce7' : '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.8rem', textAlign: 'center' }}>
-                      {sec}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {active.id === 'food-pantry' && (
-              <div style={{ backgroundColor: '#f1f5f9', padding: '1rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>Pantry Stocking & Relief Hub</h4>
-                <p style={{ fontSize: '0.9rem', color: '#475569' }}>
-                  AI recommendations based on neighborhood need: Juneautown pantries report shortages of high-protein canned foods, baby formula, and warm socks.
-                </p>
-                <button style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>
-                  Post Available Pantry Supplies
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar: Volunteer Tickets & District Stats */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Volunteer Ticket Box */}
-            <div style={{ backgroundColor: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <h4 style={{ margin: '0 0 0.5rem 0' }}>Volunteer Support Tickets</h4>
-              <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 0.75rem 0' }}>
-                AI prioritized based on urgency and volunteer availability.
-              </p>
-              <div style={{ padding: '0.75rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.85rem' }}>
-                <div><strong>Ticket #104:</strong> Emergency meal delivery</div>
-                <div style={{ color: '#64748b', fontSize: '0.8rem' }}>Near 18th & Wells - Priority High</div>
-                <button
-                  onClick={() => setClaimedTicketId(104)}
-                  disabled={claimedTicketId === 104}
-                  style={{
-                    marginTop: '0.5rem',
-                    padding: '0.35rem 0.75rem',
-                    backgroundColor: claimedTicketId === 104 ? '#94a3b8' : '#2563eb',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: claimedTicketId === 104 ? 'default' : 'pointer',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  {claimedTicketId === 104 ? 'Claimed by You' : 'Claim Ticket'}
-                </button>
-              </div>
-            </div>
-
-            {/* District Stats */}
-            <div style={{ backgroundColor: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <h4 style={{ margin: '0 0 0.5rem 0' }}>District Overview</h4>
-              <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Juneautown / Campus:</span>
-                  <strong>5 active calls</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Third Ward:</span>
-                  <strong>3 active calls</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Near West Side:</span>
-                  <strong>12 active calls</strong>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
+      <ol>
+        <li><span>N Broadway &amp; E State St</span><span>6:18 PM</span></li>
+        <li><span>N Water St &amp; E Kilbourn Ave</span><span>6:21 PM</span></li>
+        <li><span>E Wisconsin Ave &amp; N Jackson St</span><span>6:24 PM</span></li>
+        <li><span>N Prospect Ave &amp; E Ogden Ave</span><span>6:28 PM</span></li>
+      </ol>
     </div>
   );
 }
