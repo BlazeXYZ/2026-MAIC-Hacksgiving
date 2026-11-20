@@ -1,0 +1,61 @@
+name: comforce
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: comforce-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: comforce
+      POSTGRES_PASSWORD: comforce-dev
+      POSTGRES_DB: comforce
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U comforce -d comforce"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.api
+    container_name: comforce-api
+    restart: unless-stopped
+    environment:
+      APP_ENV: development
+      DEBUG: "True"
+      DATABASE_URL: postgresql+psycopg://comforce:comforce-dev@db:5432/comforce
+      HOST: "0.0.0.0"
+      PORT: "8000"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./src/server:/app/src/server
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/')"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/docker/Dockerfile.web
+    container_name: comforce-web
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
