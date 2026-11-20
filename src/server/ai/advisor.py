@@ -110,7 +110,7 @@ def recommend_stocking(
     if max_score <= 0.0:
         # No matches: fall back to base priority ordering.
         scored = [
-            (item, base, []) for item, keywords, base in CATALOG  # noqa: B007
+            (item, base, []) for item, keywords, base in CATALOG
         ]
         max_score = max(s for _, s, _ in scored)
 
