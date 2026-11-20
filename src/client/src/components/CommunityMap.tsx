@@ -1,5 +1,5 @@
-import { MapPin } from 'lucide-react';
 import { useState } from 'react';
+import LeafletMap, { fromBasemapPoint } from './LeafletMap';
 import './CommunityMap.css';
 
 interface SampleLocation {
@@ -12,10 +12,6 @@ interface SampleLocation {
   x: number;
   y: number;
 }
-
-// Map coordinates match the crop of docs/design/src/common/map.json used for the image.
-const MAP_FRAME = { x: 120, y: 180, width: 1250, height: 710 };
-const BASEMAP = new URL('../assets/community-basemap.png', import.meta.url).href;
 
 const SAMPLE_LOCATIONS: SampleLocation[] = [
   {
@@ -50,8 +46,11 @@ const SAMPLE_LOCATIONS: SampleLocation[] = [
   },
 ];
 
+const MARKERS = SAMPLE_LOCATIONS.map(({ id, name, x, y }) => ({ id, label: name, position: fromBasemapPoint(x, y) }));
+
 export default function CommunityMap() {
-  const [selected, setSelected] = useState(SAMPLE_LOCATIONS[0]);
+  const [selectedId, setSelectedId] = useState(SAMPLE_LOCATIONS[0].id);
+  const selected = SAMPLE_LOCATIONS.find((location) => location.id === selectedId) ?? SAMPLE_LOCATIONS[0];
 
   return (
     <main className="hub-page community-map" aria-labelledby="community-map-title">
@@ -60,30 +59,7 @@ export default function CommunityMap() {
 
       <div className="community-map-layout">
         <div>
-          <figure className="community-map-figure">
-            <div className="community-map-image">
-              <img src={BASEMAP} width={MAP_FRAME.width} height={MAP_FRAME.height} alt="Street map of central Milwaukee" />
-              {SAMPLE_LOCATIONS.map((location) => (
-                <button
-                  key={location.id}
-                  type="button"
-                  className="community-map-marker"
-                  aria-label={`Show ${location.name} on the map`}
-                  aria-pressed={selected.id === location.id}
-                  onClick={() => setSelected(location)}
-                  style={{
-                    left: `${(location.x - MAP_FRAME.x) / MAP_FRAME.width * 100}%`,
-                    top: `${(location.y - MAP_FRAME.y) / MAP_FRAME.height * 100}%`,
-                  }}
-                >
-                  <MapPin size={22} aria-hidden="true" />
-                </button>
-              ))}
-            </div>
-            <figcaption>
-              Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>
-            </figcaption>
-          </figure>
+          <LeafletMap markers={MARKERS} selectedMarkerId={selected.id} onSelectMarker={setSelectedId} />
           <div className="community-map-event" role="status" aria-atomic="true">
             <h3>{selected.name}</h3>
             <dl>
@@ -104,7 +80,7 @@ export default function CommunityMap() {
           <ul>
             {SAMPLE_LOCATIONS.map((location) => (
               <li key={location.id}>
-                <button type="button" aria-pressed={selected.id === location.id} onClick={() => setSelected(location)}>
+                <button type="button" aria-pressed={selected.id === location.id} onClick={() => setSelectedId(location.id)}>
                   <strong>{location.name}</strong>
                   <span>{location.neighborhood}</span>
                 </button>
