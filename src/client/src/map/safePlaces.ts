@@ -1,24 +1,8 @@
-/**
- * Verified safe places for the resident map (issue #12).
- *
- * `SafePlace` mirrors the contract in `src/server/resource_schema.py` and
- * `src/client/src/contracts.ts` (PR #51). Once that PR merges, import the type
- * from `../contracts` instead of redeclaring it here.
- */
+/** Verified safe places for the resident map (issue #12). */
 
-export interface SafePlace {
-  id: string;
-  name: string;
-  category: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  phone?: string | null;
-  hours_description: string;
-  is_staffed: boolean;
-  no_id_required: boolean;
-  district: string;
-}
+import type { SafePlace } from '../contracts/resources';
+
+export type { SafePlace };
 
 export const SAFE_PLACES_PATH = '/api/v1/resources/safe-places';
 
