@@ -8,7 +8,7 @@ Hackathons move fast. When five people are writing code at the same time, bad ha
 
 ## Table of Contents
 
-- [The Four Golden Rules](#the-four-golden-rules)
+- [The Five Golden Rules](#the-five-golden-rules)
 - [Git Workflow](#git-workflow)
   - [Branching Strategy](#branching-strategy)
   - [Commit Messages](#commit-messages)
@@ -23,12 +23,13 @@ Hackathons move fast. When five people are writing code at the same time, bad ha
 
 ---
 
-## The Four Golden Rules
+## The Five Golden Rules
 
 1. **Keep `main` working at all times.** Anyone should be able to clone `main` right now and run it without errors. Never push broken experiments directly to `main`.
 2. **Never commit secrets or personal data.** Always check `.gitignore` before you run `git add`. Never commit `.env` files, API keys, passwords, or personal phone numbers.
 3. **Commit often and push early.** Do not sit on two days of code on your laptop. Making small, clear commits makes merging easier and prevents lost work.
 4. **Talk to the team before making big changes.** If you plan to change an API route name, rewrite a database schema, or swap out a core library, tell everyone in our group chat first.
+5. **One PR per issue, and request reviewers.** Every finished task must be opened as its own Pull Request per issue (never bundle multiple issues into a monolithic PR). Always request `@Akiisqt` or `@BlazeXYZ` as the reviewer.
 
 ---
 
@@ -83,16 +84,22 @@ Use simple, conventional commit prefixes so everyone knows what changed from the
 
 ### Pull Requests
 
-1. **Check your work locally:**
-   * Run the app and make sure your new code works without breaking other pages.
+1. **One PR Per Issue:**
+   * **Never combine multiple issues into one monolithic pull request.** Each completed issue or task must have its own isolated feature branch (e.g. `feat/issue-21-intake-schemas`, `fix/issue-32-cors`) and its own dedicated PR.
+   * Scoped, bite-sized PRs make code reviews fast and prevent merge conflicts across the team.
+2. **Check your work locally:**
+   * Run the test suite (`pytest`) and linter (`ruff check .`) before opening the pull request.
+   * Make sure your new code works without breaking other pages.
    * Run `git status` and `git diff` before opening a pull request to make sure no junk files (like `.env`, `__pycache__`, or local test files) got staged.
-2. **Open the PR:**
+3. **Open the PR:**
+   * Include `Closes #<issue_number>` in the description so GitHub automatically closes the issue upon merge.
    * Write two or three sentences explaining what you added or fixed.
    * If you made a visual change in the client, paste a screenshot or quick screen recording in the description.
-3. **Quick Peer Review:**
-   * At least one other teammate needs to review the PR before merging.
+4. **Mandatory Reviewers:**
+   * **Always request `@Akiisqt` or `@BlazeXYZ` as the reviewer** (e.g., `gh pr create --reviewer Akiisqt,BlazeXYZ`).
+   * A pull request must be reviewed and approved by Akiisqt or Blaze before merging.
    * In a hackathon, reviews should be fast. Make sure it runs, doesn't break the build, and looks clean.
-4. **Merge:**
+5. **Merge:**
    * Use **Squash and Merge** so our commit history on `main` stays clean and easy to read.
    * Delete your branch after merging it.
 
