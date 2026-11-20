@@ -10,7 +10,7 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 
 - [Hackathon Plan](docs/PLAN.md) — kickoff decisions, weekend scope, and what we are leaving for later
 - [Deploy](deploy/README.md) — Docker Compose, or Kubernetes on a laptop or AWS
-- [Kubernetes setup](deploy/KUBERNETES.md) — step by step for a local kind cluster or EKS, with the same Terraform
+- [Kubernetes setup](deploy/KUBERNETES.md) — separate dev, qa, and prod, on a local kind cluster or EKS
 - [Project Ideas & Brainstorming](IDEAS.md)
 - [Contributing & Style Guide](CONTRIBUTING.md)
 - [Project Documentation](docs/README.md)
@@ -40,7 +40,7 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 - **Summary:** A combined web and mobile application (exported through Capacitor) that makes connecting with ComforceMKE initiatives interactive and responsive instead of just filling out static web forms.
 - **Client Stack:** React, TypeScript, Vite, Capacitor (iOS and Android export), OpenStreetMap, Tailwind CSS
 - **Server Stack:** Python 3.10+, FastAPI, PostgreSQL, `uv` package manager, Uvicorn
-- **Deploy:** Docker Compose locally. The same Terraform creates a local Kubernetes cluster or an AWS EKS cluster and installs this stack.
+- **Deploy:** Docker Compose locally. Terraform keeps dev, qa, and prod in separate state. Each one can run as a local Kubernetes cluster or, when you choose an account, on AWS EKS.
 - **AI Models:** Transformer-based need heatmaps, small classifier for content moderation and triage, and LLM recommendations
 
 ---
@@ -123,8 +123,8 @@ Our team is reviewing real Milwaukee open data to ground the app in actual local
 ├── deploy/                   # Docker Compose, images, and Terraform for Kubernetes
 │   ├── docker-compose.yml    # Local Postgres + API + web
 │   ├── docker/               # API and web Dockerfiles, nginx proxy
-│   ├── KUBERNETES.md         # Step-by-step local kind or AWS EKS setup
-│   └── terraform/            # One Terraform root for kind, EKS, or an existing cluster
+│   ├── KUBERNETES.md         # Step-by-step dev, qa, and prod on kind or EKS
+│   └── terraform/            # Shared stack, with a separate root for dev, qa, and prod
 ├── docs/                     # Pitch notes, slides, and diagrams
 ├── notebooks/                # Jupyter notebooks for data tests and prompt trials
 ├── src/
@@ -166,7 +166,7 @@ Postgres, the API, and the web app together:
 docker compose -f deploy/docker-compose.yml up --build
 ```
 
-Open http://localhost:3000. The API is at http://localhost:8000. Image builds, the local Kubernetes cluster, and the AWS apply are in [deploy/KUBERNETES.md](deploy/KUBERNETES.md).
+Open http://localhost:3000. The API is at http://localhost:8000. Image builds and the dev, qa, and prod Kubernetes apply are in [deploy/KUBERNETES.md](deploy/KUBERNETES.md).
 
 The sections below run the API and web app separately, with no database. Use them when you are working on one side.
 

@@ -1,5 +1,22 @@
 locals {
-  kind_kubeconfig = pathexpand(var.kind_kubeconfig_path)
+  cluster_name = coalesce(var.cluster_name, "comforce-${var.environment}")
+  namespace    = coalesce(var.namespace, "comforce-${var.environment}")
+  kind_kubeconfig_path = coalesce(
+    var.kind_kubeconfig_path,
+    "~/.kube/comforce-${var.environment}.yaml",
+  )
+  kind_kubeconfig = pathexpand(local.kind_kubeconfig_path)
+  ingress_host    = coalesce(var.ingress_host, "comforce-${var.environment}.local")
+  local_port = coalesce(var.local_port, {
+    dev  = 8080
+    qa   = 8081
+    prod = 8082
+  }[var.environment])
+  app_env = coalesce(var.app_env, {
+    dev  = "development"
+    qa   = "qa"
+    prod = "production"
+  }[var.environment])
 
   # one() is null when that cluster was not created. Both branches of a
   # conditional are evaluated, so unused clusters stay null instead of [0].
@@ -32,5 +49,12 @@ check "existing_kubeconfig" {
   assert {
     condition     = var.target != "existing" || var.kubeconfig_path != null
     error_message = "Set kubeconfig_path in terraform.tfvars when target is existing."
+  }
+}
+
+check "cluster_name_shape" {
+  assert {
+    condition     = can(regex("^[a-z][a-z0-9-]{0,38}$", local.cluster_name))
+    error_message = "Cluster name must be a short lowercase name that starts with a letter. Letters, numbers, and hyphens only."
   }
 }

@@ -1,3 +1,8 @@
+output "environment" {
+  description = "Environment this state is managing."
+  value       = var.environment
+}
+
 output "target" {
   description = "Cluster target this state is managing."
   value       = var.target
@@ -5,7 +10,7 @@ output "target" {
 
 output "cluster_name" {
   description = "Kind or EKS cluster name."
-  value       = var.cluster_name
+  value       = local.cluster_name
 }
 
 output "aws_region" {
@@ -18,20 +23,30 @@ output "namespace" {
   value       = kubernetes_namespace_v1.app.metadata[0].name
 }
 
+output "app_env" {
+  description = "APP_ENV set on the API container."
+  value       = local.app_env
+}
+
+output "local_port" {
+  description = "Host port for kubectl port-forward."
+  value       = local.local_port
+}
+
 output "port_forward" {
   description = "Open the web app when Ingress is off."
-  value       = "kubectl -n ${kubernetes_namespace_v1.app.metadata[0].name} port-forward svc/web 8080:80"
+  value       = "kubectl -n ${kubernetes_namespace_v1.app.metadata[0].name} port-forward svc/web ${local.local_port}:80"
 }
 
 output "ingress_host" {
   description = "Hostname on the Ingress, when ingress_enabled is true."
-  value       = var.ingress_enabled ? var.ingress_host : null
+  value       = var.ingress_enabled ? local.ingress_host : null
 }
 
 output "kubeconfig" {
   description = "Command that points kubectl at this cluster."
   value = var.target == "local" ? "export KUBECONFIG=${local.kind_kubeconfig}" : (
-    var.target == "aws" ? "aws eks update-kubeconfig --name ${var.cluster_name} --region ${var.aws_region}" : "kubectl config current-context"
+    var.target == "aws" ? "aws eks update-kubeconfig --name ${local.cluster_name} --region ${var.aws_region}" : "kubectl config current-context"
   )
 }
 

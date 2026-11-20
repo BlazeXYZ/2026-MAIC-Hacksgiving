@@ -1,3 +1,13 @@
+variable "environment" {
+  description = "Named environment: dev, qa, or prod. Each environment has its own state, cluster, and namespace."
+  type        = string
+
+  validation {
+    condition     = contains(["dev", "qa", "prod"], var.environment)
+    error_message = "environment must be dev, qa, or prod."
+  }
+}
+
 variable "target" {
   description = "Where to create the cluster: local (kind), aws (EKS), or existing (use the kubeconfig you already have)."
   type        = string
@@ -10,20 +20,20 @@ variable "target" {
 }
 
 variable "cluster_name" {
-  description = "Name for the kind cluster or the EKS cluster."
+  description = "Name for the kind cluster or the EKS cluster. Null uses comforce-<environment>."
   type        = string
-  default     = "comforce"
+  default     = null
 
   validation {
-    condition     = can(regex("^[a-z][a-z0-9-]{0,38}$", var.cluster_name))
+    condition     = var.cluster_name == null || can(regex("^[a-z][a-z0-9-]{0,38}$", var.cluster_name))
     error_message = "Use a short lowercase name that starts with a letter. Letters, numbers, and hyphens only."
   }
 }
 
 variable "kind_kubeconfig_path" {
-  description = "Kubeconfig file written for the local kind cluster."
+  description = "Kubeconfig file written for the local kind cluster. Null uses ~/.kube/comforce-<environment>.yaml."
   type        = string
-  default     = "~/.kube/comforce-kind.yaml"
+  default     = null
 }
 
 variable "kind_node_image" {
@@ -75,9 +85,14 @@ variable "kubeconfig_context" {
 }
 
 variable "namespace" {
-  description = "Namespace for the app, database, and ingress."
+  description = "Namespace for the app, database, and ingress. Null uses comforce-<environment>."
   type        = string
-  default     = "comforce"
+  default     = null
+
+  validation {
+    condition     = var.namespace == null || can(regex("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$", var.namespace))
+    error_message = "Namespace must be a lowercase DNS label."
+  }
 }
 
 variable "api_image" {
@@ -126,6 +141,7 @@ variable "db_password" {
   description = "PostgreSQL password. Set this in terraform.tfvars, which stays out of git."
   type        = string
   sensitive   = true
+  nullable    = false
 
   validation {
     condition     = can(regex("^[A-Za-z0-9_-]{8,}$", var.db_password))
@@ -158,7 +174,29 @@ variable "ingress_class_name" {
 }
 
 variable "ingress_host" {
-  description = "Hostname for the Ingress rule."
+  description = "Hostname for the Ingress rule. Null uses comforce-<environment>.local."
   type        = string
-  default     = "comforce.local"
+  default     = null
+}
+
+variable "app_env" {
+  description = "APP_ENV in the API container. Null uses development for dev, qa for qa, and production for prod."
+  type        = string
+  default     = null
+
+  validation {
+    condition     = var.app_env == null || can(regex("^[a-z][a-z0-9-]{0,31}$", var.app_env))
+    error_message = "app_env must be a short lowercase name."
+  }
+}
+
+variable "local_port" {
+  description = "Host port for kubectl port-forward. Null uses 8080 for dev, 8081 for qa, and 8082 for prod."
+  type        = number
+  default     = null
+
+  validation {
+    condition     = var.local_port == null || (var.local_port >= 1024 && var.local_port <= 65535)
+    error_message = "local_port must be between 1024 and 65535."
+  }
 }

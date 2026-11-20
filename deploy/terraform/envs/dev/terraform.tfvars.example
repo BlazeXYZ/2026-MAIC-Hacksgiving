@@ -1,0 +1,14 @@
+# Copy to terraform.tfvars. That file is gitignored because it holds the database password.
+# Apply only this directory. qa and prod are separate roots with separate state.
+
+target      = "local"
+db_password = "replace-with-a-real-password"
+
+# Optional overrides. Names default to comforce-dev.
+# api_replicas    = 1
+# web_replicas    = 1
+# db_storage_size = "1Gi"
+# api_image       = "ghcr.io/your-org/comforce-api:latest"
+# web_image       = "ghcr.io/your-org/comforce-web:latest"
+# ingress_enabled = true
+# ingress_host    = "comforce-dev.example.org"

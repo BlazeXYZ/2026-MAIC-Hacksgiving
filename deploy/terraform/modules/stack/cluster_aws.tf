@@ -21,7 +21,7 @@ module "vpc" {
   version = "~> 5.16"
   count   = var.target == "aws" ? 1 : 0
 
-  name = "${var.cluster_name}-vpc"
+  name = "${local.cluster_name}-vpc"
   cidr = "10.0.0.0/16"
 
   azs            = slice(data.aws_availability_zones.available[0].names, 0, 2)
@@ -38,8 +38,9 @@ module "vpc" {
   }
 
   tags = {
-    Project   = "comforce"
-    ManagedBy = "terraform"
+    Project     = "comforce"
+    Environment = var.environment
+    ManagedBy   = "terraform"
   }
 }
 
@@ -48,7 +49,7 @@ module "eks" {
   version = "~> 20.36"
   count   = var.target == "aws" ? 1 : 0
 
-  cluster_name    = var.cluster_name
+  cluster_name    = local.cluster_name
   cluster_version = var.kubernetes_version
 
   vpc_id     = module.vpc[0].vpc_id
@@ -71,8 +72,9 @@ module "eks" {
   }
 
   tags = {
-    Project   = "comforce"
-    ManagedBy = "terraform"
+    Project     = "comforce"
+    Environment = var.environment
+    ManagedBy   = "terraform"
   }
 }
 
@@ -81,7 +83,7 @@ module "ebs_csi_irsa" {
   version = "~> 5.47"
   count   = var.target == "aws" ? 1 : 0
 
-  role_name             = "${var.cluster_name}-ebs-csi"
+  role_name             = "${local.cluster_name}-ebs-csi"
   attach_ebs_csi_policy = true
 
   oidc_providers = {
@@ -92,8 +94,9 @@ module "ebs_csi_irsa" {
   }
 
   tags = {
-    Project   = "comforce"
-    ManagedBy = "terraform"
+    Project     = "comforce"
+    Environment = var.environment
+    ManagedBy   = "terraform"
   }
 }
 
@@ -112,26 +115,28 @@ resource "aws_eks_addon" "ebs_csi" {
 resource "aws_ecr_repository" "api" {
   count = var.target == "aws" ? 1 : 0
 
-  name                 = "${var.cluster_name}-api"
+  name                 = "${local.cluster_name}-api"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 
   tags = {
-    Project   = "comforce"
-    ManagedBy = "terraform"
+    Project     = "comforce"
+    Environment = var.environment
+    ManagedBy   = "terraform"
   }
 }
 
 resource "aws_ecr_repository" "web" {
   count = var.target == "aws" ? 1 : 0
 
-  name                 = "${var.cluster_name}-web"
+  name                 = "${local.cluster_name}-web"
   image_tag_mutability = "MUTABLE"
   force_delete         = true
 
   tags = {
-    Project   = "comforce"
-    ManagedBy = "terraform"
+    Project     = "comforce"
+    Environment = var.environment
+    ManagedBy   = "terraform"
   }
 }
 

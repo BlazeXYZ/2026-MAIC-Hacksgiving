@@ -1,8 +1,9 @@
 resource "kubernetes_namespace_v1" "app" {
   metadata {
-    name = var.namespace
+    name = local.namespace
     labels = {
-      "app.kubernetes.io/part-of" = "comforce"
+      "app.kubernetes.io/part-of"     = "comforce"
+      "app.kubernetes.io/environment" = var.environment
     }
   }
 

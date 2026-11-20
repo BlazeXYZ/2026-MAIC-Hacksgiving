@@ -29,7 +29,8 @@ provider "aws" {
   secret_key                  = var.target == "aws" ? null : "local"
 }
 
-provider "kind" {}
+# kind has no settings. required_providers selects it, and an empty provider
+# block in this module is treated as a deprecated proxy configuration.
 
 # One provider block for every target. Local and AWS values are unknown until
 # the cluster exists, so the app resources wait and a single apply can create

@@ -5,9 +5,10 @@ The same three processes run everywhere: PostgreSQL (`db`), FastAPI (`api`), and
 | Where | How |
 | :--- | :--- |
 | Laptop, containers only | Docker Compose |
-| Laptop Kubernetes, or AWS | The same Terraform. Set `target` to `local` or `aws` |
+| Dev, qa, or prod on a laptop | That environment's Terraform root, with `target = "local"` |
+| Dev, qa, or prod on AWS | The same root, with `target = "aws"` |
 
-Terraform creates a kind cluster on the laptop or an EKS cluster on AWS, then installs this app onto it. A cluster you already have still works with `target = "existing"`. The step-by-step is [KUBERNETES.md](KUBERNETES.md).
+Dev, qa, and prod are separate Terraform roots. Each has its own state, kind or EKS cluster, and namespace. Applying dev does not create qa or prod. A cluster you already have still works with `target = "existing"`. The step-by-step is [KUBERNETES.md](KUBERNETES.md).
 
 ## Local Docker
 
@@ -27,20 +28,20 @@ The header on the web app should read `API healthy · database up`. `GET /api/se
 
 ## Kubernetes with Terraform
 
-Follow [KUBERNETES.md](KUBERNETES.md). Short version for a laptop cluster, from the repository root:
+Follow [KUBERNETES.md](KUBERNETES.md). Short version for the dev laptop cluster, from the repository root:
 
 ```bash
 docker build -f deploy/docker/Dockerfile.api -t comforce-api:local .
 docker build -f deploy/docker/Dockerfile.web -t comforce-web:local .
-cd deploy/terraform
+cd deploy/terraform/envs/dev
 cp terraform.tfvars.example terraform.tfvars
 # Set db_password. Leave target = "local".
 terraform init
 terraform apply
-export KUBECONFIG=$HOME/.kube/comforce-kind.yaml
-kubectl -n comforce port-forward svc/web 8080:80
+export KUBECONFIG=$HOME/.kube/comforce-dev.yaml
+kubectl -n comforce-dev port-forward svc/web 8080:80
 ```
 
-Open http://localhost:8080. For AWS, set `target = "aws"` in the same directory. That apply creates the EKS cluster. Read the cost note in the guide before you apply, and run `terraform destroy` when you are finished.
+Open http://localhost:8080. QA is `deploy/terraform/envs/qa` (port 8081). Prod is `deploy/terraform/envs/prod` (port 8082). For AWS, set `target = "aws"` in the tfvars of the one environment you are deploying, using an account you choose. Read the cost note in the guide before that apply, and run `terraform destroy` in that same directory when you are finished.
 
 The API talks to Postgres at `db:5432` inside the namespace. A StatefulSet keeps the database on a persistent volume.

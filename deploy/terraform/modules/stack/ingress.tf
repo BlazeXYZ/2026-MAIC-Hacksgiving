@@ -10,7 +10,7 @@ resource "kubernetes_ingress_v1" "web" {
     ingress_class_name = var.ingress_class_name
 
     rule {
-      host = var.ingress_host
+      host = local.ingress_host
 
       http {
         path {

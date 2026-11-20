@@ -9,7 +9,7 @@ resource "terraform_data" "kube_dir" {
 resource "kind_cluster" "local" {
   count = var.target == "local" ? 1 : 0
 
-  name            = var.cluster_name
+  name            = local.cluster_name
   node_image      = var.kind_node_image
   wait_for_ready  = true
   kubeconfig_path = local.kind_kubeconfig
@@ -27,7 +27,7 @@ resource "kind_cluster" "local" {
 resource "kind_load" "images" {
   for_each = var.target == "local" ? toset([local.api_image, local.web_image]) : toset([])
 
-  cluster_name = var.cluster_name
+  cluster_name = local.cluster_name
   image        = each.value
 
   depends_on = [kind_cluster.local]

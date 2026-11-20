@@ -59,7 +59,7 @@ resource "kubernetes_deployment_v1" "api" {
 
           env {
             name  = "APP_ENV"
-            value = "production"
+            value = local.app_env
           }
 
           env {
