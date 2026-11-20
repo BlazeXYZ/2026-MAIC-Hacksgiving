@@ -8,37 +8,8 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from pydantic import BaseModel
-
-# --- TEMPORARY fallback: real schemas arrive with PR #33 ---
-# src.server.ai.schemas is defined in PR #33; until it merges, tests run
-# standalone against an inline mirror of the triage contract. Delete this
-# block once #33 is merged.
-try:
-    from src.server.ai.schemas import TriageCategory, TriageOutputSchema, UrgencyTier
-except ModuleNotFoundError:  # pragma: no cover - removed after #33 merges
-    TriageCategory = str  # food|ride|shelter|warmth|support|other
-    UrgencyTier = str  # urgent|today|this_week
-
-    class TriageOutputSchema(BaseModel):
-        category: TriageCategory
-        urgency: UrgencyTier
-        escalate: bool = False
-        explanation: str = ""
-        clarifying_question: str | None = None
-
-    # Register a stub module so src.server.ai.confirmation can import
-    # from src.server.ai.schemas while running standalone.
-    import types
-
-    _stub = types.ModuleType("src.server.ai.schemas")
-    _stub.TriageCategory = TriageCategory
-    _stub.TriageOutputSchema = TriageOutputSchema
-    _stub.UrgencyTier = UrgencyTier
-    sys.modules["src.server.ai.schemas"] = _stub
-# --- end TEMPORARY fallback ---
-
 from src.server.ai.confirmation import CATEGORY_PHRASES, generate_confirmation
+from src.server.ai.schemas import TriageOutputSchema
 
 BANNED_TOKENS = (
     "urgent",
