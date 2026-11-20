@@ -1,5 +1,5 @@
 import { Check } from 'lucide-react';
-import type { TicketStatus, TimelineEvent } from '../../contracts';
+import type { TicketStatus, TimelineEvent } from '../../contracts/intake';
 import { useSurvey } from '../../state/survey';
 import './status.css';
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { Copy, Lock } from 'lucide-react';
-import type { PublicTicket } from '../contracts';
+import type { PublicTicket } from '../contracts/intake';
 import { getTicket, normalizeToken, type Sampled } from '../api/intake';
 import { PrivacyBadge } from '../components/privacy/PrivacyNotice';
 import { StatusTimeline } from '../components/status/StatusTimeline';
