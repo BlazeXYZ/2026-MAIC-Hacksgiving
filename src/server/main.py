@@ -8,6 +8,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 try:
+    from src.server.ai.advisor import router as advisors_router
+except ModuleNotFoundError:
+    from ai.advisor import router as advisors_router
+
+try:
     from src.server.core.config import settings
 except ModuleNotFoundError:
     from core.config import settings
@@ -34,6 +39,8 @@ app.add_middleware(
 
 # Coordinator-only hotspot density endpoints (key-gated, see #41)
 app.include_router(coordinator_hotspots_router)
+# Pantry stocking advisor endpoints (see #47)
+app.include_router(advisors_router)
 
 class HealthResponse(BaseModel):
     status: str
