@@ -203,6 +203,30 @@ npx cap sync
 
 ---
 
+### 3. One-Command Dev Environment (Docker Compose)
+
+You can launch the complete development stack (PostgreSQL database, FastAPI API server, and React client) with a single command from the project root:
+
+```bash
+docker compose up
+```
+
+#### Services & Standardized Ports:
+- **Client (Web):** `http://localhost:3000` (Nginx serving compiled React client with reverse proxy)
+- **API (FastAPI Backend):** `http://localhost:8000` (Runs with `--reload` and volume-mounted `./src/server` for live code reload)
+- **Database (PostgreSQL 16):** `localhost:5432` (`comforce:comforce-dev@localhost:5432/comforce` with persistent `pgdata` volume)
+
+#### Verification:
+```bash
+# Check that all three containers are healthy and running
+docker compose ps
+
+# Test API connectivity from client network
+curl http://localhost:8000/
+```
+
+---
+
 ## Hackathon Schedule
 
 All times are in Central Time at Diercks Hall:
