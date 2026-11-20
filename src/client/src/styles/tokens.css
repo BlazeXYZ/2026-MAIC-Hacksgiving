@@ -1,0 +1,85 @@
+/* ComForce MKE Hub design tokens and shared component styles, taken from docs/design/hub-mockup-v9.html.
+   Two typefaces: Bricolage Grotesque for the interface, Newsreader for headlines and people.
+   Newsreader italic is reserved for "the AI is explaining itself".
+   Spacing scale: 4 8 12 16 24 32 48 64. Tap targets at least 44px, body text at least 15px. */
+:root {
+  --paper: #F4F5F0; --card: #FFFFFF; --sunk: #ECEEE6; --line: #E1E4DA; --line-2: #C8CDBF;
+  --ink: #16201B; --ink-2: #45524A; --ink-3: #6C776F;
+  --green: #0F6B3A; --green-2: #2E9A5C; --green-wash: #E4F0E6; --green-ink: #174A2C;
+  --red: #D8322B; --red-deep: #A61D19; --red-wash: #FCEAE7;
+  --amber: #B7790B; --amber-wash: #FBF1DA; --amber-ink: #6E4A06;
+  --hivis: #E4F23A; --tip: #F5F8D6; --tip-ink: #3E4410;
+  --f: "Bricolage Grotesque", system-ui, sans-serif;
+  --f-voice: "Newsreader", Georgia, serif;
+  --r: 12px; --r-sm: 8px;
+  --sh: 0 1px 2px rgba(22,32,27,.05), 0 8px 24px -16px rgba(22,32,27,.25);
+  color-scheme: light;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { margin: 0; }
+body { font-family: var(--f); color: var(--ink); background: var(--paper); font-size: 15px; line-height: 1.45; }
+h1, h2, h3, h4, p { margin: 0; }
+button, input, textarea { font: inherit; color: inherit; }
+:focus-visible { outline: 3px solid var(--green-2); outline-offset: 2px; }
+
+.page { max-width: 560px; margin: 0 auto; padding: 0 20px 48px; }
+.stack { display: grid; gap: 16px; }
+.kicker { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.meta { font-size: 13px; color: var(--ink-3); }
+.title { font-weight: 800; font-stretch: 85%; font-size: 26px; line-height: 1.1; letter-spacing: -.01em; }
+.voice { font-family: var(--f-voice); }
+.why { font-family: var(--f-voice); font-style: italic; font-size: 17px; line-height: 1.4; color: var(--ink-2); }
+
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 18px;
+  border-radius: 10px; border: 1px solid var(--line-2); background: var(--card); color: var(--ink);
+  font-weight: 700; font-size: 15px; line-height: 1; cursor: pointer; white-space: nowrap; text-decoration: none; }
+.btn.sm { min-height: 36px; padding: 0 14px; font-size: 14px; }
+.btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--green); padding: 0 8px; }
+.btn.block { width: 100%; }
+.btn:disabled { cursor: not-allowed; opacity: .5; }
+.btn svg { width: 17px; height: 17px; flex: none; }
+
+.card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); }
+.card-pad { padding: 20px; }
+.tip { display: flex; gap: 12px; align-items: flex-start; padding: 12px 16px; border-radius: 10px;
+  background: var(--tip); color: var(--tip-ink); font-size: 14px; line-height: 1.45; }
+.tip svg { width: 18px; height: 18px; margin-top: 1px; flex: none; }
+
+.tag { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border-radius: 6px;
+  font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+.tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.tag.urgent { background: var(--red-wash); color: var(--red-deep); }
+.tag.today { background: var(--amber-wash); color: var(--amber-ink); }
+.tag.week { background: var(--sunk); color: var(--ink-2); }
+.tag.ai { background: var(--green-wash); color: var(--green-ink); }
+.tag.ai::before { display: none; }
+
+.seg { display: inline-flex; padding: 3px; border-radius: 10px; background: var(--sunk); }
+.seg button { border: 0; background: none; min-height: 38px; padding: 0 14px; border-radius: 8px; font-size: 14px;
+  font-weight: 600; color: var(--ink-2); cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 3px rgba(22,32,27,.15); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; padding: 0 16px; border-radius: 99px;
+  border: 1px solid var(--line-2); background: var(--card); font-size: 14.5px; font-weight: 600; cursor: pointer; }
+.chip[aria-pressed="true"], .chip[aria-checked="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+.chip small { font-weight: 500; opacity: .75; }
+
+.switch { width: 48px; height: 28px; border-radius: 99px; border: 0; background: var(--line-2); position: relative; cursor: pointer; flex: none; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: #fff; transition: left .15s; }
+.switch[aria-checked="true"] { background: var(--green); }
+.switch[aria-checked="true"]::after { left: 23px; }
+
+.stepper { display: flex; align-items: center; gap: 12px; }
+.stepper .bars { display: flex; gap: 6px; flex: 1; }
+.stepper .bars i { flex: 1; height: 4px; border-radius: 2px; background: var(--line); }
+.stepper .bars i.on { background: var(--green); }
+
+.skeleton { border-radius: 6px; background: linear-gradient(90deg, var(--sunk) 0%, var(--line) 50%, var(--sunk) 100%);
+  background-size: 200% 100%; animation: shimmer 1.2s linear infinite; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+@media (prefers-reduced-motion: reduce) { .skeleton { animation: none; } }
+
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
