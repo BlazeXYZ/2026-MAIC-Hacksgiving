@@ -1,93 +1,110 @@
-import { useState } from 'react';
-import LeafletMap, { fromBasemapPoint } from './LeafletMap';
+import { useEffect, useMemo, useState } from 'react';
+import LeafletMap, { type MapMarker } from './LeafletMap';
+import {
+  SAMPLE_SAFE_PLACES, directionsHref, fetchSafePlaces, telHref, type SafePlace,
+} from '../map/safePlaces';
 import './CommunityMap.css';
 
-interface SampleLocation {
-  id: string;
-  name: string;
-  neighborhood: string;
-  description: string;
-  address: string;
-  people: number;
-  x: number;
-  y: number;
+type DataSource = 'sample' | 'live';
+
+function placeKind(place: SafePlace): { variant: string; label: string } {
+  return place.is_staffed
+    ? { variant: 'staffed', label: 'Staffed' }
+    : { variant: 'verified', label: 'Community verified' };
 }
 
-const SAMPLE_LOCATIONS: SampleLocation[] = [
-  {
-    id: 'pantry',
-    name: 'Community Pantry',
-    neighborhood: 'Near West Side',
-    description: 'A demo location for picking up shelf-stable groceries.',
-    address: '120 Sample Avenue, Milwaukee, WI',
-    people: 24,
-    x: 320,
-    y: 560,
-  },
-  {
-    id: 'donations',
-    name: 'Donation Drop-off',
-    neighborhood: 'Haymarket',
-    description: 'A demo drop-off point for canned goods and dry foods.',
-    address: '48 Demo Street, Milwaukee, WI',
-    people: 12,
-    x: 785,
-    y: 365,
-  },
-  {
-    id: 'pickup',
-    name: 'Mobile Market Stop',
-    neighborhood: 'Historic Third Ward',
-    description: 'A demo stop for a pop-up produce market.',
-    address: '305 Example Lane, Milwaukee, WI',
-    people: 36,
-    x: 1070,
-    y: 773,
-  },
-];
-
-const MARKERS = SAMPLE_LOCATIONS.map(({ id, name, x, y }) => ({ id, label: name, position: fromBasemapPoint(x, y) }));
+function SafePlacePopup({ place }: { place: SafePlace }) {
+  const kind = placeKind(place);
+  return (
+    <article aria-label={place.name}>
+      <h3>{place.name}</h3>
+      <span className={`community-map-badge community-map-badge--${kind.variant}`}>{kind.label}</span>
+      <dl>
+        <div>
+          <dt>Hours</dt>
+          <dd>{place.hours_description}</dd>
+        </div>
+        <div>
+          <dt>Address</dt>
+          <dd>{place.address}</dd>
+        </div>
+      </dl>
+      <div className="community-map-popup-actions">
+        {place.phone && (
+          <a className="community-map-action community-map-action--primary" href={telHref(place.phone)}>
+            Call {place.phone}
+          </a>
+        )}
+        <a className="community-map-action" href={directionsHref(place)} target="_blank" rel="noopener noreferrer">
+          Get route
+        </a>
+      </div>
+    </article>
+  );
+}
 
 export default function CommunityMap() {
-  const [selectedId, setSelectedId] = useState(SAMPLE_LOCATIONS[0].id);
-  const selected = SAMPLE_LOCATIONS.find((location) => location.id === selectedId) ?? SAMPLE_LOCATIONS[0];
+  const [places, setPlaces] = useState<readonly SafePlace[]>(SAMPLE_SAFE_PLACES);
+  const [source, setSource] = useState<DataSource>('sample');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    fetchSafePlaces(controller.signal)
+      .then((live) => {
+        if (live.length === 0) return;
+        setPlaces(live);
+        setSource('live');
+      })
+      // Keep the sample places when the API is not running.
+      .catch(() => undefined);
+    return () => controller.abort();
+  }, []);
+
+  const markers = useMemo<MapMarker[]>(
+    () => places.map((place) => ({
+      id: place.id,
+      label: place.name,
+      position: [place.latitude, place.longitude],
+      variant: placeKind(place).variant,
+    })),
+    [places],
+  );
+
+  const selected = places.find((place) => place.id === selectedId) ?? null;
 
   return (
     <main className="hub-page community-map" aria-labelledby="community-map-title">
       <h2 id="community-map-title">Community map</h2>
-      <p>Explore fictional sample locations around Milwaukee.</p>
+      <p>Verified safe places and shelters around Milwaukee. Tap a pin for hours, a call button, and directions.</p>
 
       <div className="community-map-layout">
-        <div>
-          <LeafletMap markers={MARKERS} selectedMarkerId={selected.id} onSelectMarker={setSelectedId} />
-          <div className="community-map-event" role="status" aria-atomic="true">
-            <h3>{selected.name}</h3>
-            <dl>
-              <div>
-                <dt>Sample address</dt>
-                <dd>{selected.address}</dd>
-              </div>
-              <div>
-                <dt>People</dt>
-                <dd>{selected.people}</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
+        <LeafletMap
+          markers={markers}
+          selectedMarkerId={selected?.id ?? null}
+          onSelectMarker={setSelectedId}
+          popupContent={selected ? <SafePlacePopup place={selected} /> : null}
+        />
 
-        <section className="community-map-locations" aria-labelledby="sample-locations-title">
-          <h3 id="sample-locations-title">Sample locations</h3>
+        <section className="community-map-locations" aria-labelledby="safe-places-title">
+          <h3 id="safe-places-title">Safe places</h3>
+          <ul className="community-map-legend" aria-label="Pin legend">
+            <li><span className="community-map-swatch community-map-swatch--staffed" aria-hidden="true" />Staffed</li>
+            <li><span className="community-map-swatch community-map-swatch--verified" aria-hidden="true" />Community verified</li>
+          </ul>
           <ul>
-            {SAMPLE_LOCATIONS.map((location) => (
-              <li key={location.id}>
-                <button type="button" aria-pressed={selected.id === location.id} onClick={() => setSelectedId(location.id)}>
-                  <strong>{location.name}</strong>
-                  <span>{location.neighborhood}</span>
+            {places.map((place) => (
+              <li key={place.id}>
+                <button type="button" aria-pressed={selected?.id === place.id} onClick={() => setSelectedId(place.id)}>
+                  <strong>{place.name}</strong>
+                  <span>{place.district} · {placeKind(place).label}</span>
                 </button>
               </li>
             ))}
           </ul>
-          <p className="community-map-detail">{selected.description}</p>
+          {source === 'sample' && (
+            <p className="community-map-detail">Showing sample data. Start the API to load live safe places.</p>
+          )}
         </section>
       </div>
     </main>
