@@ -28,6 +28,16 @@ try:
 except ModuleNotFoundError:
     from db import close_db, init_db
 
+try:
+    from src.server.api import mount_feature_routers
+except ModuleNotFoundError:
+    from api import mount_feature_routers
+
+try:
+    from src.server.security import SecurityHeadersMiddleware, install_api_guards
+except ModuleNotFoundError:
+    from security import SecurityHeadersMiddleware, install_api_guards
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -43,19 +53,25 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Enable CORS for local web development and Capacitor mobile bridge
+install_api_guards(app)
+
+# Security headers sit inside CORS so preflight still carries the Vite
+# and Capacitor allow-list, including on error responses.
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(settings.CORS_ORIGINS),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=list(settings.CORS_METHODS),
+    allow_headers=list(settings.CORS_HEADERS),
+    expose_headers=list(settings.CORS_EXPOSE_HEADERS),
 )
 
 # Coordinator-only hotspot density endpoints (key-gated, see #41)
 app.include_router(coordinator_hotspots_router)
 # Pantry stocking advisor endpoints (see #47)
 app.include_router(advisors_router)
+mount_feature_routers(app)
 
 class HealthResponse(BaseModel):
     status: str
