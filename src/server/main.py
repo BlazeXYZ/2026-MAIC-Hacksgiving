@@ -1,5 +1,6 @@
 """FastAPI application entry point for the ComforceMKE community platform."""
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
@@ -17,10 +18,24 @@ try:
 except ModuleNotFoundError:
     from ai.hotspots import router as coordinator_hotspots_router
 
+try:
+    from src.server.db import close_db, init_db
+except ModuleNotFoundError:
+    from db import close_db, init_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+    close_db()
+
+
 app = FastAPI(
     title=settings.APP_NAME,
     description="FastAPI backend supporting web and Capacitor mobile clients for ComforceMKE initiatives.",
     version="0.2.0",
+    lifespan=lifespan,
 )
 
 # Enable CORS for local web development and Capacitor mobile bridge
