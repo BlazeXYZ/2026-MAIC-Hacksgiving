@@ -18,7 +18,7 @@ body:has(.delivery-cover) { margin: 0; }
 .delivery-cover *::before,
 .delivery-cover *::after { box-sizing: border-box; }
 
-.delivery-cover button, .delivery-cover input { font: inherit; color: inherit; }
+.delivery-cover :where(button, input) { font: inherit; color: inherit; }
 .delivery-cover button { cursor: pointer; }
 .delivery-cover :focus-visible { outline: 3px solid var(--delivery-accent); outline-offset: 3px; }
 
@@ -313,4 +313,10 @@ body:has(.delivery-cover) { margin: 0; }
   .delivery-mode button { padding-inline: 0.55rem; }
   .delivery-mode svg { display: none; }
   .delivery-restaurants { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 350px) {
+  .delivery-location { grid-column: 2; grid-row: 1; justify-self: end; gap: 0.25rem; }
+  .delivery-mode { grid-column: 1 / -1; grid-row: 2; justify-self: stretch; }
+  .delivery-mode button { flex: 1; }
 }
