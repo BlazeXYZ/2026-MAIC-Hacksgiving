@@ -1,16 +1,21 @@
 """FastAPI application entry point for the ComforceMKE community platform."""
 
+from pathlib import Path
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-
-from pathlib import Path
+from pydantic import BaseModel
 
 try:
     from src.server.core.config import settings
 except ModuleNotFoundError:
     from core.config import settings
+
+try:
+    from src.server.ai.hotspots import router as coordinator_hotspots_router
+except ModuleNotFoundError:
+    from ai.hotspots import router as coordinator_hotspots_router
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -26,6 +31,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Coordinator-only hotspot density endpoints (key-gated, see #41)
+app.include_router(coordinator_hotspots_router)
 
 class HealthResponse(BaseModel):
     status: str
