@@ -27,3 +27,11 @@ python main.py
 * `GET /api/alerts/priority`: Returns active emergency alerts (such as nearby missing persons searches).
 * `GET /api/districts/stats`: Returns request volume and volunteer coverage across Milwaukee districts.
 * `POST /api/routes/safe-path`: Calculates verified routes to MSOE Public Safety or city safe havens.
+
+### Sample volunteer tickets
+
+- `GET /api/tickets` lists fictional pantry tickets and their current status.
+- `POST /api/tickets/{ticket_id}/claim` reserves an open ticket.
+- `POST /api/tickets/{ticket_id}/unclaim` reopens a ticket when given the same 64-character hexadecimal key as the claim body.
+
+The demo stores claims in memory. Restarting the server resets the board.
