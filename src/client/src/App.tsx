@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import CommunityMap from './components/CommunityMap';
 import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
@@ -43,11 +43,29 @@ export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
   const [view, setView] = useState<'communities' | 'map' | 'survey'>('communities');
+  const exitHeading = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (quickExitTriggered) {
+      exitHeading.current?.focus();
+      return;
+    }
+
+    function handleQuickExit(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !event.repeat) {
+        event.preventDefault();
+        setQuickExitTriggered(true);
+      }
+    }
+
+    window.addEventListener('keydown', handleQuickExit, true);
+    return () => window.removeEventListener('keydown', handleQuickExit, true);
+  }, [quickExitTriggered]);
 
   if (quickExitTriggered) {
     return (
       <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-        <h2>Milwaukee Transit Schedule - Route 30</h2>
+        <h2 ref={exitHeading} tabIndex={-1}>Milwaukee Transit Schedule - Route 30</h2>
         <p>Next bus arriving at N Broadway & E State St in 6 minutes.</p>
         <button
           onClick={() => setQuickExitTriggered(false)}
@@ -86,10 +104,12 @@ export default function App() {
           <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Demo preview with sample data · Community Task Force MKE & MSOE</p>
         </div>
         <button
+          type="button"
+          aria-keyshortcuts="Escape"
           onClick={() => setQuickExitTriggered(true)}
           style={{ backgroundColor: '#ef4444', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
         >
-          Quick Exit (Safe Mode)
+          Quick Exit
         </button>
       </header>
 
