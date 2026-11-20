@@ -79,3 +79,27 @@
   color: #475569;
   font-size: 0.875rem;
 }
+
+.volunteer-ticket-claimed {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.75rem;
+  color: #166534;
+}
+
+.volunteer-ticket-undo {
+  min-height: 44px;
+  padding: 0.25rem 0.5rem;
+  border: 1px solid #166534;
+  border-radius: 4px;
+  background: #fff;
+  color: #166534;
+  font: inherit;
+  cursor: pointer;
+}
+
+.volunteer-ticket-undo:disabled {
+  opacity: 0.65;
+  cursor: default;
+}

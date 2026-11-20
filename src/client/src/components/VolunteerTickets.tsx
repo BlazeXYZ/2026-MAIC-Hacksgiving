@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './VolunteerTickets.css';
 
 interface Ticket {
@@ -7,6 +7,8 @@ interface Ticket {
   description: string;
   status: 'open' | 'claimed';
 }
+
+type ClaimAction = 'claim' | 'unclaim';
 
 const URGENCY_LABELS = { urgent: 'Urgent', today: 'Today', 'this-week': 'This week' } as const;
 type Urgency = keyof typeof URGENCY_LABELS;
@@ -32,7 +34,8 @@ export default function VolunteerTickets() {
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [loadError, setLoadError] = useState(false);
   const [loadAttempt, setLoadAttempt] = useState(0);
-  const [claimingId, setClaimingId] = useState<number | null>(null);
+  const [pendingId, setPendingId] = useState<number | null>(null);
+  const claimKeys = useRef(new Map<number, string>());
   const [feedback, setFeedback] = useState('');
   const [query, setQuery] = useState('');
   const [urgency, setUrgency] = useState('');
@@ -62,14 +65,29 @@ export default function VolunteerTickets() {
     return () => controller.abort();
   }, [loadAttempt]);
 
-  async function claimTicket(ticket: Ticket) {
-    setClaimingId(ticket.id);
+  async function changeClaim(ticket: Ticket, action: ClaimAction) {
+    if (pendingId !== null) return;
+    const undoing = action === 'unclaim';
+    let key = claimKeys.current.get(ticket.id);
+    if (!key) {
+      if (undoing) return;
+      const bytes = crypto.getRandomValues(new Uint8Array(32));
+      key = Array.from(bytes, (byte) => byte.toString(16).padStart(2, '0')).join('');
+      claimKeys.current.set(ticket.id, key);
+    }
+
+    setPendingId(ticket.id);
     setFeedback('');
 
     try {
-      const response = await fetch(`/api/tickets/${ticket.id}/claim`, { method: 'POST' });
+      const response = await fetch(`/api/tickets/${ticket.id}/${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key }),
+      });
 
-      if (response.status === 409) {
+      if (response.status === 409 || response.status === 403) {
+        claimKeys.current.delete(ticket.id);
         setTickets((current) => current?.map((item) => (
           item.id === ticket.id ? { ...item, status: 'claimed' } : item
         )) ?? null);
@@ -78,24 +96,26 @@ export default function VolunteerTickets() {
       }
 
       if (response.status === 404) {
+        claimKeys.current.delete(ticket.id);
         setTickets((current) => current?.filter((item) => item.id !== ticket.id) ?? null);
         setFeedback(`${ticket.title} is no longer available.`);
         return;
       }
 
       if (!response.ok) {
-        throw new Error('Claim request failed');
+        throw new Error('Ticket update failed');
       }
 
-      const claimedTicket: Ticket = await response.json();
+      const updatedTicket: Ticket = await response.json();
+      if (undoing) claimKeys.current.delete(ticket.id);
       setTickets((current) => current?.map((item) => (
-        item.id === claimedTicket.id ? claimedTicket : item
+        item.id === updatedTicket.id ? updatedTicket : item
       )) ?? null);
-      setFeedback(`You claimed ${ticket.title}.`);
+      setFeedback(undoing ? `${ticket.title} is open again.` : `You claimed ${ticket.title}.`);
     } catch {
-      setFeedback('Could not claim this ticket. Try again.');
+      setFeedback(undoing ? 'Could not undo this claim. Try again.' : 'Could not claim this ticket. Try again.');
     } finally {
-      setClaimingId(null);
+      setPendingId(null);
     }
   }
 
@@ -180,24 +200,37 @@ export default function VolunteerTickets() {
                 )}
                 <p style={{ color: '#475569', margin: '0.25rem 0 0.5rem' }}>{ticket.description}</p>
                 {ticket.status === 'claimed' ? (
-                  <strong style={{ color: '#166534' }}>Claimed</strong>
+                  <div className="volunteer-ticket-claimed">
+                    <strong>Claimed</strong>
+                    {claimKeys.current.has(ticket.id) && (
+                      <button
+                        type="button"
+                        className="volunteer-ticket-undo"
+                        aria-label={`Undo claim: ${ticket.title}`}
+                        onClick={() => void changeClaim(ticket, 'unclaim')}
+                        disabled={pendingId !== null}
+                      >
+                        {pendingId === ticket.id ? 'Undoing…' : 'Undo claim'}
+                      </button>
+                    )}
+                  </div>
                 ) : (
                   <button
                     type="button"
-                    aria-label={claimingId === ticket.id ? `Claiming ${ticket.title}` : `Claim Ticket: ${ticket.title}`}
-                    onClick={() => void claimTicket(ticket)}
-                    disabled={claimingId !== null}
+                    aria-label={pendingId === ticket.id ? `Claiming ${ticket.title}` : `Claim Ticket: ${ticket.title}`}
+                    onClick={() => void changeClaim(ticket, 'claim')}
+                    disabled={pendingId !== null}
                     style={{
-                      backgroundColor: claimingId === null ? '#1d4ed8' : '#475569',
+                      backgroundColor: pendingId === null ? '#1d4ed8' : '#475569',
                       color: '#ffffff',
                       border: 'none',
                       padding: '0.45rem 0.75rem',
                       borderRadius: '4px',
-                      cursor: claimingId === null ? 'pointer' : 'default',
+                      cursor: pendingId === null ? 'pointer' : 'default',
                       fontSize: '0.85rem',
                     }}
                   >
-                    {claimingId === ticket.id ? 'Claiming…' : 'Claim Ticket'}
+                    {pendingId === ticket.id ? 'Claiming…' : 'Claim Ticket'}
                   </button>
                 )}
               </li>
