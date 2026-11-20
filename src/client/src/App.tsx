@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import CommunityMap from './components/CommunityMap';
+import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
 
 interface Community {
@@ -41,7 +42,7 @@ const COMMUNITIES: Community[] = [
 export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
-  const [view, setView] = useState<'communities' | 'map'>('communities');
+  const [view, setView] = useState<'communities' | 'map' | 'survey'>('communities');
 
   if (quickExitTriggered) {
     return (
@@ -99,9 +100,13 @@ export default function App() {
         <button type="button" aria-current={view === 'map' ? 'page' : undefined} onClick={() => setView('map')}>
           Map
         </button>
+        <button type="button" aria-current={view === 'survey' ? 'page' : undefined} onClick={() => setView('survey')}>
+          Request help
+        </button>
       </nav>
 
       {view === 'map' && <CommunityMap />}
+      {view === 'survey' && <HelpSurvey />}
       <main className="hub-page" hidden={view !== 'communities'}>
         {/* Community Tabs */}
         <section style={{ marginBottom: '1.5rem' }}>
