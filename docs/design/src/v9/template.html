@@ -1,0 +1,1604 @@
+<title>ComForce MKE Hub</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
+<style>
+/* ComForce MKE Hub prototype. Identity (ComForce green, Bricolage + Newsreader, the ticket stub, real OSM maps) with a
+   design pass on hierarchy, flow, spacing and the first-run experience.
+   Spacing is an 8-pt scale: 4 8 12 16 24 32 48 64. Two typefaces only: Bricolage for the interface,
+   Newsreader for people's names and headlines, and Newsreader italic only when the AI explains itself. */
+:root{
+  --stage:#0C3A24; --stage-fg:#EEF3EC; --stage-mute:#A9C2B1; --stage-line:rgba(238,243,236,.16); --stage-accent:#E4F23A; --stage-accent-fg:#16201B;
+  --stage-font:"Bricolage Grotesque",system-ui,sans-serif;
+  --paper:#F4F5F0; --card:#FFFFFF; --sunk:#ECEEE6; --line:#E1E4DA; --line-2:#C8CDBF;
+  --ink:#16201B; --ink-2:#45524A; --ink-3:#6C776F;
+  --green:#0F6B3A; --green-2:#2E9A5C; --green-wash:#E4F0E6; --green-ink:#174A2C;
+  --red:#D8322B; --red-deep:#A61D19; --red-wash:#FCEAE7;
+  --amber:#B7790B; --amber-wash:#FBF1DA; --amber-ink:#6E4A06;
+  --police:#4338A8; --hivis:#E4F23A; --tip:#F5F8D6; --tip-ink:#3E4410;
+  --f:"Bricolage Grotesque",system-ui,sans-serif; --f-voice:"Newsreader",Georgia,serif;
+  --r:12px; --r-sm:8px;
+  --sh:0 1px 2px rgba(22,32,27,.05),0 8px 24px -16px rgba(22,32,27,.25);
+  --map-land:#EDEFE8; --map-park:#D8E6D4; --map-water:#C5D9E4; --map-road:#FFFFFF; --map-hwy:#D8D6C9; --map-label:#7E877F; --map-hood:#45524A; --map-font:"Bricolage Grotesque",sans-serif;
+  color-scheme:light;
+}
+%%STAGE_CSS%%
+body{background-image:repeating-linear-gradient(45deg,transparent 0 21px,rgba(238,243,236,.035) 21px 23px),repeating-linear-gradient(-45deg,transparent 0 21px,rgba(238,243,236,.035) 21px 23px)}
+
+/* ---------- stage ---------- */
+.flag{display:inline-flex;background:var(--paper);color:var(--green);font-weight:800;font-size:12px;letter-spacing:.14em;text-transform:uppercase;padding:8px 22px 8px 12px;clip-path:polygon(0 0,calc(100% - 12px) 0,100% 50%,calc(100% - 12px) 100%,0 100%)}
+.st-intro h1{font-weight:800;font-stretch:80%}
+.st-intro h1 em{font-family:var(--f-voice);font-weight:500;color:var(--hivis);font-stretch:100%;letter-spacing:-.03em}
+.review{margin-top:48px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px}
+@media (max-width:1000px){.review{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.review{grid-template-columns:1fr}}
+.review section{border-top:3px solid var(--hivis);padding-top:16px;min-width:0}
+.review h3{margin:0 0 8px;font-size:19px;font-weight:800;font-stretch:88%}
+.review ul{margin:0;padding-left:18px;display:grid;gap:8px;font-size:15px;line-height:1.45;color:var(--stage-fg)}
+.review li::marker{color:var(--hivis)}
+.review li b{font-weight:700}
+.jnav{position:sticky;top:0;z-index:50;margin:48px -16px 0;padding:12px 16px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;background:rgba(12,58,36,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--stage-line)}
+.jnav a{flex:none;display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border-radius:99px;border:1px solid var(--stage-line);color:var(--stage-fg);text-decoration:none;font-size:14px;font-weight:600}
+.jnav a i{font-style:normal;display:grid;place-items:center;width:20px;height:20px;border-radius:50%;background:var(--hivis);color:var(--ink);font-size:11px;font-weight:800}
+.jnav a:hover{border-color:var(--hivis)}
+.shelf-head h2{font-weight:800;font-stretch:88%;display:flex;align-items:center;gap:12px}
+.shelf-head h2 i{font-style:normal;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--hivis);color:var(--ink);font-size:15px}
+.shelf-lede{margin:-6px 0 24px;max-width:46em;font-size:16px;line-height:1.5;color:var(--stage-mute)}
+.modes{display:inline-flex;padding:4px;border-radius:99px;background:rgba(0,0,0,.25);border:1px solid var(--stage-line)}
+.modes button{border:0;background:none;color:var(--stage-fg);padding:8px 16px;border-radius:99px;font-weight:700;font-size:14px;cursor:pointer}
+.modes button[aria-pressed="true"]{background:var(--hivis);color:var(--ink)}
+.phones{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:1100px){.phones{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}}
+.slot figcaption b{font-weight:800;font-stretch:90%}
+.st-cov{grid-template-columns:repeat(3,minmax(0,1fr))}
+
+/* ---------- app base ---------- */
+.ui{font-family:var(--f);color:var(--ink);background:var(--paper);font-size:15px;line-height:1.45}
+.ui h1,.ui h2,.ui h3,.ui h4,.ui p{margin:0}
+.ui a{color:inherit;text-decoration:none}
+.kicker{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3)}
+.meta{font-size:13px;color:var(--ink-3)}
+.voice{font-family:var(--f-voice)}
+.why{display:flex;gap:8px;font-family:var(--f-voice);font-style:italic;font-size:15px;line-height:1.4;color:var(--ink-2)}
+.why .ic{width:15px;height:15px;margin-top:3px;color:var(--green)}
+.hl{background:linear-gradient(transparent 60%,var(--hivis) 60% 92%,transparent 92%)}
+.logo{display:flex;align-items:center;gap:10px;color:var(--ink)}
+.logo svg{width:30px;height:30px;flex:none}
+.logo b{font-weight:800;font-stretch:85%;font-size:20px;letter-spacing:-.01em;white-space:nowrap}
+.logo b span{color:var(--green)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:44px;padding:0 18px;border-radius:10px;border:1px solid var(--line-2);background:var(--card);color:var(--ink);font-weight:700;font-size:15px;line-height:1;cursor:pointer;white-space:nowrap}
+.btn.sm{height:36px;padding:0 14px;font-size:14px}
+.btn.primary{background:var(--green);border-color:var(--green);color:#fff}
+.btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--green);padding:0 8px}
+.btn.block{width:100%}
+.btn:disabled{cursor:default;opacity:.75}
+.btn .ic{width:17px;height:17px}
+.iconbtn{position:relative;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;cursor:pointer;flex:none}
+.iconbtn .badge{position:absolute;top:8px;right:9px;width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 2px var(--card)}
+.exit{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 12px;border:0;border-radius:10px;background:var(--red);color:#fff;font-weight:700;font-size:14px;cursor:pointer}
+.exit .ic{width:16px;height:16px}
+.tag{display:inline-flex;align-items:center;gap:6px;height:22px;padding:0 8px;border-radius:6px;font-size:12px;font-weight:700;white-space:nowrap}
+.tag::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.tag.urgent{background:var(--red-wash);color:var(--red-deep)}
+.tag.today{background:var(--amber-wash);color:var(--amber-ink)}
+.tag.week{background:var(--sunk);color:var(--ink-2)}
+.tag.ai{background:var(--green-wash);color:var(--green-ink)}
+.tag.ai::before,.tag.plain::before{display:none}
+.tag.plain{background:var(--sunk);color:var(--ink-2)}
+.tag.held{background:var(--amber-wash);color:var(--amber-ink)}
+.live{width:7px;height:7px;border-radius:50%;background:currentColor;animation:blink 1.4s steps(2,start) infinite;flex:none}
+@keyframes blink{to{visibility:hidden}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.mod{background:var(--card);border:1px solid var(--line);border-radius:var(--r);min-width:0;display:flex;flex-direction:column}
+.mod-h{display:flex;align-items:center;gap:12px;padding:20px 24px 0}
+.mod-h h2{font-weight:700;font-size:18px;letter-spacing:-.005em}
+.mod-h .count{font-size:14px;color:var(--ink-3);font-weight:600}
+.mod-h .more{margin-left:auto;font-size:14px;font-weight:700;color:var(--green);white-space:nowrap}
+.mod-sub{padding:4px 24px 0;font-size:14px;color:var(--ink-2)}
+.mod-b{padding:16px 24px 24px}
+.rows>*+*{border-top:1px solid var(--line)}
+/* first-run tips share one look everywhere */
+.tip{display:flex;gap:12px;align-items:flex-start;padding:12px 16px;border-radius:10px;background:var(--tip);color:var(--tip-ink);font-size:14px;line-height:1.45}
+.tip .ic{width:18px;height:18px;margin-top:1px;flex:none}
+.tip b{font-weight:700}
+
+/* ticket: request card with a "take it" stub */
+.req{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 92px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.req-main{padding:16px 18px;min-width:0;display:grid;gap:6px}
+.req-meta{display:flex;align-items:center;gap:8px}
+.req-meta .dist{margin-left:auto;font-size:13px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.req h3{font-weight:700;font-size:17px;line-height:1.25;text-wrap:balance}
+.req .where{display:flex;align-items:center;gap:6px;font-size:13.5px;color:var(--ink-2)}
+.req .where .ic{width:14px;height:14px}
+.req .why{font-size:14px}
+.take{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border:0;border-left:2px dashed var(--line-2);background:transparent;cursor:pointer;border-radius:0 var(--r) var(--r) 0;color:var(--green);font-weight:700;font-size:14px}
+.take::before,.take::after{content:"";position:absolute;left:-9px;width:16px;height:16px;border-radius:50%;background:var(--paper);border:1px solid var(--line)}
+.take::before{top:-9px;clip-path:inset(50% 0 0 0)}
+.take::after{bottom:-9px;clip-path:inset(0 0 50% 0)}
+.on-card .take::before,.on-card .take::after{background:var(--card)}
+.take small{font-size:11.5px;font-weight:600;color:var(--ink-3)}
+.take .ic{width:22px;height:22px}
+.take:hover{background:var(--green-wash)}
+.req.taken{border-color:var(--green)}
+.req.taken .take{background:var(--green);color:#fff;border-left-color:var(--green)}
+.req.taken .take small{color:#CBE5D3}
+.screen .req{grid-template-columns:minmax(0,1fr) 80px}
+.tasklink{display:none;align-items:center;gap:4px;font-size:14px;font-weight:700;color:var(--green)}
+.tasklink .ic{width:15px;height:15px}
+.req.taken .tasklink{display:inline-flex}
+.req.locked{background:var(--sunk);border-style:dashed}
+.req.locked .take{color:var(--ink-2);cursor:default}
+.req.locked .take:hover{background:none}
+
+/* missing-person alert (the one priority override) */
+.alertcard{background:var(--card);border:2px solid var(--red);border-radius:var(--r);overflow:hidden}
+.alert-strip{display:flex;align-items:center;gap:8px;padding:8px 16px;background:var(--red);color:#fff;font-size:13px;font-weight:700}
+.alert-strip span:last-child{margin-left:auto;font-weight:500;opacity:.9}
+.halftone{display:block;border-radius:6px;border:1px solid var(--line);flex:none}
+.segs{display:flex;gap:3px;flex:1}
+.segs i{flex:1;height:8px;border-radius:2px;background:var(--sunk)}
+.segs i.done{background:var(--green)}
+.segs i.on{background:var(--hivis);box-shadow:inset 0 0 0 1px #B9C42A}
+.verified{display:inline-flex;align-items:center;gap:4px;color:var(--green);font-size:13px;font-weight:700}
+.verified .ic{width:14px;height:14px;stroke-width:3}
+
+/* maps */
+.mapwrap{position:relative;overflow:hidden}
+.map .pinlbl{font-family:var(--f)}
+.mapchips{position:absolute;top:16px;left:16px;display:flex;flex-wrap:wrap;gap:8px;z-index:2}
+.mapchip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border-radius:99px;border:1px solid var(--line);background:var(--card);font-weight:600;font-size:13px;cursor:pointer;box-shadow:0 2px 6px -3px rgba(22,32,27,.3)}
+.mapchip i{width:9px;height:9px;border-radius:50%;display:inline-block}
+.mapchip[aria-pressed="false"]{opacity:.55}
+.mapchip[aria-pressed="false"] i{background:transparent!important;box-shadow:inset 0 0 0 1.5px var(--ink-3)}
+.attrib{right:8px;bottom:6px}
+
+/* ---------- desktop ---------- */
+.desk{width:1280px;position:relative}
+.dnav{display:flex;align-items:center;gap:32px;height:72px;padding:0 48px;background:var(--card);border-bottom:1px solid var(--line)}
+.dnav nav{display:flex;gap:28px;flex:1}
+.dnav nav a{font-weight:600;font-size:15px;color:var(--ink-2);white-space:nowrap}
+.dnav nav a.on{color:var(--ink);font-weight:700}
+.dnav nav a.on span{background:linear-gradient(transparent 58%,var(--hivis) 58% 94%,transparent 94%)}
+.dsearch{display:flex;align-items:center;gap:8px;width:260px;height:40px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink-3);font-size:14px}
+.dsearch .ic{width:16px;height:16px}
+.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#2F5D9E;color:#fff;font-weight:700;font-size:14px;flex:none}
+.esc{display:inline-flex;align-items:center;gap:10px;height:40px;padding:0 14px 0 8px;border:0;border-radius:10px;background:var(--red);color:#fff;font-weight:700;font-size:15px;cursor:pointer;white-space:nowrap}
+.esc kbd{font-family:var(--f);font-size:12px;font-weight:700;background:#fff;color:var(--red-deep);border-radius:5px;padding:3px 6px}
+.dtools{display:flex;align-items:center;gap:12px}
+.dpage{padding:32px 48px 64px}
+.g12{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:24px;align-items:start}
+.c4{grid-column:span 4}.c5{grid-column:span 5}.c7{grid-column:span 7}.c8{grid-column:span 8}.c12{grid-column:1/-1}
+#home .g12{align-items:stretch}
+#home.editing .g12>.mod{outline:2px dashed var(--line-2);outline-offset:4px;cursor:grab}
+.stack{display:grid;gap:24px;align-content:start}
+.dfoot{display:flex;justify-content:space-between;align-items:center;gap:24px;padding:24px 48px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-3)}
+.dfoot b{color:var(--ink);font-weight:700}
+
+/* home: first visit vs returning */
+#home[data-mode="new"] .only-ret,#home[data-mode="ret"] .only-new{display:none!important}
+.d-alert{display:grid;grid-template-columns:72px minmax(0,1fr) 300px auto;gap:24px;align-items:center;padding:20px 24px}
+.d-alert h2{font-family:var(--f-voice);font-weight:600;font-size:28px;line-height:1.05}
+.d-alert p{margin-top:4px;font-size:15px;color:var(--ink-2)}
+.d-alert .prog{display:grid;gap:8px}
+.d-alert .prog span{font-size:13px;font-weight:600;color:var(--ink-2)}
+.d-alert .acts{display:flex;gap:8px}
+.d-alert-why{display:flex;gap:8px;align-items:center;padding:12px 24px;border-top:1px solid var(--line);font-size:14px;color:var(--ink-2);background:#FFF8F7}
+.d-alert-why .ic{width:16px;height:16px;color:var(--red)}
+.greet{display:flex;align-items:flex-end;gap:24px;margin:48px 0 24px}
+.greet h1{margin-top:8px;font-weight:800;font-stretch:80%;font-size:44px;line-height:1;letter-spacing:-.02em}
+.greet h1 em{font-family:var(--f-voice);font-weight:500;color:var(--green);font-stretch:100%;letter-spacing:-.03em}
+.greet p{margin-top:8px;font-size:16px;color:var(--ink-2)}
+.greet .right{margin-left:auto;display:flex;gap:8px}
+.start{margin-bottom:24px}
+.start-h{display:flex;align-items:center;gap:16px;padding:20px 24px}
+.start-h h2{font-size:18px;font-weight:700}
+.start-h .bar{width:160px;height:6px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.start-h .bar i{display:block;height:100%;width:25%;background:var(--green)}
+.start-h .meta{margin-left:auto}
+.steps4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:1px solid var(--line)}
+.step{display:flex;flex-direction:column;gap:8px;padding:20px 24px 24px}
+.step+.step{border-left:1px solid var(--line)}
+.step .n{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;border:1.5px solid var(--line-2);font-weight:800;font-size:13px}
+.step.done .n{background:var(--green);border-color:var(--green);color:#fff}
+.step.done .n .ic{width:15px;height:15px;stroke-width:3}
+.step h3{font-weight:700;font-size:16px}
+.step p{font-size:14px;color:var(--ink-2);flex:1}
+.step .btn{align-self:flex-start;margin-top:4px}
+.step.done h3{color:var(--ink-2)}
+.needs a{display:grid;grid-template-columns:44px minmax(0,1fr) 18px;gap:16px;align-items:center;padding:14px 24px;border-top:1px solid var(--line);cursor:pointer}
+.needs a:hover{background:var(--paper)}
+.needs .sq{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:var(--green-wash);color:var(--green)}
+.needs .sq .ic{width:21px;height:21px}
+.needs a.primary .sq{background:var(--green);color:#fff}
+.needs b{display:block;font-weight:700;font-size:16px;line-height:1.2}
+.needs small{display:block;margin-top:2px;font-size:13.5px;color:var(--ink-3)}
+.needs .chev{color:var(--ink-3);width:18px;height:18px}
+.sos{display:flex;gap:8px;align-items:center;margin-top:auto;padding:14px 24px;border-top:1px solid var(--line);font-size:13px;color:var(--ink-2);background:var(--paper);border-radius:0 0 var(--r) var(--r)}
+.sos .ic{width:16px;height:16px;color:var(--red)}
+.tickets{display:grid;gap:12px}
+.bc{display:grid;grid-template-columns:36px minmax(0,1fr);gap:12px;padding:16px 0}
+.bc:first-child{padding-top:0}
+.bc .sq{width:36px;height:36px;border-radius:9px;display:grid;place-items:center}
+.bc .sq .ic{width:17px;height:17px}
+.bc b{display:block;font-weight:700;font-size:15px;line-height:1.3;margin-top:2px}
+.bc p{margin-top:2px;font-size:14px;color:var(--ink-2)}
+.hubgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.ht{display:flex;flex-direction:column;gap:8px;padding:16px;border-radius:10px;background:var(--paper);min-height:124px}
+.sw{width:36px;height:36px;border-radius:9px;display:grid;place-items:center;color:#fff;flex:none}
+.sw .ic{width:18px;height:18px}
+.ht b{font-weight:700;font-size:14.5px;line-height:1.2}
+.ht small{margin-top:auto;font-size:13px;color:var(--ink-3)}
+.ht small.hot{color:var(--red-deep);font-weight:700}
+.sugg{display:grid;grid-template-columns:36px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 0}
+.sugg:first-child{padding-top:0}
+.sugg b{display:block;font-weight:700;font-size:15px}
+.sugg small{display:block;font-size:13px;color:var(--ink-3)}
+.safe{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;padding:14px 0}
+.safe:first-child{padding-top:0}
+.safe b{font-weight:700;font-size:15px}
+.safe p{grid-column:1/-1;font-size:13.5px;color:var(--ink-2)}
+.safe .chips{grid-column:1/-1;display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+.safe .chips span{font-size:12px;font-weight:600;padding:2px 8px;border-radius:5px;background:var(--green-wash);color:var(--green-ink)}
+.confirm{font-size:12.5px;font-weight:700;color:var(--green);white-space:nowrap}
+.coach{position:absolute;top:76px;right:40px;z-index:30;display:flex;align-items:center;gap:8px;height:28px;padding:0 6px 0 12px;border-radius:8px;background:var(--ink);color:#fff;font-size:13px;font-weight:600;box-shadow:0 10px 24px -12px rgba(0,0,0,.6)}
+.coach::before{content:"";position:absolute;top:-5px;right:64px;width:10px;height:10px;background:var(--ink);transform:rotate(45deg);border-radius:2px}
+.coach b{color:var(--hivis)}
+.coach button{display:grid;place-items:center;width:22px;height:22px;border:0;border-radius:5px;background:rgba(255,255,255,.12);color:#fff;cursor:pointer}
+.coach button .ic{width:13px;height:13px}
+#home[data-mode="new"] .dnav .esc{animation:esc-ring 1.8s ease-out infinite}
+@keyframes esc-ring{0%{box-shadow:0 0 0 0 rgba(216,50,43,.5)}100%{box-shadow:0 0 0 10px rgba(216,50,43,0)}}
+/* hub page */
+.hubhead{background:var(--green);color:#fff;padding:32px 48px 0;background-image:repeating-linear-gradient(45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px),repeating-linear-gradient(-45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px)}
+.hubhead .crumb{font-size:13px;font-weight:600;opacity:.8}
+.hubhead .row{display:flex;align-items:flex-end;gap:24px}
+.hubhead h1{margin-top:8px;font-weight:800;font-stretch:80%;font-size:44px;line-height:1;letter-spacing:-.02em}
+.hubhead p{margin-top:8px;font-family:var(--f-voice);font-size:18px;opacity:.92}
+.hubhead .facts{display:flex;gap:16px;margin-top:12px;font-size:14px;font-weight:600;opacity:.9}
+.hubhead .row .acts{margin-left:auto;display:flex;gap:8px}
+.hubhead .btn{background:#fff;border-color:#fff;color:var(--green)}
+.hubhead .btn.out{background:transparent;border-color:rgba(255,255,255,.45);color:#fff}
+.hubtabs{display:flex;gap:4px;margin-top:24px}
+.hubtabs button{display:flex;align-items:center;gap:8px;height:44px;padding:0 16px;border:0;border-radius:10px 10px 0 0;background:transparent;color:#fff;font-weight:600;font-size:15px;opacity:.85;cursor:pointer}
+.hubtabs button.on{background:var(--paper);color:var(--ink);opacity:1}
+.hubtabs .sep{width:1px;background:rgba(255,255,255,.3);margin:10px 8px}
+.hubtabs .own{font-size:11px;font-weight:700;padding:2px 6px;border-radius:4px;background:var(--hivis);color:var(--ink)}
+.composer{display:flex;gap:12px;align-items:center;padding:16px 24px}
+.composer .avatar{width:40px;height:40px}
+.composer input{flex:1;height:44px;padding:0 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:15px}
+.held{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 24px;background:var(--amber-wash);font-size:14px;color:var(--amber-ink)}
+.held .ic{color:var(--amber)}
+.thread{padding:20px 24px}
+.thread .top{display:flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-3)}
+.thread .top b{color:var(--ink);font-weight:700}
+.thread h3{margin-top:6px;font-weight:700;font-size:17px}
+.thread p{margin-top:4px;font-size:15px;color:var(--ink-2)}
+.thread.pinned{background:var(--paper)}
+.thread.pinned ol{margin:8px 0 0;padding-left:20px;display:grid;gap:4px;font-size:15px;color:var(--ink-2)}
+.answer{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;margin-top:12px;padding:12px 14px;border-radius:10px;background:var(--green-wash);font-size:14px;line-height:1.45;color:var(--green-ink)}
+.answer .ic{width:15px;height:15px;color:var(--green);margin-top:2px}
+.thread .acts{display:flex;gap:16px;margin-top:12px;font-size:13.5px;font-weight:600;color:var(--ink-3)}
+.pantry{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 12px;padding:14px 24px}
+.pantry b{font-weight:700;font-size:15px}
+.pantry .open{font-size:13px;font-weight:700;color:var(--green);white-space:nowrap}
+.pantry .closed{color:var(--ink-3)}
+.pantry p{grid-column:1/-1;font-size:13.5px;color:var(--ink-2)}
+.seg{display:inline-flex;padding:3px;border-radius:10px;background:var(--sunk)}
+.seg button{border:0;background:none;height:32px;padding:0 12px;border-radius:8px;font-size:14px;font-weight:600;color:var(--ink-2);cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--card);color:var(--ink);box-shadow:0 1px 3px rgba(22,32,27,.15)}
+.field{display:grid;gap:6px;margin-top:16px}
+.field label{font-size:13.5px;font-weight:600;color:var(--ink-2)}
+.field input{height:44px;padding:0 12px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font-size:15px}
+.stock{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.stock li{display:grid;grid-template-columns:200px minmax(0,1fr) 56px;gap:16px;align-items:center;font-size:15px}
+.stock .bar{height:10px;border-radius:3px;background:var(--sunk);overflow:hidden}
+.stock .bar i{display:block;height:100%;background:var(--red)}
+.stock b{text-align:right;font-weight:700;color:var(--red-deep);font-variant-numeric:tabular-nums}
+
+/* coordinator */
+.dnav.staff{background:var(--ink);color:#fff;border-color:var(--ink)}
+.dnav.staff .logo{color:#fff}
+.dnav.staff .logo b span{color:var(--hivis)}
+.dnav.staff .logo svg{background:var(--paper);border-radius:9px;padding:3px;width:34px;height:34px}
+.dnav.staff nav a{color:#B9C5BD}
+.dnav.staff nav a.on{color:#fff}
+.dnav.staff nav a.on span{background:none;box-shadow:inset 0 -3px 0 var(--hivis)}
+.ws{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:5px;background:var(--hivis);color:var(--ink)}
+.dnav.staff .iconbtn{background:transparent;border-color:rgba(255,255,255,.2);color:#fff}
+.dnav.staff .iconbtn .badge{box-shadow:0 0 0 2px var(--ink)}
+.pagehead{display:flex;align-items:flex-end;gap:24px;margin-bottom:24px}
+.pagehead h1{font-weight:800;font-stretch:80%;font-size:40px;line-height:1;letter-spacing:-.02em}
+.pagehead p{margin-top:8px;font-size:15px;color:var(--ink-2)}
+.pagehead .right{margin-left:auto;display:flex;gap:8px}
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;margin-bottom:24px}
+.kpi{padding:20px 24px}
+.kpi span{font-size:14px;font-weight:600;color:var(--ink-2)}
+.kpi b{display:block;margin-top:8px;font-weight:800;font-stretch:85%;font-size:36px;line-height:1;font-variant-numeric:tabular-nums}
+.kpi small{display:block;margin-top:8px;font-size:13.5px;color:var(--ink-3)}
+.kpi.bad{border-color:var(--red)}
+.kpi.bad b{color:var(--red)}
+.q{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 24px;padding:20px 24px;align-items:start}
+.q .type{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;color:var(--ink-3)}
+.q .type .ic{width:15px;height:15px}
+.q h3{margin-top:6px;font-weight:700;font-size:16.5px;line-height:1.3}
+.q .why{margin-top:6px;font-size:14.5px}
+.q .acts{display:flex;gap:8px;padding-top:20px}
+.q.done{opacity:.5}
+.q .people{display:flex;margin-top:12px}
+.q .people i{width:28px;height:28px;border-radius:50%;border:2px solid var(--card);margin-left:-6px;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;color:#fff}
+.q .people i:first-child{margin-left:0}
+.draft{margin-top:10px;padding:14px 16px;border-radius:10px;background:var(--paper);border:1px solid var(--line);font-family:var(--f-voice);font-size:16px;line-height:1.45}
+.dist{width:100%;border-collapse:collapse;font-size:14px;color:var(--ink)}
+.dist th{text-align:left;font-size:12.5px;font-weight:600;color:var(--ink-3);padding:12px 16px 8px;white-space:nowrap;border-bottom:1px solid var(--line)}
+.dist td{padding:12px 16px;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.dist tr:last-child td{border-bottom:0}
+.dist td.n{text-align:right}
+.police-ctl{display:grid;gap:12px;padding:16px 24px;border-top:1px solid var(--line)}
+.police-ctl .row{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.police-ctl .row .meta{margin-left:auto}
+.pscale{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--ink-2)}
+.pscale i{width:14px;height:14px;border-radius:3px;background:var(--police)}
+.psrc{font-size:12.5px;color:var(--ink-3);line-height:1.45}
+.psrc b{color:var(--ink-2);font-weight:600}
+.police-ctl .tip{font-size:13.5px}
+.gap{color:var(--red-deep);font-weight:700;white-space:nowrap}
+.ok{color:var(--ink-3)}
+.dist th:first-child,.dist td:first-child{padding-left:24px}
+.dist th:last-child,.dist td:last-child{padding-right:24px}
+
+/* ---------- phone ---------- */
+.screen.ui{background:var(--paper)}
+.ph-top{display:flex;align-items:center;gap:8px;padding:8px 20px 0}
+.ph-top .logo{margin-right:auto}
+.ph-pad{padding:0 20px}
+.ph-sec{margin-top:32px}
+.ph-h{display:flex;justify-content:space-between;align-items:baseline;padding:0 20px;margin-bottom:12px}
+.ph-h h2{font-weight:800;font-stretch:88%;font-size:20px}
+.ph-h a{font-weight:700;font-size:14px;color:var(--green)}
+.ph-greet{padding:24px 20px 0}
+.ph-greet h1{margin-top:4px;font-family:var(--f-voice);font-weight:500;font-size:32px;line-height:1.05;letter-spacing:-.02em}
+.ph-head{display:flex;align-items:center;gap:12px;padding:8px 20px 16px}
+.ph-head .t{flex:1;min-width:0}
+.ph-head .t b{display:block;font-weight:800;font-stretch:85%;font-size:22px;line-height:1.1}
+.back{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:var(--card);display:grid;place-items:center;cursor:pointer;flex:none}
+.p-alert .body{display:grid;grid-template-columns:56px minmax(0,1fr);gap:12px;padding:16px}
+.p-alert h3{font-family:var(--f-voice);font-weight:600;font-size:22px;line-height:1.05}
+.p-alert p{margin-top:4px;font-size:14px;color:var(--ink-2)}
+.p-alert .prog{display:flex;align-items:center;gap:12px;padding:0 16px}
+.p-alert .prog span{font-size:13px;font-weight:600;color:var(--ink-2);white-space:nowrap}
+.p-alert .acts{display:grid;grid-template-columns:1fr auto;gap:8px;padding:16px}
+.need4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.need4>a{color:inherit;display:flex;flex-direction:column;align-items:flex-start;gap:10px;min-height:104px;padding:16px;border-radius:var(--r);border:1px solid var(--line);background:var(--card);text-align:left;cursor:pointer}
+.need4 .ic{width:24px;height:24px;color:var(--green)}
+.need4 b{display:block;font-weight:700;font-size:16px;line-height:1.15}
+.need4 small{display:block;margin-top:2px;font-size:13px;color:var(--ink-3)}
+.need4>.g{color:#fff;background:var(--green);border-color:var(--green);color:#fff}
+.need4 .g .ic{color:#fff}.need4 .g small{color:#CBE5D3}
+.strip{display:flex;gap:12px;overflow-x:auto;padding:0 20px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip .card{flex:0 0 260px;padding:16px}
+.strip b{display:block;margin-top:4px;font-weight:700;font-size:15px;line-height:1.3}
+.strip p{margin-top:4px;font-size:13.5px;color:var(--ink-2)}
+.endpad{height:128px}
+.tabbar{position:absolute;left:0;right:0;bottom:0;z-index:40;display:flex;justify-content:space-between;align-items:center;padding:10px 16px 30px;background:var(--card);border-top:1px solid var(--line);color:var(--ink-3)}
+.tabbar a{display:flex;flex-direction:column;align-items:center;gap:4px;width:60px;font-size:11.5px;font-weight:600}
+.tabbar a.on{color:var(--ink)}
+.tabbar a.on .ic{color:var(--green)}
+.tabbar .ic{width:24px;height:24px}
+.tabbar .post{width:56px;height:56px;margin-top:-28px;border-radius:16px;background:var(--green);color:#fff;display:grid;place-items:center;box-shadow:0 6px 16px -6px rgba(15,107,58,.6)}
+.tabbar .post .ic{width:26px;height:26px;stroke-width:2.5;color:#fff}
+/* onboarding */
+.ob{position:absolute;inset:0;display:flex;flex-direction:column}
+.ob-body{flex:1;overflow-y:auto;scrollbar-width:none;padding:0 24px}
+.ob-foot{padding:16px 24px 34px;display:grid;gap:12px;background:var(--paper);border-top:1px solid var(--line)}
+.ob-foot .alt{text-align:center;font-size:14px;color:var(--ink-2)}
+.ob-foot .alt a{color:var(--green);font-weight:700}
+.stepper{display:flex;align-items:center;gap:12px;padding:8px 24px 0}
+.stepper .bars{display:flex;gap:6px;flex:1}
+.stepper .bars i{flex:1;height:4px;border-radius:2px;background:var(--line)}
+.stepper .bars i.on{background:var(--green)}
+.stepper .meta{white-space:nowrap}
+.ob h1{font-family:var(--f-voice);font-weight:500;font-size:32px;line-height:1.08;letter-spacing:-.02em}
+.ob .lede{margin-top:12px;font-size:16px;color:var(--ink-2)}
+.hero{position:relative;background:var(--green);color:#fff;padding:0 24px 28px;background-image:repeating-linear-gradient(45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px),repeating-linear-gradient(-45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px)}
+.hero .lang{display:flex;justify-content:flex-end;gap:4px;padding-top:4px}
+.hero .lang button{border:0;background:none;color:#fff;opacity:.75;font-size:13px;font-weight:600;padding:6px 8px;border-radius:6px;cursor:pointer}
+.hero .lang button[aria-pressed="true"]{opacity:1;background:rgba(255,255,255,.18)}
+.hero .mark{width:64px;height:64px;margin-top:16px;display:grid;place-items:center;border-radius:16px;background:var(--paper)}
+.hero .mark svg{width:44px;height:44px}
+.hero .flag{margin-top:16px;font-size:11px}
+.hero h1{margin-top:16px;color:#fff;font-size:34px}
+.choice{display:grid;gap:12px;margin-top:24px}
+.choice button{display:grid;grid-template-columns:44px minmax(0,1fr) 22px;gap:14px;align-items:center;padding:14px 16px;border-radius:var(--r);border:1.5px solid var(--line);background:var(--card);text-align:left;cursor:pointer}
+.choice .sq{width:44px;height:44px;border-radius:10px;display:grid;place-items:center;background:var(--green-wash);color:var(--green)}
+.choice b{display:block;font-weight:700;font-size:16px}
+.choice small{display:block;font-size:13.5px;color:var(--ink-3)}
+.choice .radio{width:22px;height:22px;border-radius:50%;border:2px solid var(--line-2)}
+.choice button[aria-pressed="true"]{border-color:var(--green);box-shadow:0 0 0 1px var(--green)}
+.choice button[aria-pressed="true"] .radio{border:6px solid var(--green)}
+.locbtn{display:flex;align-items:center;gap:12px;width:100%;height:56px;padding:0 16px;margin-top:24px;border-radius:var(--r);border:1.5px solid var(--green);background:var(--card);color:var(--green);font-weight:700;font-size:16px;cursor:pointer}
+.or{margin:16px 0 12px;font-size:13.5px;font-weight:600;color:var(--ink-3)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:99px;border:1px solid var(--line-2);background:var(--card);font-size:14px;font-weight:600;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:#fff}
+.chip .ic{width:14px;height:14px}
+.ob h2{margin-top:32px;font-weight:800;font-stretch:88%;font-size:19px}
+.ob .sub{margin-top:4px;font-size:14px;color:var(--ink-2)}
+.pick{margin-top:12px;background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.pick button{display:grid;grid-template-columns:36px minmax(0,1fr) 24px;gap:12px;align-items:center;width:100%;padding:12px 16px;border:0;background:none;text-align:left;cursor:pointer}
+.pick button+button{border-top:1px solid var(--line)}
+.pick b{display:block;font-weight:700;font-size:15px}
+.pick small{display:block;font-size:13px;color:var(--ink-3)}
+.pick .box{width:24px;height:24px;border-radius:7px;border:2px solid var(--line-2);display:grid;place-items:center;color:transparent}
+.pick .box .ic{width:15px;height:15px;stroke-width:3}
+.pick button[aria-pressed="true"] .box{background:var(--green);border-color:var(--green);color:#fff}
+.demo{display:grid;grid-template-columns:1fr 36px 1fr;align-items:center;margin-top:20px;padding:16px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
+.demo .arrow{color:var(--ink-3);justify-self:center}
+.mini{height:164px;border-radius:16px;border:2px solid var(--ink);overflow:hidden;background:var(--paper);position:relative}
+.mini .bar{display:flex;justify-content:flex-end;padding:8px}
+.mini .x{height:20px;padding:0 8px;border-radius:5px;background:var(--red);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;box-shadow:0 0 0 4px rgba(216,50,43,.25);animation:ring 1.6s ease-out infinite}
+@keyframes ring{0%{box-shadow:0 0 0 0 rgba(216,50,43,.45)}100%{box-shadow:0 0 0 10px rgba(216,50,43,0)}}
+.mini .ln{height:8px;margin:8px 10px 0;border-radius:3px;background:var(--line)}
+.mini .ln.s{width:55%}.mini .ln.r{background:var(--red-wash);height:34px}
+.mini.bus{border-color:#2F5D9E;background:#fff}
+.mini.bus .hd{background:#2F5D9E;color:#fff;font-family:Arial,sans-serif;font-size:10px;font-weight:700;padding:12px 8px 10px}
+.mini.bus .row{display:flex;justify-content:space-between;padding:7px 8px;border-bottom:1px solid #E5E8EC;font-family:Arial,sans-serif;font-size:9px;color:#5A6370}
+.demo .cap{grid-column:1/-1;display:grid;grid-template-columns:1fr 36px 1fr;margin-top:10px;font-size:12.5px;font-weight:600;color:var(--ink-2);text-align:center}
+.setrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;margin-top:16px;padding:16px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
+.setrow b{display:block;font-weight:700;font-size:15px}
+.setrow small{display:block;margin-top:2px;font-size:13px;color:var(--ink-2);line-height:1.4}
+.switch{width:48px;height:28px;border-radius:99px;border:0;background:var(--line-2);position:relative;cursor:pointer;flex:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}
+.switch[aria-checked="true"]{background:var(--green)}
+.switch[aria-checked="true"]::after{left:23px}
+.how{margin-top:16px;display:grid;gap:12px;counter-reset:how}
+.how li{list-style:none;display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;font-size:15px;color:var(--ink-2)}
+.how li::before{counter-increment:how;content:counter(how);width:28px;height:28px;border-radius:50%;background:var(--ink);color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.how b{color:var(--ink)}
+/* ask */
+.chat{display:grid;gap:12px;padding:0 20px}
+.bubble{max-width:86%;padding:12px 14px;border-radius:16px;font-size:15px;line-height:1.4}
+.bubble.me{justify-self:end;background:var(--ink);color:#fff;border-bottom-right-radius:4px}
+.bubble.hub{background:var(--card);border:1px solid var(--line);border-bottom-left-radius:4px}
+.bubble .meta{display:block;margin-bottom:6px;font-weight:600}
+.heard{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.heard .tag{height:28px;padding:0 6px 0 10px}
+.heard .tag .ic{width:12px;height:12px;opacity:.6}
+.match{display:grid;gap:8px;margin-top:4px}
+.match a{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--paper)}
+.match a .ic{color:var(--green)}
+.match b{display:block;font-weight:700;font-size:15px}
+.match small{display:block;font-size:13px;color:var(--ink-2)}
+.inputbar{position:absolute;left:0;right:0;bottom:0;z-index:40;display:flex;gap:8px;padding:12px 16px 30px;background:var(--card);border-top:1px solid var(--line)}
+.inputbar input{flex:1;height:44px;padding:0 16px;border-radius:99px;border:1px solid var(--line);background:var(--paper);font-size:15px}
+.inputbar button{width:44px;height:44px;border-radius:50%;border:0;display:grid;place-items:center;cursor:pointer;background:var(--sunk);color:var(--ink)}
+.inputbar button.send{background:var(--green);color:#fff}
+/* route */
+.sheet{position:absolute;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-radius:24px 24px 0 0;padding:12px 20px 34px;box-shadow:0 -12px 32px -12px rgba(22,32,27,.35)}
+.grab{width:40px;height:5px;border-radius:3px;background:var(--line-2);margin:0 auto 16px}
+.eta{display:flex;align-items:baseline;gap:12px}
+.eta b{font-weight:800;font-stretch:80%;font-size:44px;line-height:.9;letter-spacing:-.02em;white-space:nowrap}
+.eta span{font-size:15px;color:var(--ink-2)}
+.facts2{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 16px}
+.facts2 span{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:6px;font-size:13px;font-weight:600;background:var(--green-wash);color:var(--green-ink)}
+.facts2 .ic{width:14px;height:14px}
+.alts{display:grid;margin:0 0 16px;border-top:1px solid var(--line)}
+.alts button{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;height:52px;border:0;border-bottom:1px solid var(--line);background:none;text-align:left;cursor:pointer;font-size:15px}
+.alts button[aria-pressed="true"] span{font-weight:700}
+.alts button .meta{font-weight:600}
+.sheet .btn+.btn{margin-top:8px}
+.walking .go{background:var(--hivis);border-color:var(--hivis);color:var(--ink)}
+.floattop{position:absolute;top:54px;left:16px;right:16px;z-index:20;display:flex;align-items:center;gap:8px}
+.floattop .pill{flex:1;min-width:0;background:var(--card);border-radius:12px;padding:8px 12px;box-shadow:0 8px 20px -10px rgba(22,32,27,.45)}
+.floattop .pill .meta{display:block;font-size:12px}
+.floattop .pill b{display:block;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.floattop .iconbtn{box-shadow:0 8px 20px -10px rgba(22,32,27,.45)}
+/* search */
+.redhead{background:var(--red);color:#fff;padding-bottom:20px;background-image:repeating-linear-gradient(45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px),repeating-linear-gradient(-45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px)}
+.redhead .back{background:rgba(255,255,255,.18);border:0;color:#fff}
+.redhead .exit{background:#fff;color:var(--red-deep)}
+.redhead .ph-head .meta{color:#fff;opacity:.85}
+.sp-who{display:flex;gap:12px;align-items:center;margin:0 20px;padding:12px;background:var(--card);color:var(--ink);border-radius:var(--r)}
+.sp-who b{font-family:var(--f-voice);font-weight:600;font-size:20px}
+.sp-who p{margin-top:2px;font-size:13.5px;line-height:1.35;color:var(--ink-2)}
+.dispatch{display:grid;grid-template-columns:auto minmax(0,1fr);gap:12px;padding:14px 16px;background:var(--card);border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:var(--r)}
+.dispatch .ic{margin-top:2px}
+.dispatch p{margin-top:4px;font-family:var(--f-voice);font-size:16px;line-height:1.38}
+.mapcard{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:var(--card)}
+.sp-legend{display:flex;gap:14px;flex-wrap:wrap;padding:10px 14px;border-top:1px solid var(--line);font-size:12.5px;color:var(--ink-2)}
+.sp-legend span{display:inline-flex;align-items:center;gap:6px}
+.sp-legend i{width:13px;height:13px;display:inline-block;border:1.5px solid var(--ink);border-radius:2px}
+.mine-card{display:grid;grid-template-columns:auto minmax(0,1fr);gap:16px;align-items:center;padding:16px;background:var(--ink);color:#fff;border-radius:var(--r)}
+.mine-card .big{width:56px;height:64px;display:grid;place-items:center;background:var(--hivis);color:var(--ink);font-weight:800;font-stretch:80%;font-size:42px;border-radius:8px}
+.mine-card.cleared .big{background:var(--green-2);color:#fff}
+.mine-card [data-mine-label]{font-size:13px;font-weight:700;color:var(--hivis)}
+.mine-card.cleared [data-mine-label]{color:#9BE0B4}
+.mine-card p{margin-top:4px;font-size:14px;line-height:1.4;color:#CFD9D2}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+details.tip{display:block}
+details.tip summary{display:flex;gap:12px;align-items:center;cursor:pointer;list-style:none;font-weight:700}
+details.tip summary::-webkit-details-marker{display:none}
+details.tip summary .chev{margin-left:auto;transition:transform .15s}
+details.tip[open] summary .chev{transform:rotate(90deg)}
+details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
+/* requests */
+.filters{display:flex;gap:8px;overflow-x:auto;padding:0 20px;scrollbar-width:none}
+.filters::-webkit-scrollbar{display:none}
+.filters .chip{flex:none}
+.lockline{display:flex;flex-direction:column;gap:8px;align-items:flex-start;margin-top:4px}
+.lockline .btn{height:34px;font-size:13.5px;padding:0 12px}
+.lockstub{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;border-left:2px dashed var(--line-2);color:var(--ink-3);font-size:12.5px;font-weight:700;text-align:center;padding:0 6px}
+.addsafe{display:grid;gap:12px;padding:16px;border-radius:var(--r);border:1.5px dashed var(--line-2);background:var(--card)}
+.addsafe>b{font-weight:700;font-size:16px}
+.addsafe .field{margin:0}
+.tickrow{display:flex;flex-wrap:wrap;gap:8px}
+
+/* ---------- added scenes ---------- */
+.notes2{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px;margin-top:32px;counter-reset:n2}
+@media (max-width:1000px){.notes2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:560px){.notes2{grid-template-columns:1fr}}
+.notes2 div{counter-increment:n2;display:grid;grid-template-columns:28px minmax(0,1fr);gap:12px;font-size:15px;line-height:1.45;color:var(--stage-mute)}
+.notes2 div::before{content:counter(n2);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1.5px solid var(--hivis);color:var(--hivis);font-weight:800;font-size:13px}
+.notes2 b{display:block;color:var(--stage-fg);font-weight:700;margin-bottom:2px}
+.sub-shelf{margin:56px 0 16px;display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.sub-shelf h3{margin:0;font-size:20px;font-weight:800;font-stretch:88%}
+.sub-shelf span{color:var(--stage-mute);font-size:14px}
+.statuscard{padding:20px;border-radius:var(--r);background:var(--green);color:#fff}
+.statuscard .meta{color:#CBE5D3}
+.statuscard h2{margin-top:6px;font-family:var(--f-voice);font-weight:500;font-size:26px;line-height:1.1}
+.statuscard .eta2{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700}
+.statuscard .eta2 .live{color:var(--hivis)}
+.vol{display:grid;grid-template-columns:48px minmax(0,1fr);gap:12px;align-items:center;padding:16px}
+.vol .avatar{width:48px;height:48px;font-size:18px;background:#B5651D}
+.vol b{display:block;font-weight:700;font-size:16px}
+.vol small{display:block;font-size:13px;color:var(--ink-2)}
+.vol-acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;padding:0 16px 16px}
+.tl{list-style:none;margin:0;padding:16px;display:grid}
+.tl li{position:relative;display:grid;grid-template-columns:24px minmax(0,1fr) auto;gap:12px;padding-bottom:18px;font-size:15px}
+.tl li:last-child{padding-bottom:0}
+.tl li::after{content:"";position:absolute;left:11px;top:24px;bottom:0;width:2px;background:var(--line)}
+.tl li:last-child::after{display:none}
+.tl .dot{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line-2);background:var(--card);z-index:1}
+.tl .dot .ic{width:13px;height:13px;stroke-width:3}
+.tl li.done .dot{background:var(--green);border-color:var(--green);color:#fff}
+.tl li.done::after{background:var(--green)}
+.tl li.now .dot{border-color:var(--green);box-shadow:0 0 0 4px var(--green-wash)}
+.tl li.now .dot::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--green)}
+.tl b{font-weight:700}
+.tl small{display:block;font-size:13px;color:var(--ink-3)}
+.tl .meta{font-variant-numeric:tabular-nums}
+.ui .list-h{font-size:13px;font-weight:700;color:var(--ink-3);margin:24px 20px 8px}
+.pcard{padding:16px;display:grid;gap:8px}
+.pcard .top{display:flex;align-items:baseline;gap:8px}
+.pcard .top b{font-weight:700;font-size:16px}
+.pcard .top .open{margin-left:auto;font-size:13px;font-weight:700;color:var(--green);white-space:nowrap}
+.pcard .top .open.closed{color:var(--ink-3)}
+.pcard .tags{display:flex;gap:6px;flex-wrap:wrap}
+.pcard .acts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px}
+.ontask{display:flex;gap:12px;align-items:center;padding:16px;border-radius:var(--r);background:var(--green-wash);color:var(--green-ink)}
+.ontask .ic{width:24px;height:24px;color:var(--green)}
+.ontask b{display:block;font-weight:700;font-size:16px}
+.ontask small{display:block;font-size:13px}
+.kv{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;padding:14px 16px;font-size:15px}
+.kv .ic{color:var(--ink-3);margin-top:2px}
+.kv b{display:block;font-weight:700}
+.kv small{display:block;font-size:13px;color:var(--ink-2)}
+.checks{display:grid}
+.checks button{display:grid;grid-template-columns:24px minmax(0,1fr);gap:12px;align-items:center;padding:12px 16px;border:0;background:none;text-align:left;font-size:15px;cursor:pointer}
+.checks button+button{border-top:1px solid var(--line)}
+.checks .box{width:24px;height:24px;border-radius:7px;border:2px solid var(--line-2);display:grid;place-items:center;color:transparent}
+.checks .box .ic{width:15px;height:15px;stroke-width:3}
+.checks button[aria-pressed="true"] .box{background:var(--green);border-color:var(--green);color:#fff}
+.checks button[aria-pressed="true"] span:last-child{color:var(--ink-3);text-decoration:line-through}
+[data-walk].walking .go{background:var(--hivis);border-color:var(--hivis);color:var(--ink)}
+.inbox a{display:grid;grid-template-columns:40px minmax(0,1fr) auto;gap:12px;align-items:start;padding:14px 16px}
+.inbox a+a{border-top:1px solid var(--line)}
+.inbox .sq{width:40px;height:40px;border-radius:10px;display:grid;place-items:center}
+.inbox .sq .ic{width:19px;height:19px}
+.inbox b{display:block;font-weight:700;font-size:15px;line-height:1.3}
+.inbox small{display:block;margin-top:2px;font-size:13.5px;color:var(--ink-2);line-height:1.35}
+.inbox .meta{white-space:nowrap;font-size:12.5px}
+.inbox a.unread b::before{content:"";display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:6px;vertical-align:2px}
+.evhero{position:relative;padding:20px;border-radius:var(--r);background:#5B3B86;color:#fff;overflow:hidden;background-image:repeating-linear-gradient(45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px),repeating-linear-gradient(-45deg,transparent 0 15px,rgba(255,255,255,.07) 15px 17px)}
+.evhero .meta{color:#E2D6F2}
+.evhero h2{margin-top:8px;font-family:var(--f-voice);font-weight:500;font-size:28px;line-height:1.08}
+.evdate{display:flex;gap:16px;margin-top:16px}
+.evdate div{padding:8px 12px;border-radius:10px;background:rgba(255,255,255,.14)}
+.evdate b{display:block;font-size:17px;font-weight:800}
+.evdate small{font-size:12.5px;color:#E2D6F2}
+.going{display:flex;align-items:center;gap:12px;padding:16px}
+.going .people{display:flex}
+.going .people i{width:30px;height:30px;border-radius:50%;border:2px solid var(--card);margin-left:-8px;display:grid;place-items:center;font-style:normal;font-size:11px;font-weight:700;color:#fff}
+.going .people i:first-child{margin-left:0}
+.rsvp{display:grid;grid-template-columns:1fr auto;gap:8px}
+.me-head{display:flex;gap:16px;align-items:center;padding:8px 20px 0}
+.me-head .avatar{width:64px;height:64px;font-size:26px}
+.me-head h1{font-family:var(--f-voice);font-weight:500;font-size:28px;line-height:1.05}
+.prog2{height:8px;border-radius:4px;background:var(--sunk);overflow:hidden;margin:10px 0 8px}
+.prog2 i{display:block;height:100%;background:var(--green)}
+.stats3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.stats3 div{padding:14px;border-radius:var(--r);background:var(--card);border:1px solid var(--line)}
+.stats3 b{display:block;font-size:24px;font-weight:800;font-stretch:85%;line-height:1}
+.stats3 small{display:block;margin-top:4px;font-size:12.5px;color:var(--ink-2)}
+.setlist{background:var(--card);border:1px solid var(--line);border-radius:var(--r)}
+.setlist>div,.setlist>a{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:14px 16px}
+.setlist>*+*{border-top:1px solid var(--line)}
+.setlist b{display:block;font-weight:700;font-size:15px}
+.setlist small{display:block;font-size:13px;color:var(--ink-2);line-height:1.4}
+.setlist .val{font-size:14px;color:var(--ink-3);display:flex;align-items:center;gap:4px}
+.setlist .val .ic{width:16px;height:16px}
+.danger-link{display:block;text-align:center;margin-top:16px;font-size:14px;font-weight:600;color:var(--red-deep)}
+/* hubs directory */
+.dirgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:24px}
+.hubcard{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.hubcard .band{height:72px;display:flex;align-items:flex-end;padding:0 20px;position:relative;background-image:repeating-linear-gradient(45deg,transparent 0 15px,rgba(255,255,255,.08) 15px 17px),repeating-linear-gradient(-45deg,transparent 0 15px,rgba(255,255,255,.08) 15px 17px)}
+.hubcard .band .sw{transform:translateY(18px);border:3px solid var(--card);width:44px;height:44px;border-radius:12px}
+.hubcard .band .flag2{position:absolute;top:12px;right:12px;font-size:12px;font-weight:700;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,.92);color:var(--ink)}
+.hubcard .band .flag2.hot{background:#fff;color:var(--red-deep)}
+.hubcard .body{display:flex;flex-direction:column;gap:8px;padding:28px 20px 20px;flex:1}
+.hubcard h3 a:hover{text-decoration:underline}
+.hubcard h3{font-weight:700;font-size:17px;line-height:1.2}
+.hubcard p{font-size:14px;color:var(--ink-2)}
+.hubcard .stats{font-size:13px;color:var(--ink-3)}
+.hubcard .tools{display:flex;gap:6px;flex-wrap:wrap}
+.hubcard .btn{margin-top:auto;align-self:flex-start}
+.hubcard.left .btn.joined{background:var(--card);border-color:var(--line-2);color:var(--ink)}
+.hubcard.left .btn.joined .ic,.hubhead.left .acts .btn .ic{display:none}
+.hubcard .btn.joined{background:var(--green-wash);border-color:var(--green-wash);color:var(--green-ink)}
+@media (prefers-reduced-motion:reduce){.live,.mini .x,.dnav .esc{animation:none!important}}
+</style>
+
+%%DEFS%%
+
+<div class="wrap">
+  <header class="st-intro" id="top">
+    <div>
+      <span class="flag">We empower. We protect. We uplift.</span>
+      <h1>ComForce MKE <em>Hub</em></h1>
+    </div>
+    <div>
+      <p>A prototype of the ComForce MKE community app for phone and desktop. One place where Milwaukee neighbors can ask for help, give help, find somewhere safe, and join the ComForce program hubs. The screens below follow a real person's path, from opening the app for the first time to a coordinator's view of the whole district. Maps use real Milwaukee streets.</p>
+      <p class="st-kicker" style="margin-top:16px">Prototype · sample people and requests · try the buttons</p>
+    </div>
+  </header>
+
+  <section class="review" aria-label="How it's designed">
+    <section><h3>Clear priorities</h3><ul>
+      <li><b>One urgent alert at a time,</b> at the top of the page, only when a verified search is live nearby.</li>
+      <li><b>One main action per area.</b> Everything else is a quieter secondary button or a link.</li>
+      <li><b>Two typefaces, each with one job.</b> Serif italic only ever means "the AI is explaining itself."</li>
+    </ul></section>
+    <section><h3>Easy to follow</h3><ul>
+      <li><b>Home reads top to bottom:</b> what's urgent, what you need, how you can help, then your community.</li>
+      <li><b>Laptop and phone match.</b> The same "What do you need?" actions appear on both.</li>
+      <li><b>Every hub has the same tabs,</b> plus its own tools, so moving between hubs feels familiar.</li>
+      <li><b>Coordinators work from one queue</b> of decisions, each with the AI's reasoning.</li>
+    </ul></section>
+    <section><h3>Built for first-timers</h3><ul>
+      <li><b>A 3-step welcome:</b> choose your path, set your area and hubs, and practice Quick Exit.</li>
+      <li><b>A first-visit home</b> with a setup checklist and short explanations. The toggle in section 2 shows it.</li>
+      <li><b>Plain words:</b> "Urgent, Today, This week" and "3 of 8 blocks searched", not codes.</li>
+      <li><b>Locked items say how to unlock them</b> instead of hiding.</li>
+    </ul></section>
+    <section><h3>Calm and readable</h3><ul>
+      <li><b>One 8-point spacing scale:</b> 24px inside cards, 24px between cards, 48px between page sections, 20px phone margins.</li>
+      <li><b>Few borders and boxes.</b> Rows divide with hairlines, and cards never sit inside cards.</li>
+      <li><b>Tap targets are at least 44px,</b> and body text is at least 15px.</li>
+    </ul></section>
+  </section>
+
+  <nav class="jnav" aria-label="Journeys">
+    <a href="#j-first"><i>1</i>First visit</a>
+    <a href="#j-home"><i>2</i>Home</a>
+    <a href="#j-get"><i>3</i>Getting help</a>
+    <a href="#j-give"><i>4</i>Giving help</a>
+    <a href="#j-hub"><i>5</i>Hubs</a>
+    <a href="#j-coord"><i>6</i>Coordinator</a>
+    <a href="#j-day"><i>7</i>Everyday</a>
+    <a href="#j-cov"><i>✓</i>Coverage</a>
+  </nav>
+
+  <!-- ================= 1 FIRST VISIT ================= -->
+  <section class="shelf" id="j-first" aria-label="First visit">
+    <div class="shelf-head"><h2><i>1</i>First visit · phone</h2><span>about 90 seconds, then home</span></div>
+    <p class="shelf-lede">Three short steps before home. Each one does real work: it picks the right home layout, sets the area and hubs, and teaches the one safety feature someone may need in a hurry. Asking for help never requires an account.</p>
+    <div class="phones">
+
+      <figure class="slot" id="p-welcome">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="ob" data-live>
+            <div class="ob-body" style="padding:0">
+              <div class="hero">
+                <div class="statusbar" style="padding-left:10px;padding-right:6px"><span>6:02</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+                <div class="lang" role="group" aria-label="Language"><button aria-pressed="true" data-seg>English</button><button aria-pressed="false" data-seg>Español</button><button aria-pressed="false" data-seg>Hmoob</button></div>
+                <span class="mark" aria-hidden="true"><svg><use href="#logo-mark"/></svg></span>
+                <h1 class="voice">Neighbors helping neighbors, all across Milwaukee.</h1>
+              </div>
+              <div style="padding:24px 24px 0">
+                <p style="font-size:16px;font-weight:700">What brings you here today?</p>
+                <p class="meta" style="margin-top:2px">This sets up your home. You can change it anytime.</p>
+                <div class="choice" role="group" aria-label="What brings you here">
+                  <button aria-pressed="true" data-seg><span class="sq"><svg class="ic"><use href="#i-hand"/></svg></span><span><b>I need some help</b><small>Food, a ride, a safe place, someone to talk to</small></span><span class="radio"></span></button>
+                  <button aria-pressed="false" data-seg><span class="sq"><svg class="ic"><use href="#i-users"/></svg></span><span><b>I want to help</b><small>Take requests, join searches, share food</small></span><span class="radio"></span></button>
+                  <button aria-pressed="false" data-seg><span class="sq"><svg class="ic"><use href="#i-search"/></svg></span><span><b>Just looking around</b><small>See what's happening near you</small></span><span class="radio"></span></button>
+                </div>
+              </div>
+            </div>
+            <div class="ob-foot">
+              <a class="btn primary block" href="#p-setup">Continue</a>
+              <p class="alt">No account needed to ask for help · <a href="#p-home">Sign in</a></p>
+            </div>
+          </div>
+        </div></div></div></div>
+        <figcaption><b>1 · Welcome</b><p>The first question is about the person, not the app. Their answer decides which hubs are suggested and what home shows first. <strong>Language</strong> comes first, before any reading is needed.</p></figcaption>
+      </figure>
+
+      <figure class="slot" id="p-setup">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="ob" data-live>
+            <div class="statusbar"><span>6:03</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="stepper"><a class="back" href="#p-welcome" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><span class="bars"><i class="on"></i><i class="on"></i><i></i></span><span class="meta">Step 2 of 3</span></div>
+            <div class="ob-body" style="padding-top:24px">
+              <h1>Where are you, roughly?</h1>
+              <p class="lede">We use this to show nearby help. Neighbors only ever see your block, never your address.</p>
+              <button class="locbtn" data-once="Found you: Westown"><svg class="ic"><use href="#i-nav"/></svg><span data-label>Use my location</span></button>
+              <p class="or">Or pick a neighborhood</p>
+              <div class="chips" role="group" aria-label="Neighborhood">
+                <button class="chip" aria-pressed="true" data-seg><svg class="ic"><use href="#i-check"/></svg>Westown</button>
+                <button class="chip" aria-pressed="false" data-seg>Near West Side</button>
+                <button class="chip" aria-pressed="false" data-seg>Haymarket</button>
+                <button class="chip" aria-pressed="false" data-seg>Juneautown</button>
+                <button class="chip" aria-pressed="false" data-seg>More…</button>
+              </div>
+              <h2>Pick your hubs</h2>
+              <p class="sub">Suggested for someone who needs help in Westown.</p>
+              <div class="pick" role="group" aria-label="Hubs">
+                <button aria-pressed="true" data-tick><span class="sw" style="background:var(--green)"><svg class="ic"><use href="#i-food"/></svg></span><span><b>Food &amp; Mutual Aid</b><small>3 pantries open now</small></span><span class="box"><svg class="ic"><use href="#i-check"/></svg></span></button>
+                <button aria-pressed="true" data-tick><span class="sw" style="background:#2F5D9E"><svg class="ic"><use href="#i-ride"/></svg></span><span><b>Rides &amp; Transportation</b><small>Free rides from volunteers</small></span><span class="box"><svg class="ic"><use href="#i-check"/></svg></span></button>
+                <button aria-pressed="false" data-tick><span class="sw" style="background:var(--ink)"><svg class="ic"><use href="#i-shield"/></svg></span><span><b>Domestic Safety</b><small>Private: no one can see you joined</small></span><span class="box"><svg class="ic"><use href="#i-check"/></svg></span></button>
+                <button aria-pressed="false" data-tick><span class="sw" style="background:#3E7DB3"><svg class="ic"><use href="#i-family"/></svg></span><span><b>MKE Parents Club</b><small>Swaps, childcare, advice</small></span><span class="box"><svg class="ic"><use href="#i-check"/></svg></span></button>
+              </div>
+              <p class="meta" style="margin:12px 0 24px">Missing-person alerts near you are always on. 4 more hubs are under Hubs.</p>
+            </div>
+            <div class="ob-foot"><a class="btn primary block" href="#p-exitlesson">Continue</a></div>
+          </div>
+        </div></div></div></div>
+        <figcaption><b>2 · Area and hubs</b><p>Location comes with a reason and a promise. Hubs come pre-checked from step 1, so most people just tap Continue. <strong>Domestic Safety</strong> says up front that joining it is private.</p></figcaption>
+      </figure>
+
+      <figure class="slot" id="p-exitlesson">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="ob" data-live>
+            <div class="statusbar"><span>6:04</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="stepper"><a class="back" href="#p-setup" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><span class="bars"><i class="on"></i><i class="on"></i><i class="on"></i></span><span class="meta">Step 3 of 3</span></div>
+            <div class="ob-body" style="padding-top:24px">
+              <h1>Leave in one tap.</h1>
+              <p class="lede">If someone walks up, tap <b>Exit</b>. The app instantly turns into a bus schedule.</p>
+              <div class="demo" aria-hidden="true">
+                <div class="mini"><div class="bar"><span class="x">Exit</span></div><div class="ln"></div><div class="ln s"></div><div class="ln r"></div><div class="ln"></div><div class="ln s"></div></div>
+                <svg class="ic arrow"><use href="#i-arrow"/></svg>
+                <div class="mini bus"><div class="hd">Transit Schedule</div><div class="row"><span>Broadway &amp; State</span><span>6:18</span></div><div class="row"><span>Water &amp; Kilbourn</span><span>6:21</span></div><div class="row"><span>Wisconsin &amp; Jackson</span><span>6:24</span></div><div class="row"><span>Prospect &amp; Ogden</span><span>6:28</span></div></div>
+                <div class="cap"><span>Tap Exit</span><span></span><span>Looks like this</span></div>
+              </div>
+              <ul class="how">
+                <li><span><b>Exit is on every screen,</b> top right. On a computer, press Esc.</span></li>
+                <li><span><b>To come back,</b> tap the blue bar three times.</span></li>
+              </ul>
+              <div class="setrow"><span><b>Also exit when I shake my phone</b><small>Handy when your hands are full.</small></span><button class="switch" role="switch" aria-checked="false" aria-label="Shake to exit" data-switch></button></div>
+              <div style="height:24px"></div>
+            </div>
+            <div class="ob-foot">
+              <button class="btn block" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Try it now</button>
+              <a class="btn primary block" href="#j-home">Finish</a>
+            </div>
+          </div>
+        </div></div></div></div>
+        <figcaption><b>3 · Quick Exit lesson</b><p>Showing it once is better than burying it in settings. <strong>Try it now</strong> really works: the bus schedule appears, and three taps on the blue bar bring you back.</p></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ================= 2 HOME (desktop) ================= -->
+  <section class="shelf" id="j-home" aria-label="Desktop home">
+    <div class="shelf-head"><h2><i>2</i>Home · desktop</h2>
+      <div class="modes" role="group" aria-label="Show home as"><button aria-pressed="true" data-mode="new">First visit</button><button aria-pressed="false" data-mode="ret">Returning</button></div>
+    </div>
+    <p class="shelf-lede">The page reads in order: what's urgent, what you need, how you can help, then your community. Switch between <b>First visit</b> and <b>Returning</b>. The first visit adds a setup checklist, short explanations and a Quick Exit tip, and the explanations go away once they've done their job.</p>
+    <div class="fit" data-w="1280"><div class="scale"><div class="browser">
+      <div class="browser-bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">comforce.mke/home</div><div style="width:52px"></div></div>
+      <div data-app="desk" style="position:relative">
+      <div class="ui desk" data-live id="home" data-mode="new">
+        <header class="dnav">
+          <a class="logo" href="#top"><svg><use href="#logo-mark"/></svg><b>ComForce <span>MKE</span></b></a>
+          <nav aria-label="Main"><a class="on" href="#j-home"><span>Home</span></a><a href="#j-get">Map</a><a href="#j-hub">Hubs</a><a href="#j-give">Requests</a></nav>
+          <div class="dtools">
+            <div class="dsearch"><svg class="ic"><use href="#i-search"/></svg>Search help, places, hubs</div>
+            <a class="iconbtn" href="#p-alerts" aria-label="Notifications"><svg class="ic"><use href="#i-bell"/></svg><span class="badge"></span></a>
+            <span class="avatar" aria-label="Jordan">J</span>
+            <button class="esc" data-exit><kbd>esc</kbd>Quick exit</button>
+          </div>
+        </header>
+        <aside class="coach only-new" data-coach><span><b>New?</b> Quick exit hides this page instantly. Press Esc to try it.</span><button data-dismiss aria-label="Dismiss tip"><svg class="ic"><use href="#i-x"/></svg></button></aside>
+
+        <main class="dpage">
+          <article class="alertcard" aria-label="Missing person alert">
+            <div class="alert-strip"><span class="live"></span><span>Missing person · 1.3 mi from you</span><span>Posted 5:42 PM</span></div>
+            <div class="d-alert">
+              <svg class="halftone" width="72" height="88" aria-label="Photo placeholder"><use href="#portrait"/></svg>
+              <div><h2>Darnell, 14</h2><p>Last seen 4:55 PM at N 27th St &amp; W Wisconsin Ave. Black hoodie, red backpack.</p><span class="verified" style="margin-top:6px"><svg class="ic"><use href="#i-check"/></svg>Verified by ComForce</span></div>
+              <div class="prog"><span data-count="# of 8 blocks searched · 38 neighbors out">3 of 8 blocks searched</span><span class="segs" data-segs><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span></div>
+              <div class="acts"><a class="btn danger" href="#p-search">Join the search</a><button class="btn" data-once="Link copied"><span data-label>Share</span></button></div>
+            </div>
+            <div class="d-alert-why only-new"><svg class="ic"><use href="#i-alert"/></svg><span><b>Why you're seeing this:</b> ComForce posts verified alerts for missing neighbors within 2 miles. You can join, share, or do nothing. All of those are fine.</span></div>
+          </article>
+
+          <div class="greet only-ret">
+            <div><span class="kicker">Wednesday, Nov 18 · 6:12 PM · Westown</span><h1>Good evening, Jordan. Here's <em>tonight</em>.</h1><p class="why" style="font-size:16px"><svg class="ic"><use href="#i-spark"/></svg>Ordered for you: you open Food and Missing Persons the most.</p></div>
+            <div class="right"><button class="btn sm" data-toggle-class="#home|editing" data-on="Done"><svg class="ic"><use href="#i-grip"/></svg><span data-label>Customize</span></button></div>
+          </div>
+          <div class="greet only-new">
+            <div><span class="kicker">Westown · Wednesday evening</span><h1>Welcome, Jordan. <em>Glad you're here.</em></h1><p>ComForce MKE has helped 10,000+ Milwaukee residents with 300+ volunteers and partners. Here's what's happening near you.</p></div>
+          </div>
+
+          <section class="card start only-new" aria-label="Get set up">
+            <div class="start-h"><h2>Get set up</h2><span class="bar"><i></i></span><span class="meta">1 of 4 done · about 2 minutes</span><button class="btn ghost sm" data-dismiss>Hide</button></div>
+            <div class="steps4">
+              <div class="step done"><span class="n"><svg class="ic"><use href="#i-check"/></svg></span><h3>Pick your area</h3><p>Westown. We'll show help within about 2 miles.</p><a class="btn ghost sm" style="padding:0" href="#p-setup">Change</a></div>
+              <div class="step"><span class="n">2</span><h3>Join a couple of hubs</h3><p>Food &amp; Mutual Aid and Missing Persons are the most active in Westown.</p><button class="btn sm primary" data-once="Joined both"><span data-label>Join both</span></button></div>
+              <div class="step"><span class="n">3</span><h3>Practice Quick Exit</h3><p>Hide the app in one click if someone walks up. Takes 5 seconds.</p><button class="btn sm" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Try it</button></div>
+              <div class="step"><span class="n">4</span><h3>Help a neighbor <span class="meta">(optional)</span></h3><p>Take requests nearby. Private ones need a 20-minute online training.</p><a class="btn sm" href="#j-give">See how</a></div>
+            </div>
+          </section>
+
+          <div class="g12" style="margin-top:24px">
+            <article class="mod c8" aria-label="Map">
+              <div class="mapwrap">
+                <div class="mapchips">
+                  <button class="mapchip" aria-pressed="true" data-layer-chip="search" data-map="map-home"><i style="background:var(--red)"></i>Search area</button>
+                  <button class="mapchip" aria-pressed="true" data-layer-chip="safe" data-map="map-home"><i style="background:var(--green)"></i>Safe places</button>
+                  <button class="mapchip" aria-pressed="true" data-layer-chip="pantry" data-map="map-home"><i style="background:#C98A12"></i>Food</button>
+                  <button class="mapchip" aria-pressed="true" data-layer-chip="event" data-map="map-home"><i style="background:var(--ink)"></i>Events</button>
+                  <button class="mapchip" aria-pressed="true" data-layer-chip="route" data-map="map-home"><i style="background:var(--hivis)"></i>My walk</button>
+                </div>
+                <svg class="map" id="map-home" viewBox="130 190 1120 580" data-px="781" role="img" aria-label="Map of the Near West Side to Juneautown with the search area, safe places, food, events and a walking route"><use href="#basemap"/></svg>
+                <span class="attrib osm">© OpenStreetMap contributors</span>
+              </div>
+            </article>
+            <article class="mod c4 needs" aria-label="What do you need">
+              <div class="mod-h" style="padding-bottom:16px"><h2>What do you need?</h2></div>
+              <a class="primary" href="#p-ask"><span class="sq"><svg class="ic"><use href="#i-plus"/></svg></span><span><b>Ask for help</b><small>Food, a ride, a check-in</small></span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a href="#p-route"><span class="sq"><svg class="ic"><use href="#i-shield"/></svg></span><span><b>Get somewhere safe</b><small>A lit walking route, right now</small></span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a href="#p-safe"><span class="sq"><svg class="ic"><use href="#i-flame"/></svg></span><span><b>Get warm</b><small>3 places open · 24°F tonight</small></span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <a href="#p-search"><span class="sq"><svg class="ic"><use href="#i-msg"/></svg></span><span><b>Share a tip</b><small>About a search · name optional</small></span><svg class="ic chev"><use href="#i-chev"/></svg></a>
+              <div class="sos"><svg class="ic"><use href="#i-phone"/></svg>In danger? Call 911 · 24/7 line 414-395-0552</div>
+            </article>
+
+            <article class="mod c7 on-card" aria-label="Requests near you">
+              <div class="mod-h"><h2>Neighbors who need a hand</h2><span class="count">23 nearby</span><a class="more" href="#p-board">See all</a></div>
+              <p class="mod-sub only-new">Neighbors post what they need here. <b>Take it</b> means "I'll handle this." You'll get the details privately, and you can hand it back anytime.</p>
+              <div class="mod-b tickets">
+                <article class="req" data-req><div class="req-main"><div class="req-meta"><span class="tag urgent">Urgent</span><span class="meta">Food</span><span class="dist">0.4 mi</span></div><h3>Groceries for a family of four</h3><p class="why"><svg class="ic"><use href="#i-spark"/></svg>No food since Sunday, toddler at home.</p></div><button class="take" data-take><svg class="ic"><use href="#i-hand"/></svg><span data-label>Take it</span><small>#104</small></button></article>
+                <article class="req" data-req><div class="req-main"><div class="req-meta"><span class="tag week">This week</span><span class="meta">Rides</span><span class="dist">1.0 mi</span></div><h3>Ride to a job workshop, Thursday 9 AM</h3></div><button class="take" data-take><svg class="ic"><use href="#i-hand"/></svg><span data-label>Take it</span><small>#097</small></button></article>
+                <article class="req only-ret" data-req><div class="req-main"><div class="req-meta"><span class="tag week">This week</span><span class="meta">Parents Club</span><span class="dist">1.3 mi</span></div><h3>Car seat swap: have 2, need a booster</h3></div><button class="take" data-take><svg class="ic"><use href="#i-hand"/></svg><span data-label>Take it</span><small>#322</small></button></article>
+              </div>
+            </article>
+            <article class="mod c5" aria-label="News from your hubs">
+              <div class="mod-h"><h2>News from your hubs</h2><a class="more" href="#j-hub">All</a></div>
+              <div class="mod-b rows">
+                <div class="bc"><span class="sq" style="background:var(--red-wash);color:var(--red)"><svg class="ic"><use href="#i-radio"/></svg></span><div><span class="meta">Missing Persons · 6:41 PM</span><b>Rally point moved to N 27th St &amp; W Wells St</b><p>Bring a flashlight. Check in with the volunteer in the green vest.</p></div></div>
+                <div class="bc"><span class="sq" style="background:var(--green-wash);color:var(--green)"><svg class="ic"><use href="#i-food"/></svg></span><div><span class="meta">Food &amp; Mutual Aid · 5:10 PM</span><b>Coat and glove drop tonight, 7–8 PM</b><p>Sample event. Location shared with members.</p></div></div>
+                <div class="bc"><span class="sq" style="background:var(--sunk);color:var(--ink)"><svg class="ic"><use href="#i-cal"/></svg></span><div><span class="meta">Youth Advocacy · Thursday</span><b>Cycle Breakers circle, 6 PM</b><p>Sample event. Open to ages 13–19.</p></div></div>
+              </div>
+            </article>
+
+            <article class="mod c7" aria-label="Your hubs">
+              <div class="mod-h only-ret"><h2>Your hubs</h2><span class="count">4 joined</span><a class="more" href="#j-hub">Explore all 8</a></div>
+              <div class="mod-b hubgrid only-ret">
+                <a class="ht" href="#p-search"><span class="sw" style="background:var(--red)"><svg class="ic"><use href="#i-search"/></svg></span><b>Missing Persons Network</b><small class="hot">1 live search</small></a>
+                <a class="ht" href="#j-hub"><span class="sw" style="background:var(--green)"><svg class="ic"><use href="#i-food"/></svg></span><b>Food &amp; Mutual Aid</b><small>6 open requests</small></a>
+                <a class="ht" href="#p-safe"><span class="sw" style="background:var(--ink)"><svg class="ic"><use href="#i-shield"/></svg></span><b>Domestic Safety</b><small>Private hub</small></a>
+                <a class="ht" href="#j-hub"><span class="sw" style="background:#2F5D9E"><svg class="ic"><use href="#i-ride"/></svg></span><b>Rides &amp; Transportation</b><small>2 open requests</small></a>
+              </div>
+              <div class="mod-h only-new"><h2>Hubs for Westown</h2><a class="more" href="#j-hub">Browse all 8</a></div>
+              <p class="mod-sub only-new">Each ComForce program has a hub with its own threads, map, requests and tools. Join the ones that fit you.</p>
+              <div class="mod-b rows only-new">
+                <div class="sugg"><span class="sw" style="background:var(--green)"><svg class="ic"><use href="#i-food"/></svg></span><span><b>Food &amp; Mutual Aid</b><small>245 members · pantries, food sharing</small></span><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div>
+                <div class="sugg"><span class="sw" style="background:var(--red)"><svg class="ic"><use href="#i-search"/></svg></span><span><b>Missing Persons Network</b><small>Alerts are on for everyone · join to help search</small></span><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div>
+                <div class="sugg"><span class="sw" style="background:#2F5D9E"><svg class="ic"><use href="#i-ride"/></svg></span><span><b>Rides &amp; Transportation</b><small>Free rides to work, clinics, school</small></span><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div>
+              </div>
+            </article>
+            <article class="mod c5" aria-label="Safe places">
+              <div class="mod-h"><h2>Safe places nearby</h2><a class="more" href="#p-safe">Add one</a></div>
+              <p class="mod-sub only-new">Places neighbors and ComForce trust: lit, open and staffed. The safe-route planner walks you to these.</p>
+              <div class="mod-b rows">
+                <div class="safe"><b>Central Library lobby</b><span class="confirm">12 neighbors confirm</span><p>814 W Wisconsin Ave · warm, staffed, restrooms</p></div>
+                <div class="safe"><b>MSOE Public Safety</b><span class="confirm">Verified</span><p>MSOE campus, near N Broadway</p></div>
+                <div class="safe"><b>Sojourner Family Peace Center</b><span class="confirm">Verified</span><p>619 W Walnut St · domestic violence help, 24/7</p></div>
+              </div>
+            </article>
+          </div>
+        </main>
+        <footer class="dfoot"><span><b>ComForce MKE</b> · Community Task Force MKE · Milwaukee, WI · 24/7: 414-395-0552</span><span>About · Privacy · Accessibility</span><span>Prototype · sample data</span></footer>
+      </div></div>
+    </div></div></div>
+    <div class="notes2"><div><span><b>One alert, one place</b>The missing-person alert is the only red block on the page. It disappears when the search ends or you're out of range.</span></div><div><span><b>Same actions as the phone</b>"What do you need?" mirrors the four phone tiles, so habits carry over between devices.</span></div><div><span><b>Tickets you can tear off</b>"Take it" is a stub on the right of every request. Taking one turns it green and reveals details privately.</span></div><div><span><b>Teach, then step back</b>First-visit explanations and the setup checklist hide once you're set up, or when you click Hide.</span></div></div>
+  </section>
+
+  <!-- ================= 3 GETTING HELP ================= -->
+  <section class="shelf" id="j-get" aria-label="Getting help">
+    <div class="shelf-head"><h2><i>3</i>Getting help · phone</h2><span>ask → follow it → food → a safe route → safe places</span></div>
+    <p class="shelf-lede">One path for someone who needs something tonight, including what happens after they ask. The four big tiles on home lead straight into these screens. Exit sits in the same spot on every screen.</p>
+    <div class="phones">
+
+      <figure class="slot" id="p-home">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live>
+            <div class="statusbar"><span>6:12</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="ph-top"><a class="logo" href="#top"><svg><use href="#logo-mark"/></svg><b>ComForce <span>MKE</span></b></a><a class="iconbtn" href="#p-alerts" aria-label="Notifications"><svg class="ic"><use href="#i-bell"/></svg><span class="badge"></span></a><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="ph-greet"><span class="kicker">Wed Nov 18 · 24°F · Westown</span><h1>Evening, <span class="hl">Jordan</span>.</h1></div>
+            <div class="ph-pad" style="margin-top:24px">
+              <article class="alertcard p-alert">
+                <div class="alert-strip"><span class="live"></span><span>Missing · 1.3 mi</span><span>5:42 PM</span></div>
+                <div class="body"><svg class="halftone" width="56" height="68" aria-label="Photo placeholder"><use href="#portrait"/></svg><div><h3>Darnell, 14</h3><p>Black hoodie, red backpack. Last seen 4:55 PM, N 27th &amp; W Wisconsin.</p></div></div>
+                <div class="prog"><span class="segs" data-segs><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span data-count="# of 8 blocks searched">3 of 8 blocks searched</span></div>
+                <div class="acts"><a class="btn danger" href="#p-search">Join the search</a><button class="btn" data-once="Link copied"><span data-label>Share</span></button></div>
+              </article>
+            </div>
+            <div class="ph-sec"><div class="ph-h"><h2>What do you need?</h2></div>
+              <div class="ph-pad need4">
+                <a class="g" href="#p-ask"><svg class="ic"><use href="#i-plus"/></svg><span><b>Ask for help</b><small>Food, ride, check-in</small></span></a>
+                <a href="#p-route"><svg class="ic"><use href="#i-shield"/></svg><span><b>Get somewhere safe</b><small>Lit route, now</small></span></a>
+                <a href="#p-safe"><svg class="ic"><use href="#i-flame"/></svg><span><b>Get warm</b><small>3 places open</small></span></a>
+                <a href="#p-search"><svg class="ic"><use href="#i-msg"/></svg><span><b>Share a tip</b><small>Name optional</small></span></a>
+              </div>
+            </div>
+            <div class="ph-sec"><div class="ph-h"><h2>Neighbors who need a hand</h2><a href="#p-board">All 23</a></div>
+              <div class="ph-pad">
+                <article class="req" data-req><div class="req-main"><div class="req-meta"><span class="tag urgent">Urgent</span><span class="meta">Food</span><span class="dist">0.4 mi</span></div><h3>Groceries for a family of four</h3><p class="why"><svg class="ic"><use href="#i-spark"/></svg>No food since Sunday, toddler at home.</p><a class="tasklink" href="#p-task">Open your task <svg class="ic"><use href="#i-chev"/></svg></a></div><button class="take" data-take><svg class="ic"><use href="#i-hand"/></svg><span data-label>Take it</span><small>#104</small></button></article>
+              </div>
+            </div>
+            <div class="ph-sec"><div class="ph-h"><h2>News from your hubs</h2><a href="#j-hub">All</a></div>
+              <div class="strip">
+                <div class="card"><span class="meta">Missing Persons · 6:41 PM</span><b>Rally point moved to N 27th &amp; W Wells</b><p>Bring a flashlight.</p></div>
+                <div class="card"><span class="meta">Food · 5:10 PM</span><b>Coat and glove drop, 7–8 PM</b><p>Sample event.</p></div>
+                <div class="card"><span class="meta">Youth · Thursday</span><b>Cycle Breakers circle, 6 PM</b><p>Sample event.</p></div>
+              </div>
+            </div>
+            <div class="endpad"></div>
+          </div>
+          <nav class="tabbar" aria-label="App"><a class="on" href="#p-home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a><a href="#p-route"><svg class="ic"><use href="#i-pin"/></svg><span>Map</span></a><a class="post" href="#p-ask" aria-label="Ask for help"><svg class="ic"><use href="#i-plus"/></svg></a><a href="#p-board"><svg class="ic"><use href="#i-board"/></svg><span>Requests</span></a><a href="#p-me"><svg class="ic"><use href="#i-user"/></svg><span>Me</span></a></nav>
+        </div></div></div></div>
+        <figcaption><b>4 · Home</b><p>The alert is now a compact card, so the four ways to get help show on the first screen without scrolling. Every section has the same heading style and 32px of space between sections.</p></figcaption>
+      </figure>
+
+      <figure class="slot" id="p-ask">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live>
+            <div class="statusbar"><span>6:15</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="ph-head"><a class="back" href="#p-home" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><div class="t"><span class="meta">Ask for help</span><b>What's going on?</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="ph-pad" style="margin-bottom:16px"><div class="tip"><svg class="ic"><use href="#i-lamp"/></svg><span>Say it however you like. Anything urgent goes to a real person at ComForce right away.</span></div></div>
+            <div class="chat">
+              <div class="bubble me">I need food for my kids tonight. No car and the bus doesn't run late by me.</div>
+              <div class="bubble hub"><span class="meta">Here's what I understood. Tap to fix.</span>
+                <div class="heard"><span class="tag ai">Food <svg class="ic"><use href="#i-x"/></svg></span><span class="tag urgent">Tonight <svg class="ic"><use href="#i-x"/></svg></span><span class="tag ai">Kids at home <svg class="ic"><use href="#i-x"/></svg></span><span class="tag ai">No ride <svg class="ic"><use href="#i-x"/></svg></span></div>
+              </div>
+              <div class="bubble hub"><span class="meta">Closest options</span>
+                <div class="match">
+                  <a href="#p-food"><svg class="ic"><use href="#i-food"/></svg><span><b>Church basement pantry</b><small>Open till 8 PM · 0.6 mi · sample</small></span><svg class="ic"><use href="#i-chev"/></svg></a>
+                  <a href="#p-status"><svg class="ic"><use href="#i-ride"/></svg><span><b>Get a ride there</b><small>2 volunteer drivers free now</small></span><svg class="ic"><use href="#i-chev"/></svg></a>
+                  <a href="#p-status"><svg class="ic"><use href="#i-hand"/></svg><span><b>Have a neighbor bring it</b><small>Posts an urgent request near you</small></span><svg class="ic"><use href="#i-chev"/></svg></a>
+                </div>
+              </div>
+              <div class="setrow" style="margin-top:0"><span><b>Keep this private</b><small>Your name and address stay hidden until a trained volunteer takes it. Nothing is posted publicly.</small></span><button class="switch" role="switch" aria-checked="true" aria-label="Keep this private" data-switch></button></div>
+              <p class="meta" style="display:flex;gap:8px;align-items:center"><svg class="ic" style="width:15px;height:15px;color:var(--red)"><use href="#i-phone"/></svg>In danger right now? Call 911. ComForce 24/7: 414-395-0552.</p>
+            </div>
+            <div class="endpad"></div>
+          </div>
+          <div class="inputbar"><button aria-label="Speak instead"><svg class="ic"><use href="#i-mic"/></svg></button><input aria-label="Message" placeholder="Add more, or say it another way…"><button class="send" aria-label="Send"><svg class="ic"><use href="#i-send"/></svg></button></div>
+        </div></div></div></div>
+        <figcaption><b>5 · Ask for help</b><p>A short line up top answers the newcomer's real worry: will a person see this? What the AI understood can be <strong>fixed with one tap</strong>. Privacy is on by default and explained in plain words. A mic button is there for people who'd rather talk than type.</p></figcaption>
+      </figure>
+
+
+      <figure class="slot" id="p-status">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live>
+            <div class="statusbar"><span>6:31</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="ph-head"><a class="back" href="#p-ask" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><div class="t"><span class="meta">Your request · private</span><b>Help is on the way</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="ph-pad">
+              <div class="statuscard"><span class="meta">Food for tonight · sent 6:15 PM</span><h2>Marcus is bringing groceries to your door.</h2><div class="eta2"><span class="live"></span>About 25 minutes away</div></div>
+            </div>
+            <div class="ph-pad" style="margin-top:16px"><div class="card">
+              <div class="vol"><span class="avatar">M</span><span><b>Marcus T.</b><small>Food &amp; Mutual Aid volunteer · ID checked by ComForce · has helped 14 neighbors</small></span></div>
+              <div class="vol-acts"><button class="btn sm" data-once="Chat opened"><svg class="ic"><use href="#i-msg"/></svg><span data-label>Message</span></button><button class="btn sm" data-once="Calling via ComForce"><svg class="ic"><use href="#i-phone"/></svg><span data-label>Call</span></button></div>
+            </div></div>
+            <div class="ph-pad" style="margin-top:16px"><div class="card"><ol class="tl">
+              <li class="done"><span class="dot"><svg class="ic"><use href="#i-check"/></svg></span><span><b>Request sent</b><small>Seen by ComForce right away</small></span><span class="meta">6:15</span></li>
+              <li class="done"><span class="dot"><svg class="ic"><use href="#i-check"/></svg></span><span><b>Marcus took it</b><small>He sees your first name and door only</small></span><span class="meta">6:21</span></li>
+              <li class="now"><span class="dot"></span><span><b>Shopping, then on the way</b><small>Milk, bread, eggs, cereal, diapers size 4</small></span><span class="meta">now</span></li>
+              <li><span class="dot"></span><span><b>Dropped off</b><small>You'll get a note at the door, no knock if you prefer</small></span><span class="meta"></span></li>
+            </ol></div></div>
+            <div class="ph-pad" style="margin-top:16px"><div class="tip"><svg class="ic"><use href="#i-lock"/></svg><span>Your phone number stays hidden. Calls and messages go through ComForce.</span></div></div>
+            <div class="ph-pad" style="margin-top:16px;display:grid;gap:8px"><button class="btn block" data-once="Cancelled · Marcus was told"><span data-label>I don't need this anymore</span></button><a class="btn ghost block" href="tel:4143950552">Something's wrong? Talk to ComForce</a></div>
+            <div class="endpad"></div>
+          </div>
+          <nav class="tabbar" aria-label="App"><a class="on" href="#p-home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a><a href="#p-route"><svg class="ic"><use href="#i-pin"/></svg><span>Map</span></a><a class="post" href="#p-ask" aria-label="Ask for help"><svg class="ic"><use href="#i-plus"/></svg></a><a href="#p-board"><svg class="ic"><use href="#i-board"/></svg><span>Requests</span></a><a href="#p-me"><svg class="ic"><use href="#i-user"/></svg><span>Me</span></a></nav>
+        </div></div></div></div>
+        <figcaption><b>6 · Help is on the way</b><p>What happens after asking is the part people worry about most. A live timeline shows who's coming, roughly when, and what they can and can't see. Contact goes through ComForce, so <strong>nobody's number is shared</strong>.</p></figcaption>
+      </figure>
+
+      <figure class="slot" id="p-food">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live>
+            <div class="statusbar"><span>6:17</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="ph-head"><a class="back" href="#p-home" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><div class="t"><span class="meta">Food &amp; Mutual Aid</span><b>Food tonight</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="filters" role="group" aria-label="Filters"><button class="chip" aria-pressed="true" data-tick><svg class="ic"><use href="#i-check"/></svg>Open now</button><button class="chip" aria-pressed="false" data-tick>Baby formula</button><button class="chip" aria-pressed="false" data-tick>No ID needed</button><button class="chip" aria-pressed="false" data-tick>Walkable</button></div>
+            <div class="ph-pad" style="margin-top:16px"><div class="mapcard"><div class="mapwrap"><svg class="map" id="map-food" viewBox="560 160 520 300" data-px="350" role="img" aria-label="Open pantries near Westown and Haymarket"><use href="#basemap"/></svg><span class="attrib osm">© OpenStreetMap contributors</span></div></div></div>
+            <p class="list-h">3 open now · sample listings</p>
+            <div class="ph-pad" style="display:grid;gap:12px">
+              <div class="card pcard"><div class="top"><b>Church basement pantry</b><span class="open">Till 8 PM</span></div><span class="meta">0.6 mi · 12 min walk · no ID needed</span><div class="tags"><span class="tag ai">Formula</span><span class="tag ai">Canned protein</span><span class="tag ai">Rice</span></div><div class="acts"><button class="btn sm" data-once="Opened in Maps"><svg class="ic"><use href="#i-nav"/></svg><span data-label>Directions</span></button><button class="btn sm" data-once="Ride requested"><svg class="ic"><use href="#i-ride"/></svg><span data-label>Get a ride</span></button></div></div>
+              <div class="card pcard"><div class="top"><b>Block club porch shelf</b><span class="open">Till 9 PM</span></div><span class="meta">0.9 mi · take what you need</span><div class="tags"><span class="tag ai">Bread</span><span class="tag ai">Produce</span></div><div class="acts"><button class="btn sm" data-once="Opened in Maps"><svg class="ic"><use href="#i-nav"/></svg><span data-label>Directions</span></button><button class="btn sm" data-once="Ride requested"><svg class="ic"><use href="#i-ride"/></svg><span data-label>Get a ride</span></button></div></div>
+              <div class="card pcard"><div class="top"><b>From a neighbor</b><span class="open">Tonight</span></div><span class="meta">Haymarket · posted 20 min ago</span><p style="font-size:15px">2 boxes of diapers, size 4</p><button class="btn sm primary" data-once="Claimed · address sent privately"><span data-label>Claim it</span></button></div>
+            </div>
+            <div class="endpad"></div>
+          </div>
+          <nav class="tabbar" aria-label="App"><a href="#p-home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a><a class="on" href="#p-route"><svg class="ic"><use href="#i-pin"/></svg><span>Map</span></a><a class="post" href="#p-ask" aria-label="Ask for help"><svg class="ic"><use href="#i-plus"/></svg></a><a href="#p-board"><svg class="ic"><use href="#i-board"/></svg><span>Requests</span></a><a href="#p-me"><svg class="ic"><use href="#i-user"/></svg><span>Me</span></a></nav>
+        </div></div></div></div>
+        <figcaption><b>7 · Food tonight</b><p>The pantry finder from the Food hub, built for a phone and a hurry. The filters are the questions people actually ask: <strong>open now, formula, no ID</strong>. Neighbor posts sit next to pantries, and a ride is one tap away.</p></figcaption>
+      </figure>
+      <figure class="slot" id="p-route">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div data-live style="position:absolute;inset:0">
+            <svg class="map" id="map-route" viewBox="330 -80 560 560" data-px="470" preserveAspectRatio="xMidYMin slice" style="position:absolute;inset:0;width:100%;height:470px" role="img" aria-label="Walking route along W Walnut St to Sojourner Family Peace Center"><use href="#basemap"/></svg>
+            <div class="statusbar" style="position:relative;z-index:21"><span>6:20</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="floattop"><a class="iconbtn" href="#p-home" aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></a><div class="pill"><span class="meta">Safe route</span><b>To Sojourner Family Peace Center</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="sheet" data-walk>
+              <div class="grab"></div>
+              <div class="eta"><b>%%SOJ_MIN%% min</b><span>%%SOJ_MI%% mi walk · 619 W Walnut St</span></div>
+              <div class="facts2"><span><svg class="ic"><use href="#i-lamp"/></svg>Stays on lit main streets</span><span><svg class="ic"><use href="#i-shield"/></svg>Staffed 24/7</span></div>
+              <div class="alts" role="group" aria-label="Destination">
+                <button aria-pressed="true" data-seg><svg class="ic" style="color:var(--green)"><use href="#i-shield"/></svg><span>Sojourner Family Peace Center</span><span class="meta">%%SOJ_MIN%% min</span></button>
+                <button aria-pressed="false" data-seg><svg class="ic" style="color:var(--green)"><use href="#i-home"/></svg><span>Nearest open business with staff</span><span class="meta">4 min</span></button>
+              </div>
+              <button class="btn primary block go" data-go data-on="Walking · ComForce can see you · Stop"><svg class="ic"><use href="#i-nav"/></svg><span data-label>Start and share my location</span></button>
+              <a class="btn block" href="tel:4143950552"><svg class="ic"><use href="#i-phone"/></svg>Call ComForce 24/7</a>
+            </div>
+          </div>
+        </div></div></div></div>
+        <figcaption><b>8 · Get somewhere safe</b><p>The route runs on real streets and favors main, lit roads. Big text on the bottom sheet answers "how far?" first. On MSOE's campus it routes to MSOE Public Safety instead (see the home map). <strong>Start</strong> shares your location until you arrive.</p></figcaption>
+      </figure>
+
+      <figure class="slot" id="p-safe">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live>
+            <div class="statusbar"><span>6:25</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="ph-head"><a class="back" href="#p-route" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><div class="t"><span class="meta">Safe Threads</span><b>Safe places near you</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="ph-pad"><div class="mapcard"><div class="mapwrap"><svg class="map" id="map-safe" viewBox="610 240 460 300" data-px="350" role="img" aria-label="Safe places in Westown, Haymarket and Juneautown"><use href="#basemap"/></svg><span class="attrib osm">© OpenStreetMap contributors</span></div></div></div>
+            <div class="ph-pad" style="margin-top:16px"><div class="card rows" style="padding:16px">
+              <div class="safe"><b>Central Library lobby</b><span class="confirm">12 confirm</span><p>814 W Wisconsin Ave</p><div class="chips"><span>Warm</span><span>Staffed</span><span>Restrooms</span><span>Well lit</span></div></div>
+              <div class="safe"><b>Sojourner Family Peace Center</b><span class="confirm">Verified</span><p>619 W Walnut St</p><div class="chips"><span>24/7 help</span><span>Staffed</span></div></div>
+              <div class="safe"><b>MSOE Public Safety</b><span class="confirm">Verified</span><p>MSOE campus, near N Broadway</p><div class="chips"><span>Staffed</span><span>Well lit</span></div></div>
+            </div></div>
+            <div class="ph-sec ph-pad">
+              <div class="addsafe">
+                <b>Know a safe place?</b>
+                <div class="field"><label for="safe-name">Where is it?</label><input id="safe-name" value="Gas station on the corner, cashier is always in"></div>
+                <div class="tickrow" role="group" aria-label="What makes it safe">
+                  <button class="chip" aria-pressed="true" data-tick><svg class="ic"><use href="#i-lamp"/></svg>Well lit</button>
+                  <button class="chip" aria-pressed="true" data-tick><svg class="ic"><use href="#i-clock"/></svg>Open late</button>
+                  <button class="chip" aria-pressed="false" data-tick><svg class="ic"><use href="#i-user"/></svg>Staffed</button>
+                  <button class="chip" aria-pressed="false" data-tick><svg class="ic"><use href="#i-flame"/></svg>Warm inside</button>
+                </div>
+                <p class="why" style="font-size:14px"><svg class="ic"><use href="#i-spark"/></svg>It goes on the map once 3 neighbors confirm it or ComForce verifies it.</p>
+                <button class="btn primary" data-once="Posted · needs 3 neighbors to confirm"><span data-label>Post safe place</span></button>
+              </div>
+            </div>
+            <div class="endpad"></div>
+          </div>
+          <nav class="tabbar" aria-label="App"><a href="#p-home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a><a class="on" href="#p-route"><svg class="ic"><use href="#i-pin"/></svg><span>Map</span></a><a class="post" href="#p-ask" aria-label="Ask for help"><svg class="ic"><use href="#i-plus"/></svg></a><a href="#p-board"><svg class="ic"><use href="#i-board"/></svg><span>Requests</span></a><a href="#p-me"><svg class="ic"><use href="#i-user"/></svg><span>Me</span></a></nav>
+        </div></div></div></div>
+        <figcaption><b>9 · Safe places</b><p>Residents post places that are lit, open and staffed. The safe-route planner uses them as destinations. Tags you <strong>tap</strong> instead of typing make adding a place quick.</p></figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <!-- ================= 4 GIVING HELP ================= -->
+  <section class="shelf" id="j-give" aria-label="Giving help">
+    <div class="shelf-head"><h2><i>4</i>Giving help · phone</h2><span>find a request → do it → join a search</span></div>
+    <p class="shelf-lede">One path for volunteers. Each screen gives a newcomer a one-line explanation the first time. Things that need training stay visible but locked, with the way to unlock them right there.</p>
+    <div class="phones">
+
+      <figure class="slot" id="p-board">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live>
+            <div class="statusbar"><span>6:22</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="ph-head"><div class="t"><span class="meta">23 open near you</span><b>Help a neighbor</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="ph-pad" style="margin-bottom:16px"><div class="tip"><svg class="ic"><use href="#i-lamp"/></svg><span><b>New here?</b> Take a request to say you'll handle it. You'll get the details privately and can hand it back anytime.</span></div></div>
+            <div class="filters" role="group" aria-label="Filter" data-fgroup><button class="chip" aria-pressed="true" data-seg data-f="all">All</button><button class="chip" aria-pressed="false" data-seg data-f="food">Food</button><button class="chip" aria-pressed="false" data-seg data-f="rides">Rides</button><button class="chip" aria-pressed="false" data-seg data-f="safety">Safety</button><button class="chip" aria-pressed="false" data-seg data-f="parents">Parents</button></div>
+            <div class="ph-pad" style="margin-top:12px"><p class="why" style="font-size:14px"><svg class="ic"><use href="#i-spark"/></svg>Sorted by how urgent, how close, and what you've helped with before.</p></div>
+            <div class="ph-pad tickets" style="margin-top:16px" data-fitems>
+              <article data-ftags="food" class="req" data-req><div class="req-main"><div class="req-meta"><span class="tag urgent">Urgent</span><span class="meta">Food</span><span class="dist">0.4 mi</span></div><h3>Groceries for a family of four</h3><p class="where"><svg class="ic"><use href="#i-pin"/></svg>N 18th St &amp; W Wells St</p><p class="why"><svg class="ic"><use href="#i-spark"/></svg>Toddler at home. You're one of 3 nearby.</p><a class="tasklink" href="#p-task">Open your task <svg class="ic"><use href="#i-chev"/></svg></a></div><button class="take" data-take><svg class="ic"><use href="#i-hand"/></svg><span data-label>Take it</span><small>#104</small></button></article>
+              <article data-ftags="safety" class="req locked"><div class="req-main"><div class="req-meta"><span class="tag today">Today</span><span class="meta">Safety</span><span class="dist">0.7 mi</span></div><h3>Quiet check-in, private</h3><div class="lockline"><span class="where"><svg class="ic"><use href="#i-lock"/></svg>For trained volunteers. Paired with a ComForce advocate.</span><a class="btn" href="#p-me">Get trained · 20 min online</a></div></div><span class="lockstub"><svg class="ic"><use href="#i-lock"/></svg>Locked</span></article>
+              <article data-ftags="rides" class="req" data-req><div class="req-main"><div class="req-meta"><span class="tag week">This week</span><span class="meta">Rides</span><span class="dist">1.0 mi</span></div><h3>Ride to a job workshop, Thursday 9 AM</h3><p class="where"><svg class="ic"><use href="#i-pin"/></svg>Juneautown to Walnut Hill</p></div><button class="take" data-take><svg class="ic"><use href="#i-hand"/></svg><span data-label>Take it</span><small>#097</small></button></article>
+              <article data-ftags="parents" class="req" data-req><div class="req-main"><div class="req-meta"><span class="tag week">This week</span><span class="meta">Parents Club</span><span class="dist">1.3 mi</span></div><h3>Car seat swap: have 2, need a booster</h3><p class="where"><svg class="ic"><use href="#i-pin"/></svg>Haymarket</p></div><button class="take" data-take><svg class="ic"><use href="#i-hand"/></svg><span data-label>Take it</span><small>#322</small></button></article>
+            </div>
+            <div class="endpad"></div>
+          </div>
+          <nav class="tabbar" aria-label="App"><a href="#p-home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a><a href="#p-route"><svg class="ic"><use href="#i-pin"/></svg><span>Map</span></a><a class="post" href="#p-ask" aria-label="Ask for help"><svg class="ic"><use href="#i-plus"/></svg></a><a class="on" href="#p-board"><svg class="ic"><use href="#i-board"/></svg><span>Requests</span></a><a href="#p-me"><svg class="ic"><use href="#i-user"/></svg><span>Me</span></a></nav>
+        </div></div></div></div>
+        <figcaption><b>10 · Requests</b><p>Volunteer requests from every hub in one list, with AI sorting that says why. Urgency is in words, not codes. A <strong>locked</strong> request shows exactly what unlocks it instead of disappearing.</p></figcaption>
+      </figure>
+
+      <figure class="slot" id="p-task">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live>
+            <div class="statusbar"><span>6:26</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="ph-head"><a class="back" href="#p-board" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><div class="t"><span class="meta">Request #104 · Food</span><b>You're on it</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="ph-pad"><div class="ontask"><svg class="ic"><use href="#i-check"/></svg><span><b>Thanks, Jordan. Tanya knows you're coming.</b><small>Urgent · asked 5:58 PM · she'd like it by 7:30</small></span></div></div>
+            <div class="ph-pad" style="margin-top:16px"><div class="card rows">
+              <div class="kv"><svg class="ic"><use href="#i-user"/></svg><span><b>Tanya, family of four</b><small>Toddler at home. Prefers no knock: text when you're outside.</small></span></div>
+              <div class="kv"><svg class="ic"><use href="#i-pin"/></svg><span><b>Near N 18th St &amp; W Wells St</b><small>The exact door appears when you tap Start.</small></span></div>
+              <div class="kv"><svg class="ic"><use href="#i-hand"/></svg><span><b>ComForce pays up to $60</b><small>Snap the receipt in this request to get paid back.</small></span></div>
+            </div></div>
+            <p class="list-h">Shopping list</p>
+            <div class="ph-pad"><div class="card checks" role="group" aria-label="Shopping list">
+              <button aria-pressed="true" data-tick><span class="box"><svg class="ic"><use href="#i-check"/></svg></span><span>Milk, 1 gallon</span></button>
+              <button aria-pressed="false" data-tick><span class="box"><svg class="ic"><use href="#i-check"/></svg></span><span>Bread and eggs</span></button>
+              <button aria-pressed="false" data-tick><span class="box"><svg class="ic"><use href="#i-check"/></svg></span><span>Cereal, apple sauce</span></button>
+              <button aria-pressed="false" data-tick><span class="box"><svg class="ic"><use href="#i-check"/></svg></span><span>Diapers, size 4</span></button>
+            </div></div>
+            <div class="ph-pad" style="margin-top:16px"><div class="tip"><svg class="ic"><use href="#i-users"/></svg><span>Going after dark? <b>Add a buddy</b> and ComForce sees you both until you're done.</span></div></div>
+            <div class="ph-pad" style="margin-top:16px;display:grid;gap:8px" data-walk>
+              <button class="btn primary block go" data-go data-on="On my way · Tanya was told · Tap when done"><svg class="ic"><use href="#i-nav"/></svg><span data-label>Start · show me the door</span></button>
+              <div class="two"><button class="btn" data-once="Chat opened"><svg class="ic"><use href="#i-msg"/></svg><span data-label>Message</span></button><button class="btn" data-once="Handed back"><span data-label>Hand it back</span></button></div>
+            </div>
+            <div class="endpad"></div>
+          </div>
+          <nav class="tabbar" aria-label="App"><a href="#p-home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a><a href="#p-route"><svg class="ic"><use href="#i-pin"/></svg><span>Map</span></a><a class="post" href="#p-ask" aria-label="Ask for help"><svg class="ic"><use href="#i-plus"/></svg></a><a class="on" href="#p-board"><svg class="ic"><use href="#i-board"/></svg><span>Requests</span></a><a href="#p-me"><svg class="ic"><use href="#i-user"/></svg><span>Me</span></a></nav>
+        </div></div></div></div>
+        <figcaption><b>11 · You're on it</b><p>What a volunteer sees after <strong>Take it</strong>. Details unlock in steps: first name and needs now, the exact door only when they start. Reimbursement, a buddy option and "Hand it back" answer the usual worries before anyone has to ask.</p></figcaption>
+      </figure>
+
+      <figure class="slot" id="p-search">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live>
+            <div class="redhead">
+              <div class="statusbar"><span>6:14</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+              <div class="ph-head"><a class="back" href="#p-home" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><div class="t"><span class="meta">Missing Persons Network</span><b>Search party</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+              <div class="sp-who"><svg class="halftone" width="46" height="56" aria-label="Photo placeholder"><use href="#portrait"/></svg><div><b>Darnell, 14</b><p>Black hoodie, red backpack. Last seen 4:55 PM walking north on N 27th St.</p></div></div>
+            </div>
+            <div class="ph-pad" style="margin-top:20px">
+              <details class="tip"><summary><svg class="ic"><use href="#i-lamp"/></svg>First search? How it works<svg class="ic chev"><use href="#i-chev"/></svg></summary>
+                <ol><li>You get one block to walk with your group.</li><li>Knock on doors and look carefully. Don't shout his name.</li><li>Mark the block searched when you're done, and you'll get the next one.</li></ol>
+              </details>
+            </div>
+            <div class="ph-pad" style="margin-top:16px"><div class="dispatch"><svg class="ic"><use href="#i-radio"/></svg><div><span class="meta">ComForce dispatch · 6:41 PM</span><p>Family says he may head to a cousin's on N 29th. Knock on doors.</p></div></div></div>
+            <div class="ph-pad" style="margin-top:16px">
+              <div class="mapcard">
+                <div class="mapwrap"><svg class="map" id="map-search" viewBox="124 568 166 150" data-px="350" role="img" aria-label="Search blocks between N 29th and N 25th streets, W Wells St to W Michigan St"><use href="#basemap"/></svg><span class="attrib osm">© OpenStreetMap contributors</span></div>
+                <div class="sp-legend"><span><i style="background:repeating-linear-gradient(45deg,#E2EEE3 0 3px,#0F6B3A 3px 4.4px)"></i>Searched</span><span><i style="background:var(--hivis)"></i>Searching now</span><span><i style="border-color:var(--red);background:var(--red-wash)"></i>Lead</span><span><i style="border-style:dashed"></i>Needs people</span></div>
+              </div>
+            </div>
+            <div class="ph-pad" style="margin-top:16px"><div class="mine-card" data-mine><div class="big">C</div><div><span data-mine-label>Your sector · searching</span><p data-mine-text>N 27th to N 26th, Wells to Wisconsin. 6 of 10 people here.</p></div></div></div>
+            <div class="ph-pad two" style="margin-top:16px"><button class="btn primary" data-clear><svg class="ic"><use href="#i-check"/></svg><span data-label>Mark C cleared</span></button><button class="btn danger" data-once="Sent to dispatch"><svg class="ic"><use href="#i-alert"/></svg><span data-label>Report a lead</span></button></div>
+            <div class="endpad"></div>
+          </div>
+          <nav class="tabbar" aria-label="App"><a href="#p-home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a><a class="on" href="#p-route"><svg class="ic"><use href="#i-pin"/></svg><span>Map</span></a><a class="post" href="#p-ask" aria-label="Ask for help"><svg class="ic"><use href="#i-plus"/></svg></a><a href="#p-board"><svg class="ic"><use href="#i-board"/></svg><span>Requests</span></a><a href="#p-me"><svg class="ic"><use href="#i-user"/></svg><span>Me</span></a></nav>
+        </div></div></div></div>
+        <figcaption><b>12 · Search party</b><p>Blocks are real streets, N 29th to N 25th St between W Wells and W Michigan. A folded <strong>"How it works"</strong> helps first-timers without slowing anyone else down. Tap a block on the map to change its status.</p></figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <!-- ================= 5 HUB (desktop) ================= -->
+  <section class="shelf" id="j-hub" aria-label="A hub">
+    <div class="shelf-head"><h2><i>5</i>Hubs · desktop</h2><span>browse all → inside one</span></div>
+    <p class="shelf-lede">Every hub has the same four tabs (Threads, Map, Requests, News), so moving between hubs feels familiar. A hub's own tools sit after a divider and are marked. A pinned post welcomes new members.</p>
+    <div class="sub-shelf"><h3>All hubs</h3><span>where people browse and join · try Join</span></div>
+    <div class="fit" data-w="1280"><div class="scale"><div class="browser">
+      <div class="browser-bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">comforce.mke/hubs</div><div style="width:52px"></div></div>
+      <div data-app="desk" style="position:relative">
+      <div class="ui desk" data-live>
+        <header class="dnav">
+          <a class="logo" href="#top"><svg><use href="#logo-mark"/></svg><b>ComForce <span>MKE</span></b></a>
+          <nav aria-label="Main"><a href="#j-home">Home</a><a href="#j-get">Map</a><a class="on" href="#j-hub"><span>Hubs</span></a><a href="#j-give">Requests</a></nav>
+          <div class="dtools">
+            <div class="dsearch"><svg class="ic"><use href="#i-search"/></svg>Search hubs</div>
+            <a class="iconbtn" href="#p-alerts" aria-label="Notifications"><svg class="ic"><use href="#i-bell"/></svg></a>
+            <span class="avatar" aria-label="Jordan">J</span>
+            <button class="esc" data-exit><kbd>esc</kbd>Quick exit</button>
+          </div>
+        </header>
+        <main class="dpage">
+          <div class="pagehead"><div><h1>Hubs</h1><p>Every ComForce program has a hub with the same basics (threads, a map, requests and news) plus tools of its own.</p></div><div class="right"><div class="seg" role="group" aria-label="Show" data-fgroup><button aria-pressed="true" data-seg data-f="all">All 8</button><button aria-pressed="false" data-seg data-f="joined">Joined</button><button aria-pressed="false" data-seg data-f="suggested">Suggested</button></div></div></div>
+          <div class="dirgrid" data-fitems><article class="hubcard" data-ftags="joined"><div class="band" style="background-color:var(--red)"><span class="sw" style="background:var(--red)"><svg class="ic"><use href="#i-search"/></svg></span><span class="flag2 hot">1 live search</span></div><div class="body"><h3><a href="#p-search">Missing Persons Network</a></h3><p>Verified alerts, search parties and tips for missing neighbors.</p><span class="stats">1,120 members · alerts on for everyone</span><div class="tools"><span class="tag plain">Search grid</span><span class="tag plain">Verified tips</span></div><button class="btn sm joined" data-toggle-class=".hubcard|left" data-on="Join"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div></article><article class="hubcard" data-ftags="joined"><div class="band" style="background-color:var(--green)"><span class="sw" style="background:var(--green)"><svg class="ic"><use href="#i-food"/></svg></span></div><div class="body"><h3><a href="#hub-inside">Food &amp; Mutual Aid</a></h3><p>Open pantries, food sharing, and what your block is short on.</p><span class="stats">245 members · 6 open requests</span><div class="tools"><span class="tag plain">Pantry finder</span><span class="tag plain">Stocking advisor</span></div><button class="btn sm joined" data-toggle-class=".hubcard|left" data-on="Join"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div></article><article class="hubcard" data-ftags="joined"><div class="band" style="background-color:#16201B"><span class="sw" style="background:#16201B"><svg class="ic"><use href="#i-shield"/></svg></span><span class="flag2">Private</span></div><div class="body"><h3><a href="#p-safe">Domestic Safety</a></h3><p>Safe routes, private check-ins and Sojourner's 24/7 help.</p><span class="stats">Private · members are never shown</span><div class="tools"><span class="tag plain">Find a way out</span><span class="tag plain">Quick Exit</span></div><button class="btn sm joined" data-toggle-class=".hubcard|left" data-on="Join"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div></article><article class="hubcard" data-ftags="joined"><div class="band" style="background-color:#2F5D9E"><span class="sw" style="background:#2F5D9E"><svg class="ic"><use href="#i-ride"/></svg></span></div><div class="body"><h3>Rides &amp; Transportation</h3><p>Free rides from volunteers to work, clinics and school.</p><span class="stats">310 members · 2 open requests</span><div class="tools"><span class="tag plain">Ride board</span><span class="tag plain">Driver check-in</span></div><button class="btn sm joined" data-toggle-class=".hubcard|left" data-on="Join"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div></article><article class="hubcard" data-ftags="suggested"><div class="band" style="background-color:#7A4FA0"><span class="sw" style="background:#7A4FA0"><svg class="ic"><use href="#i-youth"/></svg></span></div><div class="body"><h3><a href="#p-event">Youth Advocacy · Cycle Breakers</a></h3><p>Circles, mentors and events for ages 13–19.</p><span class="stats">96 members · event Thursday</span><div class="tools"><span class="tag plain">Events</span><span class="tag plain">Mentor match</span></div><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div></article><article class="hubcard" data-ftags="suggested"><div class="band" style="background-color:#B5651D"><span class="sw" style="background:#B5651D"><svg class="ic"><use href="#i-storm"/></svg></span></div><div class="body"><h3>Disaster Relief</h3><p>Supply drops, shelters and welfare checks when weather turns.</p><span class="stats">540 members · on standby</span><div class="tools"><span class="tag plain">Shelter map</span><span class="tag plain">Welfare checks</span></div><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div></article><article class="hubcard" data-ftags="suggested"><div class="band" style="background-color:#3E7DB3"><span class="sw" style="background:#3E7DB3"><svg class="ic"><use href="#i-family"/></svg></span></div><div class="body"><h3>MKE Parents Club</h3><p>Swaps, childcare help and advice from parents nearby.</p><span class="stats">410 members · 12 new posts</span><div class="tools"><span class="tag plain">Swap board</span><span class="tag plain">Childcare</span></div><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div></article><article class="hubcard" data-ftags="suggested"><div class="band" style="background-color:#4B5850"><span class="sw" style="background:#4B5850"><svg class="ic"><use href="#i-mic"/></svg></span></div><div class="body"><h3>Activist &amp; Advocacy Podcast</h3><p>Episodes and live tapings on Milwaukee issues.</p><span class="stats">180 members · new episode</span><div class="tools"><span class="tag plain">Episodes</span><span class="tag plain">Live Q&amp;A</span></div><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div></article></div>
+          <div class="tip" style="margin-top:32px"><svg class="ic"><use href="#i-lamp"/></svg><span><b>Want a hub for your block club, school or church?</b> ComForce staff set hubs up with a community partner. <a href="#j-hub" style="color:var(--green);font-weight:700">Suggest one</a></span></div>
+        </main>
+      </div></div>
+    </div></div></div>
+    <div class="sub-shelf" id="hub-inside"><h3>Inside a hub</h3><span>Food &amp; Mutual Aid · try the tabs</span></div>
+    <div class="fit" data-w="1280"><div class="scale"><div class="browser">
+      <div class="browser-bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">comforce.mke/hubs/food</div><div style="width:52px"></div></div>
+      <div data-app="desk" style="position:relative">
+      <div class="ui desk" data-live data-tabs="hub">
+        <header class="dnav">
+          <a class="logo" href="#top"><svg><use href="#logo-mark"/></svg><b>ComForce <span>MKE</span></b></a>
+          <nav aria-label="Main"><a href="#j-home">Home</a><a href="#j-get">Map</a><a class="on" href="#j-hub"><span>Hubs</span></a><a href="#j-give">Requests</a></nav>
+          <div class="dtools">
+            <div class="dsearch"><svg class="ic"><use href="#i-search"/></svg>Search this hub</div>
+            <a class="iconbtn" href="#p-alerts" aria-label="Notifications"><svg class="ic"><use href="#i-bell"/></svg></a>
+            <span class="avatar" aria-label="Jordan">J</span>
+            <button class="esc" data-exit><kbd>esc</kbd>Quick exit</button>
+          </div>
+        </header>
+        <div class="hubhead">
+          <span class="crumb">Hubs › Community relief</span>
+          <div class="row">
+            <div><h1>Food &amp; Mutual Aid</h1><p>Find open pantries, share what you have, and see what your block is short on.</p><div class="facts"><span>245 members</span><span>·</span><span>3 pantries open now</span><span>·</span><span>Run by ComForce volunteers</span></div></div>
+            <div class="acts"><button class="btn out"><svg class="ic"><use href="#i-bell"/></svg>Alerts: important only</button><button class="btn" data-toggle-class=".hubhead|left" data-on="Join hub"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div>
+          </div>
+          <div class="hubtabs" role="tablist">
+            <button role="tab" class="on" aria-selected="true" data-tab="threads"><svg class="ic"><use href="#i-msg"/></svg>Threads</button>
+            <button role="tab" aria-selected="false" data-tab="map"><svg class="ic"><use href="#i-pin"/></svg>Pantry map</button>
+            <button role="tab" aria-selected="false" data-tab="req"><svg class="ic"><use href="#i-hand"/></svg>Requests</button>
+            <button role="tab" aria-selected="false" data-tab="news"><svg class="ic"><use href="#i-mega"/></svg>News</button>
+            <span class="sep"></span>
+            <button role="tab" aria-selected="false" data-tab="stock"><svg class="ic"><use href="#i-spark"/></svg>Stocking advisor <span class="own">This hub</span></button>
+          </div>
+        </div>
+        <div class="dpage">
+          <!-- threads -->
+          <div class="g12" data-view="threads">
+            <article class="mod c8" aria-label="Threads">
+              <div class="composer"><span class="avatar">J</span><input aria-label="Post" placeholder="Ask a question or share something with 245 neighbors…"><button class="btn primary sm" data-once="Posted"><span data-label>Post</span></button></div>
+              <div class="held"><svg class="ic"><use href="#i-lock"/></svg><span>1 post is held for review because it included someone's home address. We asked the author to remove it.</span><button class="btn sm" data-once="Reviewed"><span data-label>Review</span></button></div>
+              <div class="rows">
+                <div class="thread pinned"><div class="top"><svg class="ic" style="width:15px;height:15px"><use href="#i-pinned"/></svg><b>Denise W.</b> · ComForce coordinator · pinned</div><h3>New here? How this hub works</h3>
+                  <ol><li>Need food tonight? Check <b>Pantry map</b> for what's open now.</li><li>Have extra? Use <b>Share food</b> on the right. Your address is only shared with the person who claims it.</li><li>Every post is checked before it goes public, to keep everyone safe.</li></ol></div>
+                <div class="thread"><div class="top"><b>Keisha R.</b> · Haymarket · 22 min ago</div><h3>Where can I get baby formula tonight?</h3><p>Store by me is out and I don't get paid till Friday.</p>
+                  <div class="answer"><svg class="ic"><use href="#i-spark"/></svg><span><b>Answered automatically:</b> 2 pantries with formula are open until 8 PM within a mile. A neighbor can also drop some off, and Keisha was offered a private request.</span></div>
+                  <div class="acts"><span>3 replies</span><span>Helpful · 8</span></div></div>
+                <div class="thread"><div class="top"><b>Corner Grocery on Walnut</b> · store · 1 h ago</div><h3>Day-old bread and produce, free after 7 PM</h3><p>About 6 cases. Bring a bag. Posted as a pantry, so it shows on the map until 9.</p><div class="acts"><span>5 replies</span><span>Helpful · 21</span></div></div>
+                <div class="thread"><div class="top"><b>Marcus T.</b> · Near West Side · 3 h ago</div><h3>Our block club can host a pantry shelf. Who stocks it?</h3><p>We have a porch with a roof and a neighbor home most days.</p><div class="acts"><span>9 replies</span><span>Helpful · 14</span></div></div>
+              </div>
+            </article>
+            <div class="c4 stack">
+              <article class="mod" aria-label="Open now">
+                <div class="mod-h" style="padding-bottom:16px"><h2>Open now</h2><button class="more" style="border:0;background:none;cursor:pointer;font:inherit;font-weight:700;color:var(--green)" data-tab="map">Full map</button></div>
+                <div class="mapwrap"><svg class="map" id="map-hub" viewBox="560 160 520 300" data-px="379" role="img" aria-label="Pantries between Westown and Haymarket"><use href="#basemap"/></svg><span class="attrib osm">© OpenStreetMap contributors</span></div>
+                <div class="rows">
+                  <div class="pantry"><b>Block club porch shelf</b><span class="open">Till 9 PM</span><p>Sample · bread, produce</p></div>
+                  <div class="pantry"><b>Church basement pantry</b><span class="open">Till 8 PM</span><p>Sample · formula, canned protein</p></div>
+                </div>
+              </article>
+              <article class="mod" aria-label="Share food">
+                <div class="mod-h"><h2>Share food</h2></div>
+                <div class="mod-b">
+                  <div class="seg" role="group" aria-label="Posting as"><button aria-pressed="true" data-seg>Resident</button><button aria-pressed="false" data-seg>Store</button><button aria-pressed="false" data-seg>Organization</button></div>
+                  <div class="field"><label for="pp-what">What do you have?</label><input id="pp-what" value="2 boxes of diapers, size 4"></div>
+                  <div class="field"><label for="pp-when">Pickup window</label><input id="pp-when" value="Tonight until 9 PM"></div>
+                  <button class="btn primary block" style="margin-top:16px" data-once="On the map until 9 PM"><span data-label>Post to the map</span></button>
+                  <p class="meta" style="margin-top:12px;display:flex;gap:8px"><svg class="ic" style="width:15px;height:15px;margin-top:2px"><use href="#i-lock"/></svg>Your address is only shared with the person who claims it.</p>
+                </div>
+              </article>
+            </div>
+          </div>
+          <!-- pantry map -->
+          <div class="g12" data-view="map" hidden>
+            <article class="mod c8"><div class="mapwrap"><svg class="map" id="map-pan" viewBox="430 130 780 430" data-px="781" role="img" aria-label="Pantries near Westown and Haymarket"><use href="#basemap"/></svg><span class="attrib osm">© OpenStreetMap contributors</span></div></article>
+            <article class="mod c4"><div class="mod-h" style="padding-bottom:12px"><h2>3 pantries</h2><span class="count">sample listings</span></div>
+              <div class="rows">
+                <div class="pantry"><b>Block club porch shelf</b><span class="open">Open till 9 PM</span><p>Bread, produce · posted by a store</p></div>
+                <div class="pantry"><b>Church basement pantry</b><span class="open">Open till 8 PM</span><p>Formula, canned protein</p></div>
+                <div class="pantry"><b>Saturday mobile market</b><span class="open closed">Opens Sat 10 AM</span><p>Produce, dairy</p></div>
+              </div></article>
+          </div>
+          <!-- requests -->
+          <div class="g12" data-view="req" hidden>
+            <article class="mod c8 on-card"><div class="mod-h"><h2>Food requests</h2><span class="count">6 open</span></div><div class="mod-b tickets">
+              <article class="req" data-req><div class="req-main"><div class="req-meta"><span class="tag urgent">Urgent</span><span class="meta">Food</span><span class="dist">0.4 mi</span></div><h3>Groceries for a family of four</h3><p class="why"><svg class="ic"><use href="#i-spark"/></svg>No food since Sunday, toddler at home.</p></div><button class="take" data-take><svg class="ic"><use href="#i-hand"/></svg><span data-label>Take it</span><small>#104</small></button></article>
+              <article class="req" data-req><div class="req-main"><div class="req-meta"><span class="tag today">Today</span><span class="meta">Food</span><span class="dist">0.9 mi</span></div><h3>Formula, size 1 diapers for a newborn</h3></div><button class="take" data-take><svg class="ic"><use href="#i-hand"/></svg><span data-label>Take it</span><small>#118</small></button></article>
+            </div></article>
+            <div class="c4"><div class="tip"><svg class="ic"><use href="#i-lamp"/></svg><span>These are the same requests as the main Requests page, filtered to this hub.</span></div></div>
+          </div>
+          <!-- news -->
+          <div class="g12" data-view="news" hidden>
+            <article class="mod c8"><div class="mod-h"><h2>News</h2></div><div class="mod-b rows">
+              <div class="bc"><span class="sq" style="background:var(--green-wash);color:var(--green)"><svg class="ic"><use href="#i-food"/></svg></span><div><span class="meta">5:10 PM · from ComForce</span><b>Coat and glove drop tonight, 7–8 PM</b><p>Sample event. Location shared with members.</p></div></div>
+              <div class="bc"><span class="sq" style="background:var(--green-wash);color:var(--green)"><svg class="ic"><use href="#i-mega"/></svg></span><div><span class="meta">Monday · from ComForce</span><b>Formula is short in Juneautown this week</b><p>Drop off at any open pantry on the map before Friday.</p></div></div>
+            </div></article>
+          </div>
+          <!-- stocking advisor -->
+          <div class="g12" data-view="stock" hidden>
+            <article class="mod c8"><div class="mod-h"><h2>What your area is short on</h2><span class="tag ai">For pantry owners</span></div>
+              <p class="mod-sub">This week's requests in Juneautown and Haymarket compared with what nearby pantries reported in stock.</p>
+              <div class="mod-b"><ul class="stock">
+                <li><span>Infant formula</span><span class="bar"><i style="width:62%"></i></span><b>−62%</b></li>
+                <li><span>Warm socks &amp; gloves</span><span class="bar"><i style="width:48%"></i></span><b>−48%</b></li>
+                <li><span>Canned protein</span><span class="bar"><i style="width:35%"></i></span><b>−35%</b></li>
+                <li><span>Diapers, size 4–5</span><span class="bar"><i style="width:22%"></i></span><b>−22%</b></li>
+              </ul>
+              <p class="why" style="margin-top:24px"><svg class="ic"><use href="#i-spark"/></svg>Buy formula first: 9 of this week's 41 food requests mentioned it. A coordinator reviews this before it's sent out.</p></div>
+            </article>
+            <div class="c4 stack"><div class="tip"><svg class="ic"><use href="#i-lamp"/></svg><span><b>Who sees this?</b> Pantry owners and coordinators. Residents never see who asked for what, only these totals.</span></div></div>
+          </div>
+        </div>
+      </div></div>
+    </div></div></div>
+    <div class="notes2"><div><span><b>Same tabs everywhere</b>Threads, Map, Requests and News are in the same place in every hub. A hub's own tools come after the divider.</span></div><div><span><b>Private hubs say so</b>Domestic Safety never shows who joined, and its card says that up front.</span></div><div><span><b>Checked before it's public</b>Posts with addresses or names are held, and the author is told why in plain words.</span></div><div><span><b>Answers before replies</b>When a thread asks a question the hub can answer, the AI answer appears in the thread, marked as AI.</span></div></div>
+  </section>
+
+  <!-- ================= 6 COORDINATOR ================= -->
+  <section class="shelf" id="j-coord" aria-label="Coordinator">
+    <div class="shelf-head"><h2><i>6</i>Coordinator · desktop</h2><span>staff only · try Notify, Approve, the map layers</span></div>
+    <p class="shelf-lede">Coordinators use a separate workspace with a dark header, so they always know which mode they're in. The left side is one queue of decisions, each with the AI's reasoning. The right side shows where help is short.</p>
+    <div class="fit" data-w="1280"><div class="scale"><div class="browser">
+      <div class="browser-bar"><div class="dots"><i></i><i></i><i></i></div><div class="url">comforce.mke/coordinate</div><div style="width:52px"></div></div>
+      <div data-app="desk" style="position:relative">
+      <div class="ui desk" data-live>
+        <header class="dnav staff">
+          <a class="logo" href="#top"><svg><use href="#logo-mark"/></svg><b>ComForce <span>MKE</span></b></a>
+          <span class="ws">Coordinator</span>
+          <nav aria-label="Coordinator"><a class="on" href="#j-coord"><span>Tonight</span></a><a href="#j-coord">Volunteers</a><a href="#j-coord">News</a><a href="#j-coord">Reports</a></nav>
+          <div class="dtools">
+            <a class="iconbtn" href="#p-alerts" aria-label="Notifications"><svg class="ic"><use href="#i-bell"/></svg><span class="badge"></span></a>
+            <span class="avatar" style="background:var(--green-2)" aria-label="Denise W.">D</span>
+            <button class="esc" data-exit><kbd>esc</kbd>Quick exit</button>
+          </div>
+        </header>
+        <main class="dpage">
+          <div class="pagehead"><div><h1>Tonight, across the district</h1><p>Updated 6:12 PM · Near West Side, Westown, Haymarket, Juneautown, Third Ward</p></div><div class="right"><div class="seg" role="group" aria-label="Range"><button aria-pressed="true" data-seg>Tonight</button><button aria-pressed="false" data-seg>7 days</button><button aria-pressed="false" data-seg>30 days</button></div></div></div>
+          <div class="kpis">
+            <div class="card kpi bad"><span>Urgent, nobody has it</span><b>3</b><small>Oldest waiting 22 min</small></div>
+            <div class="card kpi"><span>Open requests</span><b>47</b><small>+9 since 4 PM</small></div>
+            <div class="card kpi"><span>Volunteers out now</span><b>38</b><small>of 310 registered</small></div>
+            <div class="card kpi"><span>Median time to claim</span><b>14 min</b><small>Goal: under 20</small></div>
+          </div>
+          <div class="g12">
+            <article class="mod c7" aria-label="Needs your decision">
+              <div class="mod-h" style="padding-bottom:12px"><h2>Needs your decision</h2><span class="count">5</span><span class="meta" style="margin-left:auto">AI sorted · you decide</span></div>
+              <div class="rows" style="border-top:1px solid var(--line)">
+                <div class="q" data-done-row><div><span class="type" style="color:var(--red-deep)"><svg class="ic"><use href="#i-search"/></svg>Search · volunteers</span><h3>Sector G needs 8 people. Notify the 11 most likely to come?</h3><p class="why"><svg class="ic"><use href="#i-spark"/></svg><span>Within 1 mile of N 27th &amp; W Wells, usually free Wednesday evenings, not pinged in 48 hours. Sending in pairs: <b data-police-near style="font-style:normal">several</b> police reports within 2 blocks of G in the last 30 days.</span></p><div class="people"><i style="background:#0F6B3A">AM</i><i style="background:#2F5D9E">TL</i><i style="background:#7A4FA0">RK</i><i style="background:#B5651D">JS</i><i style="background:#4B5850">+7</i></div></div><div class="acts"><button class="btn sm primary" data-once="Sent · 4 on their way"><svg class="ic"><use href="#i-send"/></svg><span data-label>Notify 11</span></button></div></div>
+                <div class="q" data-done-row><div><span class="type"><svg class="ic"><use href="#i-shield"/></svg>Domestic Safety · private</span><h3>"My ex is outside my building again"</h3><p class="why"><svg class="ic"><use href="#i-spark"/></svg>Matched the Sojourner 24/7 line and a private check-in. Sent privately, never posted.</p></div><div class="acts"><button class="btn sm primary" data-once="Approved"><span data-label>Approve</span></button></div></div>
+                <div class="q" data-done-row><div><span class="type"><svg class="ic"><use href="#i-mega"/></svg>News draft · Food hub</span><h3>Pantries are low on formula, socks and canned protein</h3><div class="draft">Juneautown pantries are low on infant formula, warm socks and canned protein. If you can give, drop off at any open pantry on the map before Friday.</div></div><div class="acts"><button class="btn sm" data-edit-draft><span data-label>Edit</span></button><button class="btn sm primary" data-once="Sent to 245"><span data-label>Approve</span></button></div></div>
+                <div class="q" data-done-row><div><span class="type" style="color:var(--amber-ink)"><svg class="ic"><use href="#i-lock"/></svg>Held post</span><h3>Post naming a teen and his address</h3><p class="why"><svg class="ic"><use href="#i-spark"/></svg>Search details must come from ComForce, not the public.</p></div><div class="acts"><button class="btn sm" data-once="Kept held"><span data-label>Keep held</span></button></div></div>
+                <div class="q" data-done-row><div><span class="type"><svg class="ic"><use href="#i-food"/></svg>Duplicate</span><h3>"Free bread at the corner store after 7"</h3><p class="why"><svg class="ic"><use href="#i-spark"/></svg>Same as post #311 from Corner Grocery on Walnut.</p></div><div class="acts"><button class="btn sm" data-once="Merged"><span data-label>Merge</span></button></div></div>
+              </div>
+            </article>
+            <div class="c5 stack">
+              <article class="mod" aria-label="Where help is short">
+                <div class="mod-h" style="padding-bottom:16px"><h2>Where help is short</h2></div>
+                <div class="mapwrap">
+                  <div class="mapchips">
+                    <button class="mapchip" aria-pressed="true" data-layer-chip="heat" data-map="map-coord"><i style="background:var(--red)"></i>Open requests</button>
+                    <button class="mapchip" aria-pressed="true" data-layer-chip="police" data-map="map-coord"><i style="background:var(--police);border-radius:2px"></i>Police reports</button>
+                  </div>
+                  <svg class="map" id="map-coord" viewBox="100 160 1160 680" data-px="479" role="img" aria-label="Map of open requests and public police-report hotspots by neighborhood"><use href="#basemap"/></svg><span class="attrib osm">© OpenStreetMap contributors</span>
+                </div>
+                <div class="police-ctl">
+                  <div class="row">
+                    <div class="seg" role="group" aria-label="Police report type"><button aria-pressed="true" data-seg data-ptype="all">All</button><button aria-pressed="false" data-seg data-ptype="person">Against people</button><button aria-pressed="false" data-seg data-ptype="property">Property</button></div>
+                    <span class="meta" data-police-count></span>
+                  </div>
+                  <div class="row"><span class="pscale"><i style="opacity:.16"></i>1</span><span class="pscale"><i style="opacity:.32"></i>2–3</span><span class="pscale"><i style="opacity:.7"></i>6+ reports per 200 m square</span></div>
+                  <p class="psrc" data-police-src></p>
+                  <div class="tip"><svg class="ic"><use href="#i-lamp"/></svg><span>Reports show where police were called, not where people need help. Use them to <b>pair volunteers and plan safe routes</b>, not to rank neighborhoods. Residents never see this layer.</span></div>
+                </div>
+                <p class="meta" style="padding:0 24px 8px">Requests and volunteer numbers are sample data.</p>
+                <table class="dist">
+                  <thead><tr><th>Neighborhood</th><th style="text-align:right">Requests</th><th style="text-align:right">Volunteers</th><th>Status</th></tr></thead>
+                  <tbody>
+                    <tr><td>Near West Side</td><td class="n">42</td><td class="n">10</td><td class="gap">Short 9</td></tr>
+                    <tr><td>Haymarket / Hillside</td><td class="n">16</td><td class="n">3</td><td class="gap">Short 4</td></tr>
+                    <tr><td>Marquette / Westown</td><td class="n">18</td><td class="n">7</td><td class="ok">OK</td></tr>
+                    <tr><td>Juneautown</td><td class="n">9</td><td class="n">5</td><td class="ok">OK</td></tr>
+                    <tr><td>Historic Third Ward</td><td class="n">5</td><td class="n">3</td><td class="ok">OK</td></tr>
+                  </tbody>
+                </table>
+              </article>
+            </div>
+          </div>
+        </main>
+      </div></div>
+    </div></div></div>
+    <div class="notes2"><div><span><b>Decide, don't dig</b>Everything that needs a coordinator lands in one queue with the AI's reasoning. Approve, edit or hold in one click.</span></div><div><span><b>Ping fewer people, better</b>Activation picks the 11 most likely volunteers instead of messaging all 310.</span></div><div><span><b>Real public data</b>Police-report squares come from MPD's public file, counts only, and only coordinators see them.</span></div><div><span><b>A different-looking workspace</b>The dark header makes it obvious you're acting as staff, not as a neighbor.</span></div></div>
+  </section>
+
+  <!-- ================= 7 EVERYDAY ================= -->
+  <section class="shelf" id="j-day" aria-label="Everyday">
+    <div class="shelf-head"><h2><i>7</i>Everyday · phone</h2><span>alerts → events → your settings</span></div>
+    <p class="shelf-lede">The screens people return to between emergencies. They keep the same patterns as everything else: one main action, plain words, privacy explained where it matters.</p>
+    <div class="phones">
+
+      <figure class="slot" id="p-alerts">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live data-fitems>
+            <div class="statusbar"><span>6:40</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="ph-head"><div class="t"><span class="meta">Westown</span><b>Alerts</b></div><a class="iconbtn" href="#p-me" aria-label="Alert settings"><svg class="ic"><use href="#i-bell"/></svg></a><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="ph-pad"><div class="seg" role="group" aria-label="Show" data-fgroup><button aria-pressed="true" data-seg data-f="all">All</button><button aria-pressed="false" data-seg data-f="urgent">Urgent</button><button aria-pressed="false" data-seg data-f="mine">My requests</button><button aria-pressed="false" data-seg data-f="hubs">Hubs</button></div></div>
+            <p class="list-h">Tonight</p>
+            <div class="ph-pad"><div class="card inbox">
+              <a class="unread" data-ftags="urgent hubs" href="#p-search"><span class="sq" style="background:var(--red-wash);color:var(--red)"><svg class="ic"><use href="#i-search"/></svg></span><span><b>Missing: Darnell, 14</b><small>Rally point moved to N 27th St &amp; W Wells St. 4 of 8 blocks searched.</small></span><span class="meta">6:41</span></a>
+              <a class="unread" data-ftags="mine urgent" href="#p-status"><span class="sq" style="background:var(--green-wash);color:var(--green)"><svg class="ic"><use href="#i-hand"/></svg></span><span><b>Marcus is on the way</b><small>Your food request · about 25 min</small></span><span class="meta">6:31</span></a>
+              <a data-ftags="mine hubs" href="#j-hub"><span class="sq" style="background:var(--sunk);color:var(--ink)"><svg class="ic"><use href="#i-msg"/></svg></span><span><b>3 replies to your post</b><small>Food &amp; Mutual Aid · "Our block club can host…"</small></span><span class="meta">5:52</span></a>
+            </div></div>
+            <p class="list-h">This week</p>
+            <div class="ph-pad"><div class="card inbox">
+              <a data-ftags="hubs" href="#p-event"><span class="sq" style="background:#EEE7F6;color:#5B3B86"><svg class="ic"><use href="#i-cal"/></svg></span><span><b>Cycle Breakers circle, Thursday</b><small>Youth Advocacy · 14 going</small></span><span class="meta">Mon</span></a>
+              <a data-ftags="mine" href="#p-me"><span class="sq" style="background:var(--tip);color:var(--tip-ink)"><svg class="ic"><use href="#i-shield"/></svg></span><span><b>One module left in your training</b><small>Private check-ins · 8 minutes</small></span><span class="meta">Sun</span></a>
+            </div></div>
+            <div class="ph-pad" style="margin-top:16px"><div class="tip"><svg class="ic"><use href="#i-clock"/></svg><span><b>Quiet hours 10 PM–7 AM.</b> Only urgent safety alerts come through.</span></div></div>
+            <div class="endpad"></div>
+          </div>
+          <nav class="tabbar" aria-label="App"><a class="on" href="#p-home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a><a href="#p-route"><svg class="ic"><use href="#i-pin"/></svg><span>Map</span></a><a class="post" href="#p-ask" aria-label="Ask for help"><svg class="ic"><use href="#i-plus"/></svg></a><a href="#p-board"><svg class="ic"><use href="#i-board"/></svg><span>Requests</span></a><a href="#p-me"><svg class="ic"><use href="#i-user"/></svg><span>Me</span></a></nav>
+        </div></div></div></div>
+        <figcaption><b>13 · Alerts</b><p>One inbox for everything, sorted by time and grouped into tonight and this week. The filters split <strong>urgent</strong> from routine, and every row opens the screen it is about. Quiet hours are on by default.</p></figcaption>
+      </figure>
+
+      <figure class="slot" id="p-event">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live>
+            <div class="statusbar"><span>6:44</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="ph-head"><a class="back" href="#p-alerts" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><div class="t"><span class="meta">Youth Advocacy · Cycle Breakers</span><b>Event</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="ph-pad"><div class="evhero"><span class="meta">Hosted by ComForce Youth Advocacy</span><h2>Cycle Breakers circle</h2><div class="evdate"><div><b>Thu, Nov 19</b><small>Tomorrow</small></div><div><b>6–7:30 PM</b><small>Snacks provided</small></div></div></div></div>
+            <div class="ph-pad" style="margin-top:16px"><div class="card rows">
+              <div class="kv"><svg class="ic"><use href="#i-youth"/></svg><span><b>For ages 13–19</b><small>Talk, mentors and a meal with people your age who get it.</small></span></div>
+              <div class="kv"><svg class="ic"><use href="#i-lock"/></svg><span><b>Location shared after you RSVP</b><small>Near Westown. Keeping it private keeps it safe for everyone.</small></span></div>
+              <div class="kv"><svg class="ic"><use href="#i-family"/></svg><span><b>Under 16?</b><small>A parent or guardian gets a copy of your RSVP.</small></span></div>
+            </div></div>
+            <div class="ph-pad" style="margin-top:16px"><div class="card going"><span class="people"><i style="background:#7A4FA0">DA</i><i style="background:#2F5D9E">KJ</i><i style="background:#B5651D">TS</i><i style="background:#4B5850">+11</i></span><span class="meta">14 going · Sample event</span></div></div>
+            <div class="ph-pad" style="margin-top:16px;display:grid;gap:12px">
+              <div class="rsvp"><button class="btn primary" data-once="You're going · address sent"><svg class="ic"><use href="#i-check"/></svg><span data-label>I'm going</span></button><button class="btn" data-once="Marked maybe"><span data-label>Maybe</span></button></div>
+              <button class="btn block" data-once="Ride requested for Thursday"><svg class="ic"><use href="#i-ride"/></svg><span data-label>Need a ride? Ask Rides &amp; Transportation</span></button>
+              <button class="btn ghost block" data-once="Added to your calendar"><svg class="ic"><use href="#i-cal"/></svg><span data-label>Add to my calendar</span></button>
+            </div>
+            <div class="endpad"></div>
+          </div>
+          <nav class="tabbar" aria-label="App"><a class="on" href="#p-home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a><a href="#p-route"><svg class="ic"><use href="#i-pin"/></svg><span>Map</span></a><a class="post" href="#p-ask" aria-label="Ask for help"><svg class="ic"><use href="#i-plus"/></svg></a><a href="#p-board"><svg class="ic"><use href="#i-board"/></svg><span>Requests</span></a><a href="#p-me"><svg class="ic"><use href="#i-user"/></svg><span>Me</span></a></nav>
+        </div></div></div></div>
+        <figcaption><b>14 · An event</b><p>Hub news and events open to a page like this. The location stays private until you RSVP, and parents are copied for younger teens. <strong>Need a ride?</strong> links straight into another hub, so the programs feel like one ComForce instead of separate apps.</p></figcaption>
+      </figure>
+
+      <figure class="slot" id="p-me">
+        <div class="fit" data-w="414"><div class="scale"><div class="phone"><div class="screen ui" data-app="phone">
+          <div class="island"></div>
+          <div class="scroll" data-live>
+            <div class="statusbar"><span>6:50</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
+            <div class="ph-top" style="justify-content:flex-end"><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="me-head"><span class="avatar">J</span><div><h1>Jordan</h1><span class="meta">Westown · member since November</span></div></div>
+            <div class="ph-pad" style="margin-top:24px"><div class="stats3"><div><b>3</b><small>neighbors helped</small></div><div><b>2</b><small>searches joined</small></div><div><b>4</b><small>hubs</small></div></div></div>
+            <div class="ph-pad" style="margin-top:16px"><div class="card" style="padding:16px"><b style="font-size:15px">Trained volunteer · 2 of 3 modules</b><div class="prog2"><i style="width:66%"></i></div><p class="meta">Last one: Private check-ins, about 8 minutes. Unlocks private requests.</p><button class="btn sm primary" style="margin-top:12px" data-once="Module started · 8 min"><span data-label>Finish training</span></button></div></div>
+            <p class="list-h">Privacy and safety</p>
+            <div class="ph-pad"><div class="setlist">
+              <div><span><b>Shake to exit</b><small>Shaking the phone opens the bus schedule</small></span><button class="switch" role="switch" aria-checked="true" aria-label="Shake to exit" data-switch></button></div>
+              <div><span><b>Disguise the app icon</b><small>Shows as "Bus Times" on your home screen</small></span><button class="switch" role="switch" aria-checked="false" aria-label="Disguise the app icon" data-switch></button></div>
+              <div role="button" tabindex="0" style="cursor:pointer"><span><b>Who can see me</b><small>Neighbors see your block, never your address</small></span><span class="val">Block only<svg class="ic"><use href="#i-chev"/></svg></span></div>
+              <div role="button" tabindex="0" style="cursor:pointer"><span><b>Private hubs</b><small>Hidden from your profile</small></span><span class="val">1<svg class="ic"><use href="#i-chev"/></svg></span></div>
+            </div></div>
+            <p class="list-h">Everything else</p>
+            <div class="ph-pad"><div class="setlist">
+              <a href="#p-alerts"><span><b>Alerts and quiet hours</b></span><span class="val">10 PM–7 AM<svg class="ic"><use href="#i-chev"/></svg></span></a>
+              <div role="button" tabindex="0" style="cursor:pointer"><span><b>Language</b></span><span class="val">English<svg class="ic"><use href="#i-chev"/></svg></span></div>
+              <div role="button" tabindex="0" style="cursor:pointer"><span><b>Download or delete my data</b></span><span class="val"><svg class="ic"><use href="#i-chev"/></svg></span></div>
+            </div></div>
+            <a class="danger-link" href="#p-welcome">Sign out</a>
+            <div class="endpad"></div>
+          </div>
+          <nav class="tabbar" aria-label="App"><a href="#p-home"><svg class="ic"><use href="#i-home"/></svg><span>Home</span></a><a href="#p-route"><svg class="ic"><use href="#i-pin"/></svg><span>Map</span></a><a class="post" href="#p-ask" aria-label="Ask for help"><svg class="ic"><use href="#i-plus"/></svg></a><a href="#p-board"><svg class="ic"><use href="#i-board"/></svg><span>Requests</span></a><a class="on" href="#p-me"><svg class="ic"><use href="#i-user"/></svg><span>Me</span></a></nav>
+        </div></div></div></div>
+        <figcaption><b>15 · Me</b><p>Privacy and safety settings come first, and each says what it does in plain words. <strong>Disguise the app icon</strong> covers someone who checks the phone itself, not just the screen. Volunteer training shows up as progress with a clear next step.</p></figcaption>
+      </figure>
+
+    </div>
+  </section>
+
+  <section class="shelf" id="j-cov" aria-label="Feature coverage">
+    <div class="shelf-head"><h2><i>✓</i>Where each planned feature lives</h2><span>README and IDEAS.md</span></div>
+    <div class="st-cov">
+      <div>Modular hubs for every ComForce program<a href="#j-hub">5 · All hubs</a></div>
+      <div>Shared basics plus custom tools per hub<a href="#j-hub">5 · Hub tabs</a></div>
+      <div>Customizable, AI-ordered home<a href="#j-home">2 · Returning</a></div>
+      <div>Onboarding and first-run guidance<a href="#j-first">1 · First visit</a></div>
+      <div>Missing-person priority override<a href="#j-home">2 · Home</a></div>
+      <div>Search parties and block grid<a href="#p-search">12 · Search party</a></div>
+      <div>Find a way out: lit route to safety<a href="#p-route">8 · Safe route</a></div>
+      <div>Routing to MSOE Public Safety, Sojourner<a href="#j-home">2 · Map</a></div>
+      <div>Quick Exit and decoy screen<a href="#p-exitlesson">3 · Lesson</a></div>
+      <div>Private check-ins<a href="#p-ask">5 · Ask</a></div>
+      <div>Safe Threads<a href="#p-safe">9 · Safe places</a></div>
+      <div>Hub news and events<a href="#p-event">14 · Event</a></div>
+      <div>Ask for help, AI-matched<a href="#p-ask">5 · Ask</a></div>
+      <div>Volunteer requests, AI-sorted<a href="#p-board">10 · Requests</a></div>
+      <div>Pantry finder and food sharing<a href="#p-food">7 · Food tonight</a></div>
+      <div>Pantry stocking advisor<a href="#j-hub">5 · Stocking tab</a></div>
+      <div>District stats, need heatmap, moderation<a href="#j-coord">6 · Coordinator</a></div>
+      <div>Smart volunteer activation, AI drafts<a href="#j-coord">6 · Queue</a></div>
+      <div>Request status for the person who asked<a href="#p-status">6 · On the way</a></div>
+      <div>Volunteer task view and reimbursement<a href="#p-task">11 · You're on it</a></div>
+      <div>Alerts inbox and quiet hours<a href="#p-alerts">13 · Alerts</a></div>
+      <div>Privacy settings, disguised icon, training<a href="#p-me">15 · Me</a></div>
+      <div>Police-report hotspots (public MPD data)<a href="#j-coord">6 · Coordinator map</a></div>
+    </div>
+    <p class="st-foot">Prototype for MAIC Hacksgiving 2026. Darnell, Jordan, Denise, and every request, post, pantry and event are made up. Map data © OpenStreetMap contributors (ODbL). ComForce's phone number and figures come from comforcemilwaukee.com.</p>
+  </section>
+</div>
+
+%%DECOY%%
+<script>
+%%HUBJS%%
+// Public MPD reports, binned to 200 m squares at build time (see common/build_police.py)
+function drawPolice(H, v) {
+  const PD = H.MAP.police; if (!PD) return;
+  const g = H.el('g', { 'data-layer': 'police' }, v.svg), s = PD.cell - 14, cells = [];
+  PD.cells.forEach(([x, y, a, b, c]) => {
+    const r = H.el('rect', { x: x - s / 2, y: y - s / 2, width: s, height: s, rx: 7, fill: H.cssv('--police', '#4338A8') }, g);
+    cells.push([r, { all: a + b + c, person: a, property: b }, x, y]);
+  });
+  const fmt = d => new Date(d + 'T12:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  const show = type => {
+    let n = 0;
+    cells.forEach(([r, c]) => { const k = c[type]; n += k; r.style.display = k ? '' : 'none'; r.setAttribute('fill-opacity', k ? Math.min(.7, .06 + .1 * k) : 0); });
+    document.querySelectorAll('[data-police-count]').forEach(e => e.textContent = n + ' reports in view');
+  };
+  show('all');
+  document.addEventListener('click', e => { const b = e.target.closest('[data-ptype]'); if (b) show(b.dataset.ptype); });
+  document.querySelectorAll('[data-police-src]').forEach(e => e.innerHTML = `<b>Source:</b> Milwaukee Police Department public NIBRS data (data.milwaukee.gov), ${fmt(PD.from)}–${fmt(PD.to)}, refreshed daily. Counts only: no addresses or case numbers.`);
+  // reports near search sector G (N 27th–26th, Wisconsin–Michigan): cells within ~2 blocks of its centre
+  const G = H.MAP.grid, q = [G['27th|Wisconsin'], G['26th|Wisconsin'], G['26th|Michigan'], G['27th|Michigan']];
+  if (q.every(Boolean)) {
+    const cx = q.reduce((a, p) => a + p[0], 0) / 4, cy = q.reduce((a, p) => a + p[1], 0) / 4;
+    const near = cells.reduce((a, [, c, x, y]) => a + (Math.hypot(x - cx, y - cy) <= 75 ? c.all : 0), 0);
+    document.querySelectorAll('[data-police-near]').forEach(e => e.textContent = near);
+  }
+}
+HUB.init(H => {
+  H.overview('map-home');
+  H.pantryMap('map-hub'); H.pantryMap('map-pan');
+  const vc = H.views['map-coord'];
+  if (vc) { H.heat(vc); drawPolice(H, vc); Object.entries(H.MAP.hoods).forEach(([n, [x, y]]) => H.hood(vc, n, x, y - 40, 10)); H.pin(vc, H.layer(vc, 'search'), H.P.last_seen, 'search'); }
+  H.sojournerRoute('map-route', { w: 14 });
+  H.safePlaces('map-safe');
+  H.pantryMap('map-food');
+  H.sectorMap('map-search');
+});
+// list filters: a [data-fgroup] of [data-f] buttons filters the nearest [data-fitems] list by data-ftags
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-fgroup] [data-f]'); if (!b) return;
+  const root = b.closest('figure, .desk'), list = root && root.querySelector('[data-fitems]'), f = b.dataset.f;
+  if (list) list.querySelectorAll('[data-ftags]').forEach(n => n.hidden = f !== 'all' && !n.dataset.ftags.split(' ').includes(f));
+});
+// coordinator: edit the AI draft in place
+document.addEventListener('click', e => {
+  const b = e.target.closest('[data-edit-draft]'); if (!b) return;
+  const d = b.closest('.q').querySelector('.draft'), on = d.contentEditable !== 'true';
+  d.contentEditable = on; b.querySelector('[data-label]').textContent = on ? 'Save' : 'Edit'; if (on) d.focus();
+});
+// first visit vs returning, and dismissable first-run hints
+document.addEventListener('click', e => {
+  const m = e.target.closest('[data-mode]');
+  if (m && m.tagName === 'BUTTON') {
+    m.parentElement.querySelectorAll('[data-mode]').forEach(b => b.setAttribute('aria-pressed', b === m));
+    const h = document.getElementById('home'); h.dataset.mode = m.dataset.mode;
+    h.querySelectorAll('[data-dismissed]').forEach(n => { n.hidden = false; n.removeAttribute('data-dismissed'); });
+    return;
+  }
+  const d = e.target.closest('[data-dismiss]');
+  if (d) { const box = d.closest('[data-coach], .start'); box.hidden = true; box.dataset.dismissed = ''; }
+});
+</script>
