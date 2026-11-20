@@ -1,7 +1,6 @@
 """Tests for the triage JSON output parser (src.server.ai.parser)."""
 
 import sys
-from enum import StrEnum
 from pathlib import Path
 
 # Ensure repository root is on sys.path
@@ -9,47 +8,12 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-# TEMPORARY: PR #33 introduces src/server/ai/schemas.py. Until it merges,
-# define an equivalent contract inline so these tests run standalone.
-try:
-    from src.server.ai.schemas import (
-        TriageCategory,
-        TriageOutputSchema,
-        UrgencyTier,
-    )
-except ModuleNotFoundError:
-    import types
-
-    from pydantic import BaseModel
-
-    class TriageCategory(StrEnum):
-        food = "food"
-        ride = "ride"
-        shelter = "shelter"
-        warmth = "warmth"
-        support = "support"
-        other = "other"
-
-    class UrgencyTier(StrEnum):
-        urgent = "urgent"
-        today = "today"
-        this_week = "this_week"
-
-    class TriageOutputSchema(BaseModel):
-        category: TriageCategory
-        urgency: UrgencyTier
-        escalate: bool = False
-        explanation: str = ""
-        clarifying_question: str | None = None
-
-    # Register the stub so src.server.ai.parser can import it standalone
-    _stub = types.ModuleType("src.server.ai.schemas")
-    _stub.TriageCategory = TriageCategory
-    _stub.UrgencyTier = UrgencyTier
-    _stub.TriageOutputSchema = TriageOutputSchema
-    sys.modules["src.server.ai.schemas"] = _stub
-
 from src.server.ai.parser import extract_json, fallback_classify, parse_triage_output
+from src.server.ai.schemas import (
+    TriageCategory,
+    TriageOutputSchema,
+    UrgencyTier,
+)
 
 
 def test_extract_json_clean_object():
@@ -94,8 +58,8 @@ def test_extract_json_empty_returns_none():
 def test_parse_clean_json():
     raw = '{"category": "food", "urgency": "today", "explanation": "hungry"}'
     out = parse_triage_output(raw)
-    assert out.category is TriageCategory.food
-    assert out.urgency is UrgencyTier.today
+    assert out.category is TriageCategory.FOOD
+    assert out.urgency is UrgencyTier.TODAY
     assert out.explanation == "hungry"
     assert out.escalate is False
 
@@ -103,7 +67,7 @@ def test_parse_clean_json():
 def test_parse_fenced_json_with_missing_optional_fields():
     raw = '```json\n{"category": "ride", "urgency": "this_week"}\n```'
     out = parse_triage_output(raw)
-    assert out.category is TriageCategory.ride
+    assert out.category is TriageCategory.RIDE
     assert out.escalate is False  # default applied
     assert out.explanation == ""  # default applied
     assert out.clarifying_question is None
@@ -112,20 +76,20 @@ def test_parse_fenced_json_with_missing_optional_fields():
 def test_parse_prose_wrapped_json():
     raw = 'The reply is {"category": "warmth", "urgency": "today"} for sure.'
     out = parse_triage_output(raw)
-    assert out.category is TriageCategory.warmth
+    assert out.category is TriageCategory.WARMTH
 
 
 def test_parse_enum_case_insensitive():
     raw = '{"category": "FOOD", "urgency": "Today"}'
     out = parse_triage_output(raw)
-    assert out.category is TriageCategory.food
-    assert out.urgency is UrgencyTier.today
+    assert out.category is TriageCategory.FOOD
+    assert out.urgency is UrgencyTier.TODAY
 
 
 def test_parse_extra_unknown_fields_ignored():
     raw = '{"category": "other", "urgency": "today", "confidence": 0.9}'
     out = parse_triage_output(raw)
-    assert out.category is TriageCategory.other
+    assert out.category is TriageCategory.OTHER
     assert not hasattr(out, "confidence")
 
 
@@ -133,7 +97,7 @@ def test_parse_wrong_enum_value_falls_back():
     raw = '{"category": "banana", "urgency": "today"}'
     out = parse_triage_output(raw)
     # invalid enum -> fallback on the raw text, which matches no keyword
-    assert out.category is TriageCategory.other
+    assert out.category is TriageCategory.OTHER
     # output still validates against the schema contract:
     assert TriageOutputSchema.model_validate(out.model_dump())
 
@@ -141,70 +105,70 @@ def test_parse_wrong_enum_value_falls_back():
 def test_parse_wrong_enum_with_keyword_text_falls_back():
     raw = '{"category": "banana"} help with groceries please'
     out = parse_triage_output(raw)
-    assert out.category is TriageCategory.food
+    assert out.category is TriageCategory.FOOD
 
 
 def test_parse_malformed_json_falls_back():
     raw = '{"category": "food", "urgency": "today"'  # truncated
     out = parse_triage_output(raw)
     # fallback sees "food" in the raw text
-    assert out.category is TriageCategory.food
+    assert out.category is TriageCategory.FOOD
 
 
 def test_parse_empty_string_falls_back():
     out = parse_triage_output("")
-    assert out.category is TriageCategory.other
+    assert out.category is TriageCategory.OTHER
     assert out.clarifying_question  # friendly question present
 
 
 def test_parse_none_input_falls_back():
     out = parse_triage_output(None)  # type: ignore[arg-type]
-    assert out.category is TriageCategory.other
+    assert out.category is TriageCategory.OTHER
 
 
 def test_fallback_support_escalate():
     out = fallback_classify("I feel unsafe and there is violence at home")
-    assert out.category is TriageCategory.support
-    assert out.urgency is UrgencyTier.urgent
+    assert out.category is TriageCategory.SUPPORT
+    assert out.urgency is UrgencyTier.URGENT
     assert out.escalate is True
 
 
 def test_fallback_escalate_keyword_domestic():
     out = fallback_classify("domestic situation, I am scared at home")
     assert out.escalate is True
-    assert out.category is TriageCategory.support
+    assert out.category is TriageCategory.SUPPORT
 
 
 def test_fallback_food():
     out = fallback_classify("I am hungry and need groceries from the pantry")
-    assert out.category is TriageCategory.food
+    assert out.category is TriageCategory.FOOD
 
 
 def test_fallback_ride_urgency_today():
     out = fallback_classify("I need a ride to my interview today")
-    assert out.category is TriageCategory.ride
-    assert out.urgency is UrgencyTier.today
+    assert out.category is TriageCategory.RIDE
+    assert out.urgency is UrgencyTier.TODAY
 
 
 def test_fallback_ride_urgency_this_week():
     out = fallback_classify("I need a ride to the clinic appointment")
-    assert out.category is TriageCategory.ride
-    assert out.urgency is UrgencyTier.this_week
+    assert out.category is TriageCategory.RIDE
+    assert out.urgency is UrgencyTier.THIS_WEEK
 
 
 def test_fallback_shelter():
     out = fallback_classify("I was evicted and have nowhere to stay or sleep")
-    assert out.category is TriageCategory.shelter
+    assert out.category is TriageCategory.SHELTER
 
 
 def test_fallback_warmth():
     out = fallback_classify("It is cold and I need a warm coat and blanket")
-    assert out.category is TriageCategory.warmth
+    assert out.category is TriageCategory.WARMTH
 
 
 def test_fallback_other_asks_question():
     out = fallback_classify("just saying hello")
-    assert out.category is TriageCategory.other
+    assert out.category is TriageCategory.OTHER
     assert out.clarifying_question
 
 

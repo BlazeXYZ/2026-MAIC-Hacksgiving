@@ -10,6 +10,9 @@ import time
 
 import httpx
 
+from src.server.ai.mock import MockTriageEngine, mock_mode_active
+from src.server.ai.parser import parse_triage_output
+from src.server.ai.schemas import TriageOutputSchema
 from src.server.core.config import settings
 
 logger = logging.getLogger(__name__)
@@ -90,7 +93,11 @@ class TriageLLMClient:
 
     async def triage(self, text: str, prompt_builder=None) -> "TriageOutputSchema":
         """Triage ``text`` via the LLM, falling back to the mock engine."""
-        if mock_mode_active(self.settings):
+        if mock_mode_active(
+            self.settings.GEMINI_API_KEY,
+            self.settings.OPENAI_API_KEY,
+            self.settings.AI_MOCK_MODE,
+        ):
             logger.info("AI mock mode active; using MockTriageEngine")
             return await MockTriageEngine().triage(text)
 
@@ -126,41 +133,3 @@ class TriageLLMClient:
                 "Analyze the following message and respond with structured "
                 "triage data.\n\nMessage:\n" + text
             )
-
-
-# Shared schema/parser/mock contract provided by PRs #33/#34/#35. TEMPORARY
-# fallbacks keep this module importable until those PRs merge.
-try:
-    from src.server.ai.mock import MockTriageEngine, mock_mode_active
-    from src.server.ai.parser import parse_triage_output
-    from src.server.ai.schemas import TriageOutputSchema
-except ImportError:  # TEMPORARY until PRs #33/#34/#35 merge
-    from pydantic import BaseModel, Field
-
-    class TriageOutputSchema(BaseModel):  # type: ignore[no-redef]
-        severity: str = Field(default="unknown")
-        category: str = Field(default="unknown")
-        summary: str = ""
-        confidence: float = 0.0
-
-    def parse_triage_output(raw: str) -> "TriageOutputSchema":  # type: ignore[no-redef]
-        import json
-        import re
-
-        match = re.search(r"\{.*\}", raw, re.DOTALL)
-        data = json.loads(match.group(0)) if match else {}
-        return TriageOutputSchema(**data)
-
-    class MockTriageEngine:  # type: ignore[no-redef]
-        """Deterministic stand-in for PR #35's mock engine."""
-
-        async def triage(self, text: str) -> "TriageOutputSchema":
-            return TriageOutputSchema(
-                severity="moderate",
-                category="general",
-                summary=f"Mock triage for: {text[:50]}",
-                confidence=0.5,
-            )
-
-    def mock_mode_active(settings=None) -> bool:  # type: ignore[no-redef]
-        return bool(getattr(settings, "AI_MOCK_MODE", False))
