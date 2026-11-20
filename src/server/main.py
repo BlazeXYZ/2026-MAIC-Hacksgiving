@@ -24,6 +24,13 @@ except ModuleNotFoundError:
     from ai.hotspots import router as coordinator_hotspots_router
 
 try:
+    from src.server.ticket_routes import lifespan as ticket_lifespan
+    from src.server.ticket_routes import router as volunteer_ticket_router
+except ModuleNotFoundError:
+    from ticket_routes import lifespan as ticket_lifespan
+    from ticket_routes import router as volunteer_ticket_router
+
+try:
     from src.server.db import close_db, init_db
 except ModuleNotFoundError:
     from db import close_db, init_db
@@ -42,9 +49,9 @@ except ModuleNotFoundError:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
-    yield
+    async with ticket_lifespan(app):
+        yield
     close_db()
-
 
 app = FastAPI(
     title=settings.APP_NAME,
@@ -69,6 +76,7 @@ app.add_middleware(
 
 # Coordinator-only hotspot density endpoints (key-gated, see #41)
 app.include_router(coordinator_hotspots_router)
+app.include_router(volunteer_ticket_router)
 # Pantry stocking advisor endpoints (see #47)
 app.include_router(advisors_router)
 mount_feature_routers(app)
