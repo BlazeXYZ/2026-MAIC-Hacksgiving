@@ -1,0 +1,32 @@
+.tl { list-style: none; margin: 0; padding: 20px; display: grid; }
+.tl li { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 12px; padding-bottom: 20px; font-size: 15px; }
+.tl li:last-child { padding-bottom: 0; }
+.tl li::after { content: ""; position: absolute; left: 11px; top: 26px; bottom: 2px; width: 2px; background: var(--line); }
+.tl li:last-child::after { display: none; }
+.tl .dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--line-2); background: var(--card); z-index: 1; }
+.tl .dot svg { width: 13px; height: 13px; stroke-width: 3; }
+.tl li.done .dot { background: var(--green); border-color: var(--green); color: #fff; }
+.tl li.done::after { background: var(--green); }
+.tl li.now .dot { border-color: var(--green); box-shadow: 0 0 0 4px var(--green-wash); }
+.tl li.now .dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+.tl li.later b { color: var(--ink-2); font-weight: 600; }
+.tl b { font-weight: 700; }
+.tl small { display: block; font-size: 13.5px; color: var(--ink-3); }
+.tl .meta { font-variant-numeric: tabular-nums; }
+
+.statuscard { padding: 20px; display: grid; gap: 8px; background: var(--green); color: #fff; border-radius: var(--r); }
+.statuscard .meta { color: #CBE5D3; }
+.statuscard h2 { font-family: var(--f-voice); font-weight: 500; font-size: 26px; line-height: 1.15; letter-spacing: -.01em; }
+.eta { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; }
+.live { width: 8px; height: 8px; border-radius: 50%; background: var(--hivis); animation: blink 1.4s steps(2, start) infinite; flex: none; }
+@keyframes blink { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .live { animation: none; } }
+
+.token { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; padding: 16px 20px; }
+.token code { font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; font-size: 22px; font-weight: 700; letter-spacing: .06em; }
+.token .btn { margin-left: auto; }
+.token p { flex-basis: 100%; }
+
+.lookup { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 8px; align-items: end; }
+.lookup .field { padding: 0; }
+.lookup input { text-transform: uppercase; font-family: ui-monospace, "Cascadia Mono", Consolas, monospace; letter-spacing: .06em; }
