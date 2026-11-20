@@ -31,5 +31,27 @@ class Settings:
     AI_TIMEOUT_SECONDS: float = float(os.getenv("AI_TIMEOUT_SECONDS", "4.0"))
     AI_MOCK_MODE: bool = os.getenv("AI_MOCK_MODE", "false").lower() in ("true", "1")
 
+    # Vite dev server, loopback, and the Capacitor web view.
+    CORS_ORIGINS: tuple[str, ...] = (
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "capacitor://localhost",
+        "http://localhost",
+    )
+    CORS_METHODS: tuple[str, ...] = (
+        "GET",
+        "POST",
+        "PUT",
+        "PATCH",
+        "DELETE",
+        "OPTIONS",
+    )
+    CORS_HEADERS: tuple[str, ...] = ("Accept", "Content-Type", "Authorization")
+    CORS_EXPOSE_HEADERS: tuple[str, ...] = (
+        "X-Total-Count",
+        "X-Urgent-Count",
+        "X-Pending-Count",
+    )
+
 
 settings = Settings()
