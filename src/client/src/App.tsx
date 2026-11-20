@@ -1,5 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import CommunityMap from './components/CommunityMap';
+import DeliveryCover from './components/DeliveryCover';
 import VolunteerTickets from './components/VolunteerTickets';
 
 interface Community {
@@ -42,13 +43,8 @@ export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
   const [view, setView] = useState<'communities' | 'map'>('communities');
-  const exitHeading = useRef<HTMLHeadingElement>(null);
-
   useEffect(() => {
-    if (quickExitTriggered) {
-      exitHeading.current?.focus();
-      return;
-    }
+    if (quickExitTriggered) return;
 
     function handleQuickExit(event: KeyboardEvent) {
       if (event.key === 'Escape' && !event.repeat) {
@@ -62,18 +58,7 @@ export default function App() {
   }, [quickExitTriggered]);
 
   if (quickExitTriggered) {
-    return (
-      <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-        <h2 ref={exitHeading} tabIndex={-1}>Milwaukee Transit Schedule - Route 30</h2>
-        <p>Next bus arriving at N Broadway & E State St in 6 minutes.</p>
-        <button
-          onClick={() => setQuickExitTriggered(false)}
-          style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}
-        >
-          Return to Portal
-        </button>
-      </div>
-    );
+    return <DeliveryCover onReturn={() => setQuickExitTriggered(false)} />;
   }
 
   const active = COMMUNITIES.find((c) => c.id === selectedCommunity) || COMMUNITIES[0];
