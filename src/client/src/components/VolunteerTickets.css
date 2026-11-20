@@ -140,3 +140,23 @@ button.volunteer-ticket-stub:disabled { cursor: default; opacity: 0.65; }
   .volunteer-ticket-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .volunteer-ticket-filters label:first-child { grid-column: 1 / -1; }
 }
+
+.volunteer-ticket-undo {
+  width: 100%;
+  min-height: 44px;
+  padding: 0.25rem;
+  border: 0;
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--green-dark);
+  font: inherit;
+  cursor: pointer;
+}
+
+.volunteer-ticket-undo:not(:disabled):hover { background: var(--green-wash); }
+.volunteer-ticket-undo:focus-visible { outline-color: var(--surface); }
+
+.volunteer-ticket-undo:disabled {
+  opacity: 0.65;
+  cursor: default;
+}

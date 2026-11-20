@@ -34,6 +34,40 @@ def test_claim_unknown_ticket_returns_404(ticket_client: TestClient) -> None:
     assert ticket_client.post("/api/tickets/999999/claim").status_code == 404
 
 
+def test_only_claiming_client_can_reopen_ticket(ticket_client: TestClient) -> None:
+    claim_path = "/api/tickets/104/claim"
+    unclaim_path = "/api/tickets/104/unclaim"
+    first_claim = {"key": "a" * 64}
+    next_claim = {"key": "b" * 64}
+
+    claimed = ticket_client.post(claim_path, json=first_claim)
+    assert claimed.status_code == 200
+    assert "key" not in claimed.json()
+    assert ticket_client.post(claim_path, json=first_claim).json() == claimed.json()
+    assert ticket_client.post(claim_path, json=next_claim).status_code == 409
+    assert ticket_client.post(unclaim_path, json=next_claim).status_code == 403
+    assert ticket_client.get("/api/tickets").json()[0] == claimed.json()
+
+    reopened = ticket_client.post(unclaim_path, json=first_claim)
+    assert reopened.status_code == 200
+    assert reopened.json()["status"] == "open"
+    assert ticket_client.get("/api/tickets").json()[0] == reopened.json()
+    assert ticket_client.post(unclaim_path, json=first_claim).json() == reopened.json()
+
+    assert ticket_client.post(claim_path, json=next_claim).status_code == 200
+    assert ticket_client.post(unclaim_path, json=first_claim).status_code == 403
+    assert ticket_client.post(unclaim_path, json=next_claim).status_code == 200
+
+
+def test_claim_without_key_cannot_be_released_by_another_client(
+    ticket_client: TestClient,
+) -> None:
+    assert ticket_client.post("/api/tickets/104/claim").status_code == 200
+    release = ticket_client.post("/api/tickets/104/unclaim", json={"key": "a" * 64})
+    assert release.status_code == 403
+    assert ticket_client.get("/api/tickets").json()[0]["status"] == "claimed"
+
+
 def test_only_one_concurrent_claim_succeeds(ticket_client: TestClient) -> None:
     ticket_id = ticket_client.get("/api/tickets").json()[0]["id"]
     path = f"/api/tickets/{ticket_id}/claim"

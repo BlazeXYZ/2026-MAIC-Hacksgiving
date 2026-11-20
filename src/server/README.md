@@ -33,9 +33,10 @@ uv run python -m pytest ../../tests
 * `GET /`: Health check.
 * `GET /api/communities`: Returns active ComforceMKE initiatives, member counts, and open tickets.
 * `GET /api/tickets`: Lists sample pantry tasks with their current claim status.
-* `POST /api/tickets/{ticket_id}/claim`: Claims a sample task and returns the updated ticket. Returns `404` for an unknown ticket and `409` for an already claimed ticket.
+* `POST /api/tickets/{ticket_id}/claim`: Claims a sample task and returns the updated ticket. Returns `404` for an unknown ticket and `409` for an existing claim with a different key. A retry with the original key returns the existing claim.
+* `POST /api/tickets/{ticket_id}/unclaim`: Reopens a ticket with the same 64-character lowercase hexadecimal key supplied in the optional `{"key": "..."}` claim body. A different key returns `403`.
 * `GET /api/alerts/priority`: Returns a fixed sample alert for the demo.
 * `GET /api/districts/stats`: Returns request volume and volunteer coverage across Milwaukee districts.
 * `POST /api/routes/safe-path`: Returns a fixed example route summary based on the campus flag.
 
-Ticket claims are shared within the running server process and reset when it restarts. The ticket board uses fictional pantry tasks.
+Ticket claims are shared within the running server process and reset when it restarts. Claim keys are kept out of ticket listings. The browser holds its keys while the ticket board is mounted. The ticket board uses fictional pantry tasks.
