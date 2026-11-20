@@ -366,27 +366,6 @@ button, input, select, textarea { font: inherit; color: inherit; }
   font-size: 0.875rem;
 }
 
-.transit-screen { min-height: 100dvh; background: #fff; color: #1f2328; font-family: Arial, Helvetica, sans-serif; }
-.transit-content { width: min(100% - 2.5rem, 54rem); margin-inline: auto; }
-.transit-header { padding-block: 1.5rem; background: #2f5d9e; color: #fff; }
-.transit-header h2, .transit-header p, .transit-arrival p { margin: 0; }
-.transit-header h2 { margin-top: 0.25rem; font-size: 2rem; }
-.transit-header h2:focus { outline: none; }
-.transit-body { padding-top: 1.5rem; }
-.transit-arrival { padding: 1rem; background: #f1f4f8; border: 1px solid #dce3ed; border-radius: 8px; }
-.transit-arrival strong { display: block; font-size: 2.25rem; }
-
-.transit-body button {
-  margin-top: 1rem;
-  min-height: 44px;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid #c9d2de;
-  border-radius: 6px;
-  color: #234d85;
-  background: #fff;
-  cursor: pointer;
-}
-
 @media (max-width: 760px) {
   .hub-app { padding-bottom: calc(68px + env(safe-area-inset-bottom, 0px)); }
   .hub-header-inner { grid-template-columns: 1fr auto; gap: 0.75rem; min-height: 4rem; }

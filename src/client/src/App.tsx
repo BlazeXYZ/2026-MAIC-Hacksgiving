@@ -1,6 +1,7 @@
 import { AlertCircle, ArrowRight, ChevronRight, HeartHandshake, LayoutGrid, LogOut, MapPin, Plus, Search, Shield, Utensils } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import CommunityMap from './components/CommunityMap';
+import DeliveryCover from './components/DeliveryCover';
 import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
 import './App.css';
@@ -57,14 +58,10 @@ export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<CommunityId>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState(false);
   const [view, setView] = useState<View>('communities');
-  const exitHeading = useRef<HTMLHeadingElement>(null);
   const searchGridHeading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    if (quickExitTriggered) {
-      exitHeading.current?.focus();
-      return;
-    }
+    if (quickExitTriggered) return;
 
     function handleQuickExit(event: KeyboardEvent) {
       if (event.key === 'Escape' && !event.repeat) {
@@ -78,26 +75,7 @@ export default function App() {
   }, [quickExitTriggered]);
 
   if (quickExitTriggered) {
-    return (
-      <main className="transit-screen">
-        <header className="transit-header">
-          <div className="transit-content">
-            <p>Milwaukee Transit Schedule</p>
-            <h2 ref={exitHeading} tabIndex={-1}>Route 30</h2>
-          </div>
-        </header>
-        <div className="transit-content transit-body">
-          <section aria-label="Next arrival" className="transit-arrival">
-            <span>Next arrival</span>
-            <strong>6 min</strong>
-            <p>N Broadway &amp; E State St</p>
-          </section>
-          <button type="button" onClick={() => setQuickExitTriggered(false)}>
-            Return to Portal
-          </button>
-        </div>
-      </main>
-    );
+    return <DeliveryCover onReturn={() => setQuickExitTriggered(false)} />;
   }
 
   const active = COMMUNITIES.find((community) => community.id === selectedCommunity) ?? COMMUNITIES[0];
