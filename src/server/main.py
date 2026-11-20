@@ -1,11 +1,17 @@
 """FastAPI application entry point for the ComforceMKE community platform."""
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+try:
+    from src.server.ai.advisor import router as advisors_router
+except ModuleNotFoundError:
+    from ai.advisor import router as advisors_router
 
 try:
     from src.server.core.config import settings
@@ -17,10 +23,24 @@ try:
 except ModuleNotFoundError:
     from ai.hotspots import router as coordinator_hotspots_router
 
+try:
+    from src.server.db import close_db, init_db
+except ModuleNotFoundError:
+    from db import close_db, init_db
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+    close_db()
+
+
 app = FastAPI(
     title=settings.APP_NAME,
     description="FastAPI backend supporting web and Capacitor mobile clients for ComforceMKE initiatives.",
     version="0.2.0",
+    lifespan=lifespan,
 )
 
 # Enable CORS for local web development and Capacitor mobile bridge
@@ -34,6 +54,8 @@ app.add_middleware(
 
 # Coordinator-only hotspot density endpoints (key-gated, see #41)
 app.include_router(coordinator_hotspots_router)
+# Pantry stocking advisor endpoints (see #47)
+app.include_router(advisors_router)
 
 class HealthResponse(BaseModel):
     status: str

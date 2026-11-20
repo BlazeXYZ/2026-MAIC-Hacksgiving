@@ -4,8 +4,6 @@ Covers: happy-path Gemini parsing via httpx.MockTransport, error-path and
 timeout-path fallback to MockTriageEngine, mock-mode short-circuit, and
 debug-level latency logging.
 
-TEMPORARY: schema/parser/mock imports use an inline fallback until PRs
-#33/#34/#35 merge.
 """
 
 import asyncio
@@ -22,13 +20,8 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from src.server.ai.client import TriageLLMClient
+from src.server.ai.schemas import TriageOutputSchema
 from src.server.core.config import Settings
-
-# TEMPORARY fallback until PRs #33/#34/#35 merge
-try:
-    from src.server.ai.schemas import TriageOutputSchema
-except ModuleNotFoundError:  # TEMPORARY
-    from src.server.ai.client import TriageOutputSchema
 
 
 def _make_settings(**overrides):
@@ -81,8 +74,8 @@ def test_complete_parses_gemini_response():
 
 def test_triage_happy_path_returns_schema(caplog):
     payload = (
-        '{"severity": "high", "category": "fire", '
-        '"summary": "Active fire reported", "confidence": 0.9}'
+        '{"category": "food", "urgency": "today", "escalate": false, '
+        '"explanation": "Resident needs food assistance today."}'
     )
     settings = _make_settings()
     transport = httpx.MockTransport(_gemini_handler(payload))
@@ -93,13 +86,14 @@ def test_triage_happy_path_returns_schema(caplog):
         result = asyncio.run(client.triage("smoke coming from building"))
 
     assert isinstance(result, TriageOutputSchema)
-    assert result.severity == "high"
-    assert result.category == "fire"
+    assert result.category.value == "food"
+    assert result.urgency.value == "today"
+    assert result.escalate is False
     assert "ms" in caplog.text
 
 
 def test_triage_openai_path():
-    payload = '{"severity": "low", "category": "noise", "summary": "y"}'
+    payload = '{"category": "ride", "urgency": "this_week", "escalate": false}'
 
     def handler(request: httpx.Request) -> httpx.Response:
         assert request.headers["Authorization"] == "Bearer openai-key"
@@ -117,7 +111,8 @@ def test_triage_openai_path():
     result = asyncio.run(client.triage("loud music"))
 
     assert isinstance(result, TriageOutputSchema)
-    assert result.severity == "low"
+    assert result.category.value == "ride"
+    assert result.urgency.value == "this_week"
 
 
 def test_triage_error_falls_back_to_mock(monkeypatch, caplog):

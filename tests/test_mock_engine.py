@@ -1,10 +1,8 @@
 """Tests for the deterministic mock triage engine (issue #35)."""
 
 import asyncio
-import enum
 import sys
 import time
-import types
 from pathlib import Path
 
 # Ensure repository root is on sys.path
@@ -12,51 +10,15 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-try:
-    from src.server.ai.schemas import (
-        TriageCategory,
-        TriageOutputSchema,
-        UrgencyTier,
-    )
-except ModuleNotFoundError:
-    # --- TEMPORARY INLINE FALLBACK (until PR #33 merges) ---
-    # PR #33 introduces src/server/ai/schemas.py. Until it lands on main,
-    # this branch registers a stand-in module so tests run standalone.
-    # DELETE THIS BLOCK once #33 is merged.
-    from pydantic import BaseModel
-
-    _schemas_module = types.ModuleType("src.server.ai.schemas")
-
-    class TriageCategory(str, enum.Enum):
-        FOOD = "food"
-        RIDE = "ride"
-        SHELTER = "shelter"
-        WARMTH = "warmth"
-        SUPPORT = "support"
-        OTHER = "other"
-
-    class UrgencyTier(str, enum.Enum):
-        URGENT = "urgent"
-        TODAY = "today"
-        THIS_WEEK = "this_week"
-
-    class TriageOutputSchema(BaseModel):
-        category: TriageCategory
-        urgency: UrgencyTier
-        escalate: bool = False
-        explanation: str = ""
-        clarifying_question: str | None = None
-
-    _schemas_module.TriageCategory = TriageCategory
-    _schemas_module.UrgencyTier = UrgencyTier
-    _schemas_module.TriageOutputSchema = TriageOutputSchema
-    sys.modules["src.server.ai.schemas"] = _schemas_module
-    # --- END TEMPORARY INLINE FALLBACK ---
-
 from src.server.ai.mock import (
     MOCK_LATENCY_SECONDS,
     MockTriageEngine,
     mock_mode_active,
+)
+from src.server.ai.schemas import (
+    TriageCategory,
+    TriageOutputSchema,
+    UrgencyTier,
 )
 
 # All 15 eval scenarios, classified exactly as the eval suite (PR #42)

@@ -125,8 +125,8 @@ def fallback_classify(text: str) -> TriageOutputSchema:
     if has_any(_WARMTH_KEYWORDS):
         return _schema_from("warmth", "today", explanation="Warmth need detected.")
     return TriageOutputSchema(
-        category=TriageCategory.other,
-        urgency=UrgencyTier.this_week,
+        category=TriageCategory.OTHER,
+        urgency=UrgencyTier.THIS_WEEK,
         clarifying_question=(
             "Thanks for reaching out! Could you tell us a bit more about "
             "what you need help with (food, a ride, shelter, warmth, or "

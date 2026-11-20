@@ -88,7 +88,7 @@ export default function LeafletMap({ markers, selectedMarkerId, onSelectMarker, 
         .addTo(group);
       const element = point.getElement();
       element?.setAttribute('aria-label', `Show ${label} on the map`);
-      element?.addEventListener('keydown', (event) => {
+      element?.addEventListener('keydown', (event: KeyboardEvent) => {
         if (event.key === ' ') {
           event.preventDefault();
           onSelectMarker(id);
