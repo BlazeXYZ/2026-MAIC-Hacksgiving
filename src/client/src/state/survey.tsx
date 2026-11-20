@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
-import type { SurveyRequest } from '../contracts';
+import type { SurveyRequest } from '../contracts/intake';
 import { translate, type Language, type StringKey } from '../i18n/strings';
 
 /** Preset needs. Issue #2 owns the cards that set these; the values match `ServiceCategory` hints. */
