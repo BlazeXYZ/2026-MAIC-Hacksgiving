@@ -31,6 +31,26 @@ Each environment is its own Terraform root, kind cluster, namespace, kubeconfig,
 | `environment` in `/api/health` | `development` | `qa` | `production` |
 | API / web replicas | 1 / 1 | 1 / 1 | 2 / 2 |
 
+## Ports
+
+The browser uses one host port per environment. That port-forward lands on `svc/web` port 80. Nginx on that Service serves the React app and proxies `/api` to the API, so health is `http://127.0.0.1:<host port>/api/health`, not a separate host port.
+
+| What | dev | qa | prod |
+| :--- | :--- | :--- | :--- |
+| Laptop URL | http://127.0.0.1:8080 | http://127.0.0.1:8081 | http://127.0.0.1:8082 |
+| Fallback URL if that port is taken | http://127.0.0.1:18080 | http://127.0.0.1:18081 | http://127.0.0.1:18082 |
+| Port-forward | `svc/web` `8080:80` | `svc/web` `8081:80` | `svc/web` `8082:80` |
+
+Inside every namespace the Service ports are the same:
+
+| Service | Port | Where it is |
+| :--- | :--- | :--- |
+| `web` | 80 | nginx. The only Service you forward to the laptop. |
+| `api` | 8000 | FastAPI. Reached from nginx as `http://api:8000`. Not published on the laptop. |
+| `db` | 5432 | Postgres. Headless Service. The API uses `db:5432`. Not published on the laptop. |
+
+Docker Compose is a different stack and can stay running. It publishes web on `localhost:3000`, the API on `localhost:8000`, and Postgres on `localhost:5432`. Do not bind the kind port-forward to 3000, 8000, or 5432, and do not treat those Compose ports as the Kubernetes app.
+
 Human steps and the cloud write-up are in [deploy/KUBERNETES.md](../../../deploy/KUBERNETES.md). This skill does not change application code and does not set `target` to `aws`.
 
 Stay on this laptop. Do not push images, state, or secrets to a registry or cluster you did not create here. Do not apply a directory the phrase did not name.
