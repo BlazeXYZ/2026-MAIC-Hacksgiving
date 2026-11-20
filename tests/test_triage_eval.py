@@ -25,13 +25,13 @@ if str(REPO_ROOT) not in sys.path:
 # inline fallbacks below are never used.
 # ---------------------------------------------------------------------------
 try:
+    from src.server.ai.mock import MockTriageEngine
+    from src.server.ai.parser import parse_triage_output
     from src.server.ai.schemas import (
         TriageCategory,
         TriageOutputSchema,
         UrgencyTier,
     )
-    from src.server.ai.mock import MockTriageEngine
-    from src.server.ai.parser import parse_triage_output
 
     _USING_REAL_CONTRACT = True
 except ModuleNotFoundError:
