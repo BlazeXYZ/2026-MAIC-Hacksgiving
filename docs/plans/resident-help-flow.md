@@ -197,10 +197,22 @@ step 7: that still closes #2–#10.
 - **"Keep this private" isn't sent.** `SurveyRequest` has no field for it. Today every request is treated as
   private. If it should be a choice, add `keep_private: bool` to the contract.
 - **Hmong strings.** `i18n/strings.ts` falls back to English for `hmn`. Needs a person to translate, not a machine.
-- **For #8:** call `useQuickExit().exit()` from the button and the Esc listener, and remove the `exit-standin`
-  button in `App.tsx`. Esc also closes the privacy `<dialog>`, so listen on `window` in the capture phase.
-- **For #9:** replace `DisguiseStandIn` in `App.tsx`; spread `useTripleTap(restore)` on the blue header bar.
-- **For #2:** replace the `need-slot` list in `AskScreen.tsx`; set `need` through `useSurvey().update`.
+- **For #8:** the red Exit in `PhoneHead` and the `esc Quick exit` button in `DeskNav` (`components/shell/Frame.tsx`)
+  are stand-ins that call `useQuickExit().exit()`. Add the Esc listener there. Esc also closes the privacy
+  `<dialog>`, so listen on `window` in the capture phase.
+- **For #9:** replace `DisguiseStandIn` in `App.tsx` (already styled like the mockup's decoy); keep
+  `useTripleTap(restore)` spread on the blue header bar.
+- **For #2:** the need choice is a row of chips in the first chat bubble of `AskScreen.tsx`. Swap in the
+  mockup's `.need4` tiles (home screen) and set `need` through `useSurvey().update`.
+
+## UI follows the v9 mockup
+
+Screens map to mockup frames: `WelcomeScreen` = 1 Welcome (language toggle in the green hero, #3),
+`AreaScreen` = 2 Area (#4, without the hubs list), `AskScreen` = 5 Ask for help (chat; #5 is the input bar,
+#6 the "Tap to fix" bubble), `StatusScreen` = 6 Help is on the way (#15). Styles in `styles/tokens.css` are
+ported from `docs/design/src/v9/template.html` with the same class names, and icons come from the mockup's
+own SVG set (`components/Icon.tsx`). The emergency line (#7) is the mockup's "In danger?" line, pinned in
+every footer. Tabs and desktop nav items for screens that don't exist yet are shown but disabled.
 
 ---
 

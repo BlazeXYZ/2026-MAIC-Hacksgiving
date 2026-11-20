@@ -1,21 +1,21 @@
 import { useEffect, useState } from 'react';
-import { EyeOff } from 'lucide-react';
 import { clearSampleTickets } from './api/intake';
-import { EmergencyBar } from './components/shell/EmergencyBar';
-import { LanguageSelector } from './components/survey/LanguageSelector';
+import { IconSprite } from './components/Icon';
+import { DeskNav } from './components/shell/Frame';
+import { AreaScreen } from './screens/AreaScreen';
 import { AskScreen } from './screens/AskScreen';
-import { CommunitiesDemo } from './screens/CommunitiesDemo';
 import { StatusScreen } from './screens/StatusScreen';
+import { WelcomeScreen } from './screens/WelcomeScreen';
 import { QuickExitProvider, useQuickExit } from './state/quickExit';
-import { SurveyProvider, useSurvey } from './state/survey';
+import { SurveyProvider } from './state/survey';
 import { useTripleTap } from './state/useTripleTap';
-import './components/shell/shell.css';
 
-type Screen = 'home' | 'ask' | 'status';
+type Screen = 'welcome' | 'area' | 'ask' | 'status';
 
 export default function App() {
   return (
     <QuickExitProvider>
+      <IconSprite />
       <Root />
     </QuickExitProvider>
   );
@@ -35,60 +35,32 @@ function Root() {
   );
 }
 
+/** Resident flow from the v9 mockup: Welcome → Area → Ask (chat) → Status. */
 function Shell() {
-  const { exit } = useQuickExit();
-  const { t } = useSurvey();
-  const [screen, setScreen] = useState<Screen>('ask');
+  const [screen, setScreen] = useState<Screen>('welcome');
   const [token, setToken] = useState<string | null>(null);
-  const showEmergency = screen !== 'home';
-
-  const nav: Array<[Screen, string]> = [
-    ['home', 'Home'],
-    ['ask', t('ask.kicker')],
-    ['status', t('status.title')],
-  ];
 
   return (
-    <>
-      <div className="chrome">
-        <div className="appbar">
-          <a className="logo" href="/" onClick={(e) => (e.preventDefault(), setScreen('home'))}>
-            ComForce <span>MKE</span>
-          </a>
-          <nav className="appnav" aria-label="Main">
-            {nav.map(([id, label]) => (
-              <button key={id} type="button" aria-current={screen === id ? 'page' : undefined} onClick={() => setScreen(id)}>
-                {label}
-              </button>
-            ))}
-          </nav>
-          <span className="spacer" />
-          {screen !== 'ask' && <LanguageSelector compact />}
-          {/* Stand-in trigger until #8 adds the real Quick Exit button and the Esc shortcut. */}
-          <button type="button" className="exit-standin" onClick={exit}>
-            <EyeOff aria-hidden="true" />
-            Exit
-          </button>
-        </div>
-        {showEmergency && <EmergencyBar />}
-      </div>
-
-      {screen === 'home' && <CommunitiesDemo />}
+    <div className="app app-desk">
+      <DeskNav onLogo={() => setScreen('welcome')} />
+      {screen === 'welcome' && <WelcomeScreen onContinue={() => setScreen('area')} onCheck={() => setScreen('status')} />}
+      {screen === 'area' && <AreaScreen onBack={() => setScreen('welcome')} onContinue={() => setScreen('ask')} />}
       {screen === 'ask' && (
         <AskScreen
-          onSubmitted={(code) => {
+          onBack={() => setScreen('area')}
+          onFollow={(code) => {
             setToken(code);
             setScreen('status');
           }}
         />
       )}
-      {screen === 'status' && <StatusScreen token={token} onToken={setToken} onNewRequest={() => setScreen('ask')} />}
-    </>
+      {screen === 'status' && <StatusScreen token={token} onToken={setToken} onBack={() => setScreen(token ? 'ask' : 'welcome')} onAsk={() => setScreen('ask')} />}
+    </div>
   );
 }
 
 /**
- * Stand-in disguise until #9 builds the real MCTS schedule. It only exists so the #10 return gesture
+ * Stand-in for #9's disguise, matching the mockup's decoy screen. It exists so the #10 return gesture
  * can be used: three deliberate taps on the blue bar bring the app back.
  */
 function DisguiseStandIn() {
@@ -104,17 +76,22 @@ function DisguiseStandIn() {
   }, []);
 
   return (
-    <div className="disguise">
-      <header className="disguise-bar" {...tripleTap}>
-        <h1>Transit Schedule</h1>
+    <div className="decoy">
+      <header {...tripleTap}>
+        <h3>Transit Schedule</h3>
         <p>Route 30 · Sherman–Wisconsin · Eastbound</p>
       </header>
+      <div className="next">
+        Next bus at N Broadway &amp; E State St<b>6 min</b>
+      </div>
       <ol>
         <li><span>N Broadway &amp; E State St</span><span>6:18 PM</span></li>
         <li><span>N Water St &amp; E Kilbourn Ave</span><span>6:21 PM</span></li>
         <li><span>E Wisconsin Ave &amp; N Jackson St</span><span>6:24 PM</span></li>
         <li><span>N Prospect Ave &amp; E Ogden Ave</span><span>6:28 PM</span></li>
+        <li><span>N Farwell Ave &amp; E Brady St</span><span>6:31 PM</span></li>
       </ol>
+      <p className="fine">Times are estimates. Arrivals refresh every 30 seconds.</p>
     </div>
   );
 }

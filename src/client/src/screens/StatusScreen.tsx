@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Copy, Lock } from 'lucide-react';
 import type { PublicTicket } from '../contracts';
 import { getTicket, normalizeToken, type Sampled } from '../api/intake';
+import { Icon } from '../components/Icon';
+import { PhoneHead, TabBar } from '../components/shell/Frame';
+import { EmergencyBar, COMFORCE_HOTLINE } from '../components/shell/EmergencyBar';
 import { PrivacyBadge } from '../components/privacy/PrivacyNotice';
 import { StatusTimeline } from '../components/status/StatusTimeline';
-import { COMFORCE_HOTLINE } from '../components/shell/EmergencyBar';
 import { useSurvey } from '../state/survey';
 
 const POLL_MS = 15_000;
@@ -12,10 +13,10 @@ const POLL_MS = 15_000;
 type Load = { kind: 'idle' } | { kind: 'loading' } | { kind: 'found'; ticket: Sampled<PublicTicket> } | { kind: 'not-found' } | { kind: 'error' };
 
 /**
- * Anonymous status page (#15). Looks a request up by its code, no login. Shows the timeline, a rough
- * time estimate and the volunteer's alias, never anyone's phone number or address.
+ * Mockup screen 6 · Help is on the way (#15). Anonymous: looked up by code, no login. Shows who is coming
+ * (alias only), roughly when, and the timeline. Calls go through ComForce, never a personal number.
  */
-export function StatusScreen({ token, onToken, onNewRequest }: { token: string | null; onToken: (t: string) => void; onNewRequest: () => void }) {
+export function StatusScreen({ token, onToken, onBack, onAsk }: { token: string | null; onToken: (t: string) => void; onBack: () => void; onAsk: () => void }) {
   const { t } = useSurvey();
   const [load, setLoad] = useState<Load>({ kind: token ? 'loading' : 'idle' });
   const [draft, setDraft] = useState('');
@@ -48,106 +49,135 @@ export function StatusScreen({ token, onToken, onNewRequest }: { token: string |
     try {
       await navigator.clipboard.writeText(code);
     } catch {
-      window.prompt(t('status.code'), code); // fallback for browsers without clipboard access
+      window.prompt(t('status.code'), code); // fallback where clipboard access is blocked
     }
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
-  const lookupForm = (
-    <form className="card card-pad stack" onSubmit={submit}>
-      <div className="lookup">
-        <div className="field">
-          <label htmlFor="token-input">{t('status.lookup')}</label>
-          <input id="token-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="cf-XXXXXX" autoComplete="off" spellCheck={false} />
-        </div>
-        <button type="submit" className="btn primary" disabled={!normalizeToken(draft)}>
-          {t('status.lookup.go')}
-        </button>
-      </div>
-      {load.kind === 'not-found' && (
-        <p className="field-error" role="alert">
-          {t('status.notfound')}
-        </p>
-      )}
-      {load.kind === 'error' && (
-        <p className="field-error" role="alert">
-          {t('review.failed')}
-        </p>
-      )}
-    </form>
-  );
-
   const ticket = load.kind === 'found' ? load.ticket : null;
-  const name = ticket?.assigned_volunteer_alias ?? t('status.someone');
+  const alias = ticket?.assigned_volunteer_alias ?? null;
+  const showLookup = !token || load.kind === 'not-found' || load.kind === 'error';
 
   return (
-    <main className="page stack" style={{ paddingTop: 24 }}>
-      <header style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ flex: 1 }}>
-          <p className="meta">{t('status.kicker')}</p>
-          <h1 className="title">{t('status.title')}</h1>
-        </div>
-        <PrivacyBadge />
-      </header>
+    <div className="view">
+      <PhoneHead meta={t('status.kicker')} title={ticket ? t(`status.t.${ticket.status}`) : t('status.lookup')} onBack={onBack} />
 
-      {!token || load.kind === 'not-found' || load.kind === 'error' ? lookupForm : null}
-
-      {load.kind === 'loading' && (
-        <div className="card card-pad review-skel" role="status">
-          <span className="visually-hidden">{t('review.loading')}</span>
-          <div className="skeleton" style={{ height: 28, width: '70%' }} />
-          <div className="skeleton" style={{ width: '40%' }} />
-        </div>
-      )}
-
-      {ticket && (
-        <>
-          <section className="statuscard" aria-live="polite">
-            <span className="meta">
-              {t(`category.${ticket.category}`)} · {t(`urgency.${ticket.urgency}`)}
-              {ticket.sample ? ` · ${t('sample')}` : ''}
-            </span>
-            <h2>{t(`status.head.${ticket.status}`, { name })}</h2>
-            {ticket.status !== 'resolved' && (
-              <div className="eta">
-                <span className="live" aria-hidden="true" />
-                {t(`status.eta.${ticket.urgency}`)}
-              </div>
+      <div className="view-body" style={{ paddingBottom: 24 }}>
+        {showLookup && (
+          <form className="ph-pad lookup" onSubmit={submit} style={{ display: 'grid', gap: 12 }}>
+            <div>
+              <label htmlFor="token-input">{t('status.code')}</label>
+              <input id="token-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="cf-XXXXXX" autoComplete="off" spellCheck={false} />
+            </div>
+            {load.kind === 'not-found' && (
+              <p className="field-error" role="alert">
+                {t('status.notfound')}
+              </p>
             )}
-          </section>
-
-          <div className="card token">
-            <span className="meta" style={{ flexBasis: '100%' }}>
-              {t('status.code')}
-            </span>
-            <code>{ticket.token}</code>
-            <button type="button" className="btn sm" onClick={() => void copy(ticket.token)}>
-              <Copy aria-hidden="true" />
-              <span aria-live="polite">{copied ? t('status.copied') : t('status.copy')}</span>
+            {load.kind === 'error' && (
+              <p className="field-error" role="alert">
+                {t('review.failed')}
+              </p>
+            )}
+            <button type="submit" className="btn primary block" disabled={!normalizeToken(draft)}>
+              {t('status.lookup.go')}
             </button>
-            <p className="meta">{t('status.code.help')}</p>
-          </div>
+          </form>
+        )}
 
-          <div className="card">
-            <StatusTimeline status={ticket.status} events={ticket.timeline} />
+        {load.kind === 'loading' && (
+          <div className="ph-pad" role="status">
+            <span className="visually-hidden">{t('review.loading')}</span>
+            <div className="statuscard" style={{ display: 'grid', gap: 10 }}>
+              <i className="skeleton" style={{ width: '40%', opacity: 0.5 }} />
+              <i className="skeleton" style={{ height: 24, opacity: 0.5 }} />
+            </div>
           </div>
+        )}
 
-          <div className="tip">
-            <Lock aria-hidden="true" />
-            <span>{t('status.masked')}</span>
-          </div>
+        {ticket && (
+          <>
+            <div className="ph-pad">
+              <div className="statuscard" aria-live="polite">
+                <span className="meta">
+                  {t(`category.${ticket.category}`)} · {t(`urgency.${ticket.urgency}`)}
+                  {ticket.sample ? ` · ${t('sample')}` : ''}
+                </span>
+                <h2>{t(`status.head.${ticket.status}`, { name: alias ?? t('status.someone') })}</h2>
+                {ticket.status !== 'resolved' && (
+                  <div className="eta2">
+                    <span className="live" />
+                    {t(`status.eta.${ticket.urgency}`)}
+                  </div>
+                )}
+              </div>
+            </div>
 
-          <div className="stack" style={{ gap: 8 }}>
-            <a className="btn ghost block" href={COMFORCE_HOTLINE.tel}>
-              {t('status.wrong')}
-            </a>
-            <button type="button" className="btn block" onClick={onNewRequest}>
-              {t('status.new')}
-            </button>
-          </div>
-        </>
-      )}
-    </main>
+            <div className="ph-pad" style={{ marginTop: 16 }}>
+              <div className="card">
+                <div className="vol">
+                  <span className={alias ? 'avatar' : 'avatar wait'}>{alias ? alias[0] : <Icon name="clock" />}</span>
+                  <span>
+                    <b>{alias ?? t('status.vol.wait')}</b>
+                    <small>{alias ? t('status.vol.d') : t('status.vol.wait.d')}</small>
+                  </span>
+                </div>
+                {alias && (
+                  <div className="vol-acts">
+                    <a className="btn sm" href={COMFORCE_HOTLINE.tel}>
+                      <Icon name="msg" />
+                      {t('status.msg')}
+                    </a>
+                    <a className="btn sm" href={COMFORCE_HOTLINE.tel}>
+                      <Icon name="phone" />
+                      {t('status.call')}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className="ph-pad" style={{ marginTop: 16 }}>
+              <div className="card">
+                <StatusTimeline status={ticket.status} events={ticket.timeline} />
+              </div>
+            </div>
+
+            <div className="ph-pad" style={{ marginTop: 16 }}>
+              <div className="card code">
+                <span>
+                  <span className="meta">{t('status.code')}</span>
+                  <b>{ticket.token}</b>
+                  <small>{t('status.code.help')}</small>
+                </span>
+                <button type="button" className="btn sm" onClick={() => void copy(ticket.token)}>
+                  <span aria-live="polite">{copied ? t('status.copied') : t('status.copy')}</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="ph-pad" style={{ marginTop: 16 }}>
+              <div className="tip" style={{ alignItems: 'center' }}>
+                <Icon name="lock" />
+                <span style={{ flex: 1 }}>{t('status.masked')}</span>
+                <PrivacyBadge />
+              </div>
+            </div>
+
+            <div className="ph-pad" style={{ marginTop: 16, display: 'grid', gap: 8 }}>
+              <a className="btn ghost block" href={COMFORCE_HOTLINE.tel}>
+                {t('status.wrong')}
+              </a>
+            </div>
+          </>
+        )}
+      </div>
+
+      <div className="view-foot">
+        <EmergencyBar />
+        <TabBar onAsk={onAsk} />
+      </div>
+    </div>
   );
 }

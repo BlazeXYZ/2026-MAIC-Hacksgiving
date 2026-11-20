@@ -1,36 +1,38 @@
 import { useEffect, useRef, useState } from 'react';
-import { ArrowLeft, Lightbulb } from 'lucide-react';
-import type { TriageResult } from '../contracts';
+import type { SurveyAccepted, TriageResult } from '../contracts';
 import { previewTriage, submitSurvey, type Sampled } from '../api/intake';
-import { LanguageSelector } from '../components/survey/LanguageSelector';
-import { OtherTextInput } from '../components/survey/OtherTextInput';
-import { DistrictPicker } from '../components/survey/DistrictPicker';
-import { TriageReviewCard } from '../components/survey/TriageReviewCard';
+import { Icon } from '../components/Icon';
+import { PhoneHead } from '../components/shell/Frame';
+import { EmergencyBar } from '../components/shell/EmergencyBar';
+import { ChatInput } from '../components/survey/ChatInput';
+import { TriageReviewCard, type FixTarget } from '../components/survey/TriageReviewCard';
 import { PrivacyBadge } from '../components/privacy/PrivacyNotice';
-import { NEEDS, freeTextProblem, toSurveyRequest, useSurvey } from '../state/survey';
-import '../components/survey/survey.css';
+import { NEEDS, toSurveyRequest, useSurvey, type Need } from '../state/survey';
 
-type Step = 'language' | 'need' | 'district' | 'review';
-const STEPS: Step[] = ['language', 'need', 'district', 'review'];
+/** need: pick a need · text: say more (or skip) · review: check what we understood · sent: done */
+type Phase = 'need' | 'text' | 'review' | 'sent';
 
 /**
- * The resident intake survey: language (#3) → need + words (#2 slot, #5) → area (#4) → review (#6).
- * Answers live in the survey context, so moving back and forth keeps them.
+ * Mockup screen 5 · Ask for help, as a chat. The resident picks a need (the #2 slot), can add words in
+ * the input bar (#5), then checks the AI's reading in a reply bubble (#6) before anything is sent.
+ * Privacy (#16) is on by default, and the emergency line (#7) stays pinned above the input bar.
  */
-export function AskScreen({ onSubmitted }: { onSubmitted: (token: string) => void }) {
+export function AskScreen({ onBack, onFollow }: { onBack: () => void; onFollow: (token: string) => void }) {
   const { survey, update, t } = useSurvey();
-  const [step, setStep] = useState<Step>('language');
+  const [phase, setPhase] = useState<Phase>(survey.need ? 'text' : 'need');
+  const [said, setSaid] = useState<string | null>(null);
   const [triage, setTriage] = useState<Sampled<TriageResult> | null>(null);
+  const [fixing, setFixing] = useState<FixTarget>(null);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const heading = useRef<HTMLHeadingElement>(null);
-  const index = STEPS.indexOf(step);
+  const [accepted, setAccepted] = useState<Sampled<SurveyAccepted> | null>(null);
+  const [inputKey, setInputKey] = useState(0);
+  const [inputStartsEmpty, setInputStartsEmpty] = useState(false);
+  const body = useRef<HTMLDivElement>(null);
 
-  // Move focus to the new step's heading so screen readers announce it.
-  useEffect(() => heading.current?.focus(), [step]);
-
+  // Ask the triage layer again whenever the inputs it reads change during review.
   useEffect(() => {
-    if (step !== 'review') return;
+    if (phase !== 'review') return;
     let live = true;
     setTriage(null);
     setError(null);
@@ -40,92 +42,151 @@ export function AskScreen({ onSubmitted }: { onSubmitted: (token: string) => voi
     return () => {
       live = false;
     };
-    // Re-run only when entering review; edits happen on earlier steps.
-  }, [step]);
+  }, [phase, survey.need, survey.district]);
 
-  const textProblem = freeTextProblem(survey.freeText, survey.need === 'other');
-  const canNext = step === 'language' || (step === 'need' && survey.need !== null && !textProblem) || (step === 'district' && survey.district !== null);
+  // Keep the newest bubble in view.
+  useEffect(() => {
+    const el = body.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+  }, [phase, triage, fixing, said, accepted]);
+
+  function pickNeed(n: Need) {
+    update({ need: n });
+    if (phase === 'need') setPhase('text');
+  }
+
+  function send(text: string) {
+    if (!survey.need) update({ need: 'other' });
+    setSaid(text);
+    setInputStartsEmpty(true);
+    setInputKey((k) => k + 1);
+    setPhase('review');
+  }
+
+  function skip() {
+    update({ freeText: '' });
+    setSaid(null);
+    setPhase('review');
+  }
+
+  function edit() {
+    setFixing(null);
+    setInputStartsEmpty(false);
+    setInputKey((k) => k + 1);
+    setPhase('text');
+  }
 
   async function confirm() {
     if (!triage) return;
     setSending(true);
     setError(null);
     try {
-      const accepted = await submitSurvey(toSurveyRequest(survey), triage);
-      onSubmitted(accepted.token);
+      setAccepted(await submitSurvey(toSurveyRequest(survey), triage));
+      setPhase('sent');
     } catch {
       setError(t('review.failed'));
+    } finally {
       setSending(false);
     }
   }
 
-  const titles: Record<Step, string> = {
-    language: t('lang.title'),
-    need: t('need.title'),
-    district: t('district.title'),
-    review: t('review.step'),
-  };
+  const needOpen = survey.need === 'other' && phase === 'text';
 
   return (
-    <main className="page stack" style={{ paddingTop: 24 }}>
-      <div className="stepper">
-        <div className="bars" aria-hidden="true">
-          {STEPS.map((s, i) => (
-            <i key={s} className={i <= index ? 'on' : undefined} />
-          ))}
-        </div>
-        <span className="meta">{t('step.of', { n: index + 1, total: STEPS.length })}</span>
-      </div>
+    <div className="view">
+      <PhoneHead meta={t('ask.kicker')} title={t('ask.title')} onBack={onBack} />
 
-      <header style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ flex: 1 }}>
-          <p className="meta">{t('ask.kicker')}</p>
-          <h1 className="title" ref={heading} tabIndex={-1} style={{ outline: 'none' }}>
-            {titles[step]}
-          </h1>
-        </div>
-        <PrivacyBadge />
-      </header>
-
-      {step === 'language' && (
-        <>
-          <LanguageSelector />
-          <p className="meta">{t('lang.help')}</p>
-        </>
-      )}
-
-      {step === 'need' && (
-        <>
+      <div className="view-body" ref={body}>
+        <div className="ph-pad" style={{ marginBottom: 16 }}>
           <div className="tip">
-            <Lightbulb aria-hidden="true" />
+            <Icon name="lamp" />
             <span>{t('ask.tip')}</span>
           </div>
-          {/* Stand-in for the need cards from #2: same values, plain styling. */}
-          <div className="need-slot" role="radiogroup" aria-label={t('need.title')}>
-            {NEEDS.map((n) => (
-              <button key={n} type="button" className="chip" role="radio" aria-checked={survey.need === n} onClick={() => update({ need: n })}>
-                {t(`need.${n}`)}
-              </button>
-            ))}
+        </div>
+
+        <div className="chat" aria-live="polite">
+          <div className="bubble hub">
+            <span className="meta">{t('chat.ask')}</span>
+            {/* Stand-in for #2's need cards: same values, chip styling. */}
+            <div className="chips" role="radiogroup" aria-label={t('need.title')}>
+              {NEEDS.map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className="chip"
+                  role="radio"
+                  aria-checked={survey.need === n}
+                  disabled={phase === 'review' || phase === 'sent'}
+                  onClick={() => pickNeed(n)}
+                >
+                  {t(`need.${n}`)}
+                </button>
+              ))}
+            </div>
           </div>
-          <OtherTextInput open={survey.need !== null} required={survey.need === 'other'} />
-        </>
-      )}
 
-      {step === 'district' && (
-        <>
-          <p style={{ color: 'var(--ink-2)' }}>{t('district.help')}</p>
-          <DistrictPicker />
-        </>
-      )}
+          {survey.need && phase !== 'need' && <div className="bubble me">{t(`need.${survey.need}`)}</div>}
 
-      {step === 'review' && (
-        <>
-          <TriageReviewCard triage={triage} sending={sending} error={error} onConfirm={() => void confirm()} onEdit={() => setStep('need')} />
-          <div className="card setrow">
+          {survey.need && phase !== 'need' && (
+            <div className="bubble hub">
+              {survey.need === 'other' ? t('chat.other') : t('chat.more')}
+              {phase === 'text' && survey.need !== 'other' && (
+                <div className="chips" style={{ marginTop: 10 }}>
+                  <button type="button" className="chip" onClick={skip}>
+                    {t('chat.skip')}
+                    <Icon name="arrow" />
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {said && (phase === 'review' || phase === 'sent') && <div className="bubble me">{said}</div>}
+
+          {(phase === 'review' || phase === 'sent') && (
+            <TriageReviewCard
+              triage={triage}
+              settled={phase === 'sent'}
+              sending={sending}
+              error={error}
+              fixing={fixing}
+              onFix={setFixing}
+              onConfirm={() => void confirm()}
+              onEdit={edit}
+            />
+          )}
+
+          {phase === 'sent' && accepted && (
+            <div className="bubble hub">
+              <span className="meta">{t('sent.title')}</span>
+              <div className="match">
+                <button type="button" onClick={() => onFollow(accepted.token)}>
+                  <Icon name="clock" />
+                  <span>
+                    <b>{t('sent.follow')}</b>
+                    <small>{t('sent.follow.d', { code: accepted.token })}</small>
+                  </span>
+                  <Icon name="chev" />
+                </button>
+                <a href="tel:4143950552">
+                  <Icon name="phone" />
+                  <span>
+                    <b>{accepted.service.name}</b>
+                    <small>{accepted.service.next_step}</small>
+                  </span>
+                  <Icon name="chev" />
+                </a>
+              </div>
+            </div>
+          )}
+
+          <div className="setrow">
             <span>
               <b id="keep-private">{t('private.title')}</b>
               <small>{t('private.help')}</small>
+              <span style={{ display: 'block', marginTop: 8 }}>
+                <PrivacyBadge long />
+              </span>
             </span>
             <button
               type="button"
@@ -133,31 +194,17 @@ export function AskScreen({ onSubmitted }: { onSubmitted: (token: string) => voi
               role="switch"
               aria-checked={survey.keepPrivate}
               aria-labelledby="keep-private"
+              disabled={phase === 'sent'}
               onClick={() => update({ keepPrivate: !survey.keepPrivate })}
             />
           </div>
-        </>
-      )}
-
-      {step !== 'review' && (
-        <div className="ask-foot">
-          {index > 0 ? (
-            <button type="button" className="btn" onClick={() => setStep(STEPS[index - 1])}>
-              <ArrowLeft aria-hidden="true" />
-              {t('nav.back')}
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className="btn primary"
-            style={index === 0 ? { gridColumn: '1 / -1' } : undefined}
-            disabled={!canNext}
-            onClick={() => setStep(STEPS[index + 1])}
-          >
-            {t('nav.next')}
-          </button>
         </div>
-      )}
-    </main>
+      </div>
+
+      <div className="view-foot">
+        <EmergencyBar />
+        <ChatInput key={inputKey} open={needOpen} startEmpty={inputStartsEmpty} disabled={phase === 'review' || phase === 'sent'} onSend={send} />
+      </div>
+    </div>
   );
 }

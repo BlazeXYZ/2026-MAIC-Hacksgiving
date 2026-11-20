@@ -29,15 +29,19 @@ export const DISTRICTS: District[] = [
   { id: 'general', name: 'General Milwaukee', hint: 'Anywhere else in the city' },
 ];
 
+/** Answer to the welcome screen's "What brings you here today?". */
+export type Intent = 'need' | 'give' | 'look';
+
 export interface SurveyState {
   language: Language;
+  intent: Intent;
   need: Need | null;
   freeText: string;
   district: DistrictId | null;
   keepPrivate: boolean;
 }
 
-const INITIAL: SurveyState = { language: 'en', need: null, freeText: '', district: null, keepPrivate: true };
+const INITIAL: SurveyState = { language: 'en', intent: 'need', need: null, freeText: '', district: null, keepPrivate: true };
 
 interface SurveyContextValue {
   survey: SurveyState;

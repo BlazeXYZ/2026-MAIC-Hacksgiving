@@ -1,7 +1,6 @@
-import { Check } from 'lucide-react';
 import type { TicketStatus, TimelineEvent } from '../../contracts';
 import { useSurvey } from '../../state/survey';
-import './status.css';
+import { Icon } from '../Icon';
 
 export const STAGES: TicketStatus[] = ['pending', 'assigned', 'in_progress', 'resolved'];
 
@@ -29,7 +28,7 @@ export function StatusTimeline({ status, events }: { status: TicketStatus; event
         return (
           <li key={stage} className={state} aria-current={state === 'now' ? 'step' : undefined}>
             <span className="dot" aria-hidden="true">
-              {state === 'done' && <Check />}
+              {state === 'done' && <Icon name="check" />}
             </span>
             <span>
               <b>{t(`tl.${stage}`)}</b>

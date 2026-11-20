@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LocateFixed } from 'lucide-react';
+import { Icon } from '../Icon';
 import { DISTRICTS, useSurvey, type District, type DistrictId } from '../../state/survey';
 
 /** Beyond this distance from every known centre we call it "General Milwaukee". */
@@ -26,12 +26,41 @@ export function nearestDistrict(at: [number, number]): District {
 
 type LocateState = { kind: 'idle' } | { kind: 'busy' } | { kind: 'found'; name: string } | { kind: 'failed'; reason: 'denied' | 'unsupported' };
 
+/** Neighborhood chips, as on the mockup's "Where are you, roughly?" screen. The picked one shows a check. */
+export function DistrictChips({ onPick }: { onPick?: (id: DistrictId) => void }) {
+  const { survey, update, t } = useSurvey();
+  return (
+    <div className="chips" role="radiogroup" aria-label={t('district.or')}>
+      {DISTRICTS.map((d) => {
+        const on = survey.district === d.id;
+        return (
+          <button
+            key={d.id}
+            type="button"
+            className="chip"
+            role="radio"
+            aria-checked={on}
+            title={d.hint}
+            onClick={() => {
+              update({ district: d.id });
+              onPick?.(d.id);
+            }}
+          >
+            {on && <Icon name="check" />}
+            {d.name}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 /**
- * Neighborhood picker (#4). "Use my location" turns coordinates into a neighborhood on this device;
- * only the neighborhood name goes into the request, never the coordinates.
+ * Neighborhood picker (#4): "Use my location" plus the chips. Coordinates are turned into a
+ * neighborhood on this device; only the neighborhood name goes into the request.
  */
 export function DistrictPicker() {
-  const { survey, update, t } = useSurvey();
+  const { update, t } = useSurvey();
   const [locate, setLocate] = useState<LocateState>({ kind: 'idle' });
 
   function useLocation() {
@@ -51,42 +80,21 @@ export function DistrictPicker() {
     );
   }
 
-  function pick(id: DistrictId) {
-    update({ district: id });
-    setLocate({ kind: 'idle' });
-  }
-
   return (
-    <div className="stack">
-      <button type="button" className="btn block" onClick={useLocation} disabled={locate.kind === 'busy'}>
-        <LocateFixed aria-hidden="true" />
-        {locate.kind === 'busy' ? t('district.locating') : locate.kind === 'found' ? t('district.found', { name: locate.name }) : t('district.locate')}
+    <>
+      <button type="button" className="locbtn" onClick={useLocation} disabled={locate.kind === 'busy'}>
+        <Icon name="nav" />
+        <span>
+          {locate.kind === 'busy' ? t('district.locating') : locate.kind === 'found' ? t('district.found', { name: locate.name }) : t('district.locate')}
+        </span>
       </button>
       {locate.kind === 'failed' && (
-        <p className="field-error" role="alert">
+        <p className="field-error" role="alert" style={{ marginTop: 8 }}>
           {t(locate.reason === 'denied' ? 'district.denied' : 'district.unsupported')}
         </p>
       )}
-      <p className="kicker" id="district-or">
-        {t('district.or')}
-      </p>
-      <div className="pick" role="radiogroup" aria-labelledby="district-or">
-        {DISTRICTS.map((d) => (
-          <button
-            key={d.id}
-            type="button"
-            role="radio"
-            aria-checked={survey.district === d.id}
-            onClick={() => pick(d.id)}
-          >
-            <span>
-              <b>{d.name}</b>
-              <small>{d.hint}</small>
-            </span>
-            <span className="radio-dot" aria-hidden="true" />
-          </button>
-        ))}
-      </div>
-    </div>
+      <p className="or">{t('district.or')}</p>
+      <DistrictChips onPick={() => setLocate({ kind: 'idle' })} />
+    </>
   );
 }
