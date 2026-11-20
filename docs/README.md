@@ -3,6 +3,7 @@
 Store presentation decks, architecture diagrams, notes, and judging files in this folder.
 
 - [Hackathon Plan](PLAN.md) — organized kickoff notes and the three-day scope.
+- [Hubs notes](HUBS.md) — prototype notes for forums, trust scores, and Quick Exit.
 - [Deploy](../deploy/README.md) — Docker locally, Terraform on Kubernetes.
 - [Kubernetes setup](../deploy/KUBERNETES.md) — local kind cluster or AWS EKS, same Terraform.
 

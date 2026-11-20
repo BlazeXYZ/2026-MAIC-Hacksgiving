@@ -13,9 +13,11 @@ from pydantic import BaseModel
 try:
     from src.server.core.config import settings
     from src.server.db import close_database, init_database, list_services
+    from src.server.hubs import router as hubs_router
 except ModuleNotFoundError:
     from core.config import settings
     from db import close_database, init_database, list_services
+    from hubs import router as hubs_router
 
 logger = logging.getLogger("comforce.api")
 
@@ -53,6 +55,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(hubs_router)
 
 class HealthResponse(BaseModel):
     status: str
