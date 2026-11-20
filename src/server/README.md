@@ -22,7 +22,9 @@ python main.py
 
 ## API Endpoints
 
-* `GET /`: Health check.
+* `GET /`: Process health check.
+* `GET /api/health`: Readiness. `database` is `up`, `down`, or `disabled`.
+* `GET /api/services`: Rows from PostgreSQL. Empty when no database is configured.
 * `GET /api/communities`: Returns active ComforceMKE initiatives, member counts, and open tickets.
 * `GET /api/alerts/priority`: Returns active emergency alerts (such as nearby missing persons searches).
 * `GET /api/districts/stats`: Returns request volume and volunteer coverage across Milwaukee districts.

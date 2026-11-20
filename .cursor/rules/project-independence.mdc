@@ -1,0 +1,28 @@
+---
+description: Academic project, independent of Direct Supply. Keep work local or on a cloud the user names.
+alwaysApply: true
+---
+
+# Project independence
+
+This repository is an academic MAIC Hacksgiving project. It is independent of Direct Supply. Treat every task as local work, or as a deploy of this project to a cloud the user explicitly chooses in the conversation.
+
+## Where work may go
+
+- The laptop: the repo, Docker Compose, a local kind cluster, local files, and local test runs.
+- A cloud the user names for this project, such as an AWS account they choose when they ask to deploy. Use only the account, region, and registry they specify.
+
+## Keep Direct Supply out of this project
+
+Do not send this project, its data, images, state, or secrets to Direct Supply systems. That includes Direct Supply git remotes, container registries, Kubernetes clusters, cloud accounts, `*.directsupply.cloud`, and internal chat or ticket tools.
+
+```text
+# Allowed when the user asked for their own AWS account
+terraform apply    # deploy/terraform with target = "aws"
+
+# Not allowed
+git push origin    # when origin is a Direct Supply org
+docker push <direct-supply-registry>/comforce-api
+```
+
+If a remote, registry, or account looks like it belongs to Direct Supply, stop and ask which destination they want. Do not infer a company destination from the laptop, VPN, or credential files.

@@ -8,6 +8,9 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 
 ## Quick Links
 
+- [Hackathon Plan](docs/PLAN.md) — kickoff decisions, weekend scope, and what we are leaving for later
+- [Deploy](deploy/README.md) — Docker Compose, or Kubernetes on a laptop or AWS
+- [Kubernetes setup](deploy/KUBERNETES.md) — step by step for a local kind cluster or EKS, with the same Terraform
 - [Project Ideas & Brainstorming](IDEAS.md)
 - [Contributing & Style Guide](CONTRIBUTING.md)
 - [Project Documentation](docs/README.md)
@@ -36,7 +39,8 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 - **Project Title:** ComForce MKE Community Hub
 - **Summary:** A combined web and mobile application (exported through Capacitor) that makes connecting with ComforceMKE initiatives interactive and responsive instead of just filling out static web forms.
 - **Client Stack:** React, TypeScript, Vite, Capacitor (iOS and Android export), OpenStreetMap, Tailwind CSS
-- **Server Stack:** Python 3.10+, FastAPI, `uv` package manager, Uvicorn
+- **Server Stack:** Python 3.10+, FastAPI, PostgreSQL, `uv` package manager, Uvicorn
+- **Deploy:** Docker Compose locally. The same Terraform creates a local Kubernetes cluster or an AWS EKS cluster and installs this stack.
 - **AI Models:** Transformer-based need heatmaps, small classifier for content moderation and triage, and LLM recommendations
 
 ---
@@ -116,6 +120,11 @@ Our team is reviewing real Milwaukee open data to ground the app in actual local
 ├── data/                     # Sample data and schemas
 │   ├── raw/                  # Raw sample files (git-ignored)
 │   └── processed/            # Cleaned mock data for testing
+├── deploy/                   # Docker Compose, images, and Terraform for Kubernetes
+│   ├── docker-compose.yml    # Local Postgres + API + web
+│   ├── docker/               # API and web Dockerfiles, nginx proxy
+│   ├── KUBERNETES.md         # Step-by-step local kind or AWS EKS setup
+│   └── terraform/            # One Terraform root for kind, EKS, or an existing cluster
 ├── docs/                     # Pitch notes, slides, and diagrams
 ├── notebooks/                # Jupyter notebooks for data tests and prompt trials
 ├── src/
@@ -144,7 +153,22 @@ Our team is reviewing real Milwaukee open data to ground the app in actual local
 ### Prerequisites
 * Python 3.10 or newer (with [`uv`](https://github.com/astral-sh/uv) or pip)
 * Node.js 18 or newer (with npm)
+* Docker, for the full local stack
+* Terraform 1.5+, kubectl, and kind, when deploying to a local Kubernetes cluster
+* AWS CLI, when deploying that same Terraform to EKS
 * Git installed and configured
+
+### Run the full stack with Docker
+
+Postgres, the API, and the web app together:
+
+```bash
+docker compose -f deploy/docker-compose.yml up --build
+```
+
+Open http://localhost:3000. The API is at http://localhost:8000. Image builds, the local Kubernetes cluster, and the AWS apply are in [deploy/KUBERNETES.md](deploy/KUBERNETES.md).
+
+The sections below run the API and web app separately, with no database. Use them when you are working on one side.
 
 ---
 

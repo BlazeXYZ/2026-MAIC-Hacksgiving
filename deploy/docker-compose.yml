@@ -1,0 +1,60 @@
+# Local stack. Same service names the Kubernetes deploy uses: db, api, web.
+# The database password here is for laptops only. Cloud deploys set their own
+# password through Terraform.
+
+name: comforce
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: comforce
+      POSTGRES_PASSWORD: comforce-dev
+      POSTGRES_DB: comforce
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U comforce -d comforce"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
+  api:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.api
+    environment:
+      APP_ENV: production
+      DATABASE_URL: postgresql+psycopg://comforce:comforce-dev@db:5432/comforce
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health')",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+
+  web:
+    build:
+      context: ..
+      dockerfile: deploy/docker/Dockerfile.web
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:

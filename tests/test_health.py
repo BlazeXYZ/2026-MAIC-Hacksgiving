@@ -24,3 +24,25 @@ def test_list_communities():
     assert response.status_code == 200
     communities = response.json()
     assert len(communities) >= 3
+
+
+def test_stack_health_shape():
+    response = client.get("/api/health")
+    assert response.status_code in (200, 503)
+    body = response.json()
+    assert body["database"] in ("up", "down", "disabled")
+    assert "status" in body
+
+
+def test_services_follow_database_state():
+    health = client.get("/api/health")
+    database = health.json()["database"]
+    response = client.get("/api/services")
+    if database == "up":
+        assert response.status_code == 200
+        assert isinstance(response.json(), list)
+    elif database == "disabled":
+        assert response.status_code == 200
+        assert response.json() == []
+    else:
+        assert response.status_code == 503

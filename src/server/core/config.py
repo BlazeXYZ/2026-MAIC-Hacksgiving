@@ -16,6 +16,9 @@ class Settings:
     PORT: int = int(os.getenv("PORT", "8000"))
     HOST: str = os.getenv("HOST", "0.0.0.0")
 
+    # Empty means the API starts without a database. Compose and Kubernetes set a Postgres URL.
+    DATABASE_URL: str | None = os.getenv("DATABASE_URL") or None
+
     # API Keys
     GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")
     OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")

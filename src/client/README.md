@@ -13,6 +13,10 @@ npm run dev
 
 Open `http://localhost:3000` in your browser. API requests to `/api` are automatically proxied to the FastAPI server at `http://localhost:8000`.
 
+The header shows API and database status from `GET /api/health`. With no Postgres running, the database line reads `disabled`.
+
+To run the web app, API, and Postgres together, use Docker Compose from the repository root. See [deploy/README.md](../../deploy/README.md).
+
 ## Mobile Build (Capacitor)
 
 Compile the web application and sync native mobile platforms:

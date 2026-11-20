@@ -128,3 +128,13 @@ desktop.ini
 logs/
 temp/
 tmp/
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+override.tf
+override.tf.json

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface Community {
   id: string;
@@ -36,10 +36,23 @@ const COMMUNITIES: Community[] = [
   },
 ];
 
+type StackHealth = {
+  status: string;
+  database: string;
+};
+
 export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
   const [claimedTicketId, setClaimedTicketId] = useState<number | null>(null);
+  const [stack, setStack] = useState<StackHealth | null>(null);
+
+  useEffect(() => {
+    fetch('/api/health')
+      .then((response) => response.json())
+      .then((body: StackHealth) => setStack(body))
+      .catch(() => setStack({ status: 'offline', database: 'unknown' }));
+  }, []);
 
   if (quickExitTriggered) {
     return (
@@ -77,7 +90,10 @@ export default function App() {
       <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>ComForce MKE Community Hub</h1>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Connected through Community Task Force MKE & MSOE</p>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+            Connected through Community Task Force MKE & MSOE
+            {stack ? ` · API ${stack.status} · database ${stack.database}` : ' · checking API'}
+          </p>
         </div>
         <button
           onClick={() => setQuickExitTriggered(true)}

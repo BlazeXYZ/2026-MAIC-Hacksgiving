@@ -1,21 +1,48 @@
 """FastAPI application entry point for the ComforceMKE community platform."""
 
-import uvicorn
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
-
+import logging
+from contextlib import asynccontextmanager
 from pathlib import Path
+
+import uvicorn
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 try:
     from src.server.core.config import settings
+    from src.server.db import close_database, init_database, list_services
 except ModuleNotFoundError:
     from core.config import settings
+    from db import close_database, init_database, list_services
+
+logger = logging.getLogger("comforce.api")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    status = "disabled"
+    if settings.DATABASE_URL:
+        try:
+            init_database()
+            status = "up"
+        except Exception:
+            logger.exception("Database connection failed")
+            status = "down"
+            app.state.database = status
+            if settings.APP_ENV == "production":
+                raise
+    app.state.database = status
+    yield
+    close_database()
+
 
 app = FastAPI(
     title=settings.APP_NAME,
     description="FastAPI backend supporting web and Capacitor mobile clients for ComforceMKE initiatives.",
     version="0.2.0",
+    lifespan=lifespan,
 )
 
 # Enable CORS for local web development and Capacitor mobile bridge
@@ -31,6 +58,22 @@ class HealthResponse(BaseModel):
     status: str
     app_name: str
     environment: str
+
+
+class StackHealth(BaseModel):
+    status: str
+    app_name: str
+    environment: str
+    database: str
+
+
+class ServiceOut(BaseModel):
+    slug: str
+    name: str
+    category: str
+    summary: str
+    address: str | None = None
+    phone: str | None = None
 
 class Community(BaseModel):
     id: str
@@ -68,12 +111,37 @@ class SafeRouteResponse(BaseModel):
 
 @app.get("/", response_model=HealthResponse)
 def root():
-    """Health check endpoint."""
+    """Process health check. Kubernetes liveness uses this path."""
     return HealthResponse(
         status="healthy",
         app_name=settings.APP_NAME,
         environment=settings.APP_ENV,
     )
+
+
+@app.get("/api/health", response_model=StackHealth)
+def stack_health():
+    """Readiness check. Reports whether PostgreSQL is reachable."""
+    database = getattr(app.state, "database", "disabled")
+    healthy = database in ("up", "disabled")
+    payload = StackHealth(
+        status="healthy" if healthy else "degraded",
+        app_name=settings.APP_NAME,
+        environment=settings.APP_ENV,
+        database=database,
+    )
+    return JSONResponse(status_code=200 if healthy else 503, content=payload.model_dump())
+
+
+@app.get("/api/services", response_model=list[ServiceOut])
+def get_services():
+    """Services stored in PostgreSQL. Empty until a database is configured."""
+    database = getattr(app.state, "database", "disabled")
+    if database == "disabled":
+        return []
+    if database != "up":
+        raise HTTPException(status_code=503, detail="Database is unavailable")
+    return [ServiceOut.model_validate(row) for row in list_services()]
 
 @app.get("/api/communities", response_model=list[Community])
 def list_communities():
