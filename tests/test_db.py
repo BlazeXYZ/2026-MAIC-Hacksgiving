@@ -90,7 +90,7 @@ def test_resource_crud_operations() -> None:
         district="East Town",
         latitude=43.0445,
         longitude=-87.9090,
-        phone="414-277-7159",
+        phone="414-555-0159",
         hours_description="Open 24/7",
         is_staffed=True,
         no_id_required=True,
