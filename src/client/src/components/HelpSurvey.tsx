@@ -21,16 +21,16 @@ export default function HelpSurvey() {
 
   return (
     <main className="hub-page help-survey" aria-labelledby="survey-heading">
-      <h2 id="survey-heading">Request help</h2>
-      <p>This is a demo. Use sample details.</p>
+      <h2 id="survey-heading" className="hub-page-title">Request help</h2>
+      <p className="hub-page-description">This is a demo. Use sample details.</p>
       {reviewing && need ? (
-        <section className="help-survey-review" aria-labelledby="survey-review-title">
+        <section className="help-survey-review hub-panel" aria-labelledby="survey-review-title">
           <h3 id="survey-review-title" tabIndex={-1} ref={(heading) => heading?.focus()}>
             Review your selection
           </h3>
           <p>{need.label}</p>
           {needId === 'other' && <p>{description.trim()}</p>}
-          <button className="help-survey-action" type="button" onClick={() => setReviewing(false)}>
+          <button className="hub-button hub-button--secondary" type="button" onClick={() => setReviewing(false)}>
             Back to choices
           </button>
         </section>
@@ -44,7 +44,7 @@ export default function HelpSurvey() {
             <div className="help-survey-choices">
               {NEEDS.map(({ id, label, icon: Icon }) => (
                 <label key={id} className="help-survey-choice">
-                  <Icon size={22} aria-hidden="true" />
+                  <span className="help-survey-icon"><Icon size={22} aria-hidden="true" /></span>
                   <span>{label}</span>
                   <input
                     type="radio"
@@ -64,7 +64,7 @@ export default function HelpSurvey() {
               <textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} />
             </label>
           )}
-          <button className="help-survey-action" type="submit" disabled={!needId || (needId === 'other' && !description.trim())}>
+          <button className="hub-button hub-button--primary help-survey-next" type="submit" disabled={!needId || (needId === 'other' && !description.trim())}>
             Next
           </button>
         </form>

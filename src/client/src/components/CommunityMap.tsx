@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { ChevronRight, MapPin } from 'lucide-react';
 import LeafletMap, { fromBasemapPoint } from './LeafletMap';
 import './CommunityMap.css';
 
@@ -54,13 +55,13 @@ export default function CommunityMap() {
 
   return (
     <main className="hub-page community-map" aria-labelledby="community-map-title">
-      <h2 id="community-map-title">Community map</h2>
-      <p>Explore fictional sample locations around Milwaukee.</p>
+      <h2 id="community-map-title" className="hub-page-title">Community map</h2>
+      <p className="hub-page-description">Select a sample location for its address and headcount.</p>
 
       <div className="community-map-layout">
         <div>
           <LeafletMap markers={MARKERS} selectedMarkerId={selected.id} onSelectMarker={setSelectedId} />
-          <div className="community-map-event" role="status" aria-atomic="true">
+          <div className="community-map-event hub-panel" role="status" aria-atomic="true">
             <h3>{selected.name}</h3>
             <dl>
               <div>
@@ -75,14 +76,15 @@ export default function CommunityMap() {
           </div>
         </div>
 
-        <section className="community-map-locations" aria-labelledby="sample-locations-title">
+        <section className="community-map-locations hub-panel" aria-labelledby="sample-locations-title">
           <h3 id="sample-locations-title">Sample locations</h3>
           <ul>
             {SAMPLE_LOCATIONS.map((location) => (
               <li key={location.id}>
                 <button type="button" aria-pressed={selected.id === location.id} onClick={() => setSelectedId(location.id)}>
-                  <strong>{location.name}</strong>
-                  <span>{location.neighborhood}</span>
+                  <MapPin size={19} aria-hidden="true" />
+                  <span><strong>{location.name}</strong><small>{location.neighborhood}</small></span>
+                  <ChevronRight size={16} aria-hidden="true" />
                 </button>
               </li>
             ))}

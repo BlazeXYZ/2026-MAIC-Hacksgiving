@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Crosshair, LocateFixed } from 'lucide-react';
 import {
   divIcon, imageOverlay, latLngBounds, layerGroup, map as createMap, marker, polyline, tileLayer,
   type LatLngTuple, type Map as MapInstance, type Marker,
@@ -32,7 +33,7 @@ interface LeafletMapProps {
   polylines?: readonly LatLngTuple[][];
 }
 
-const PIN_ICON = divIcon({ className: 'community-map-pin', iconSize: [36, 36], iconAnchor: [18, 30] });
+const PIN_ICON = divIcon({ className: 'community-map-pin', iconSize: [44, 44], iconAnchor: [22, 38] });
 
 export default function LeafletMap({ markers, selectedMarkerId, onSelectMarker, polylines }: LeafletMapProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -115,7 +116,7 @@ export default function LeafletMap({ markers, selectedMarkerId, onSelectMarker, 
   useEffect(() => {
     const map = mapRef.current;
     if (!map || !polylines) return;
-    const paths = polyline([...polylines], { color: '#0f766e', weight: 5 }).addTo(map);
+    const paths = polyline([...polylines], { color: '#0f6b3a', weight: 5 }).addTo(map);
     return () => { paths.remove(); };
   }, [polylines]);
 
@@ -123,19 +124,19 @@ export default function LeafletMap({ markers, selectedMarkerId, onSelectMarker, 
     <div className="community-map-figure">
       <div ref={containerRef} className="community-map-canvas" role="region" aria-label="Interactive street map of Milwaukee" />
       <div className="community-map-tools">
-        <button type="button" disabled={locating} onClick={() => {
+        <button className="hub-button hub-button--secondary" type="button" disabled={locating} onClick={() => {
           mapRef.current?.setView(MILWAUKEE, 14, { animate: false });
           setNotice('');
         }}>
-          Recenter on Milwaukee
+          <Crosshair size={17} aria-hidden="true" /> Recenter on Milwaukee
         </button>
-        <button type="button" disabled={locating} onClick={() => {
+        <button className="hub-button hub-button--secondary" type="button" disabled={locating} onClick={() => {
           if (!mapRef.current) return;
           setNotice('Finding your location…');
           setLocating(true);
           mapRef.current.locate({ setView: true, maxZoom: 16, timeout: 8000 });
         }}>
-          Locate me
+          <LocateFixed size={17} aria-hidden="true" /> Locate me
         </button>
         <span role="status">{notice}</span>
       </div>

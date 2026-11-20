@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Check, Hand, MapPin } from 'lucide-react';
 import './VolunteerTickets.css';
 
 interface Ticket {
@@ -118,17 +119,16 @@ export default function VolunteerTickets() {
   });
 
   return (
-    <section aria-labelledby="volunteer-tickets-heading" style={{ backgroundColor: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-      <h3 id="volunteer-tickets-heading" style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Volunteer Support Tickets</h3>
-      <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.75rem' }}>
-        Sample tasks for Food Pantry &amp; Mutual Aid.
-      </p>
-      <div role="status" style={{ fontSize: '0.85rem', color: '#334155', marginBottom: statusMessage ? '0.75rem' : 0 }}>
+    <section aria-labelledby="volunteer-tickets-heading" className="volunteer-tickets">
+      <h2 id="volunteer-tickets-heading">Volunteer support tickets</h2>
+      <p className="volunteer-ticket-intro">Sample tasks for Food Pantry &amp; Mutual Aid.</p>
+      <div role="status" className="volunteer-ticket-status">
         {statusMessage}
       </div>
       {loadError && (
         <button
           type="button"
+          className="hub-button hub-button--secondary"
           onClick={() => {
             setLoadError(false);
             setLoadAttempt((attempt) => attempt + 1);
@@ -165,39 +165,34 @@ export default function VolunteerTickets() {
         <p className="volunteer-ticket-no-results" role="status">No tickets match your filters.</p>
       )}
       {filteredTickets && filteredTickets.length > 0 && (
-        <ul style={{ display: 'grid', gap: '0.5rem', listStyle: 'none', margin: 0, padding: 0 }}>
+        <ul className="volunteer-ticket-list">
           {filteredTickets.map((ticket) => {
             const details = SAMPLE_TICKET_DETAILS[ticket.id];
             return (
               <li key={ticket.id} className="volunteer-ticket-card">
-                <strong>{ticket.title}</strong>
-                {details && (
-                  <div className="volunteer-ticket-tags">
-                    <span data-urgency={details.urgency}>{URGENCY_LABELS[details.urgency]}</span>
-                    <span>{details.category}</span>
-                    <span>{details.district}</span>
-                  </div>
-                )}
-                <p style={{ color: '#475569', margin: '0.25rem 0 0.5rem' }}>{ticket.description}</p>
+                <div className="volunteer-ticket-content">
+                  {details && (
+                    <div className="volunteer-ticket-tags">
+                      <span data-urgency={details.urgency}>{URGENCY_LABELS[details.urgency]}</span>
+                      <span>{details.category}</span>
+                    </div>
+                  )}
+                  <h3>{ticket.title}</h3>
+                  <p>{ticket.description}</p>
+                  {details && <p className="volunteer-ticket-district"><MapPin size={15} aria-hidden="true" /> {details.district}</p>}
+                </div>
                 {ticket.status === 'claimed' ? (
-                  <strong style={{ color: '#166534' }}>Claimed</strong>
+                  <span className="volunteer-ticket-stub is-claimed"><Check size={22} aria-hidden="true" /> Claimed</span>
                 ) : (
                   <button
+                    className="volunteer-ticket-stub"
                     type="button"
                     aria-label={claimingId === ticket.id ? `Claiming ${ticket.title}` : `Claim Ticket: ${ticket.title}`}
                     onClick={() => void claimTicket(ticket)}
                     disabled={claimingId !== null}
-                    style={{
-                      backgroundColor: claimingId === null ? '#1d4ed8' : '#475569',
-                      color: '#ffffff',
-                      border: 'none',
-                      padding: '0.45rem 0.75rem',
-                      borderRadius: '4px',
-                      cursor: claimingId === null ? 'pointer' : 'default',
-                      fontSize: '0.85rem',
-                    }}
                   >
-                    {claimingId === ticket.id ? 'Claiming…' : 'Claim Ticket'}
+                    <Hand size={22} aria-hidden="true" />
+                    {claimingId === ticket.id ? 'Claiming…' : 'Claim ticket'}
                   </button>
                 )}
               </li>

@@ -1,49 +1,64 @@
+import { AlertCircle, ArrowRight, ChevronRight, HeartHandshake, LayoutGrid, LogOut, MapPin, Plus, Search, Shield, Utensils } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import CommunityMap from './components/CommunityMap';
 import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
+import './App.css';
 
-interface Community {
-  id: string;
-  name: string;
-  tag: string;
-  description: string;
-  members: number;
-  openTickets: number;
-}
-
-const COMMUNITIES: Community[] = [
+const COMMUNITIES = [
   {
     id: 'domestic-safety',
     name: 'Domestic Abuse Support',
-    tag: 'Crisis Support',
-    description: 'Confidential safety planning, rapid safe routing, and discreet emergency contact.',
-    members: 128,
-    openTickets: 4,
+    tag: 'Crisis support',
+    description: 'Explore a sample safety planning and community resource hub.',
+    icon: Shield,
   },
   {
     id: 'missing-persons',
     name: 'Missing Persons Search Network',
-    tag: 'Emergency Response',
-    description: 'Coordinate volunteer search parties, share verified sighting tips, and map cleared search sectors.',
-    members: 310,
-    openTickets: 1,
+    tag: 'Search and response',
+    description: 'See how volunteer teams could track which areas have been searched.',
+    icon: Search,
   },
   {
     id: 'food-pantry',
     name: 'Food Pantry & Mutual Aid',
-    tag: 'Community Relief',
-    description: 'Find open food pantries, post surplus groceries, and get AI recommendations on high-need items.',
-    members: 245,
-    openTickets: 6,
+    tag: 'Food and supplies',
+    description: 'Explore sample food pickup and donation locations.',
+    icon: Utensils,
   },
+] as const;
+
+const NAV_ITEMS = [
+  { id: 'communities', label: 'Communities', icon: LayoutGrid },
+  { id: 'map', label: 'Map', icon: MapPin },
+  { id: 'survey', label: 'Request help', icon: HeartHandshake },
+] as const;
+
+const SEARCH_SECTORS = [
+  { name: 'Sector A', status: 'Active' },
+  { name: 'Sector B', status: 'Searching' },
+  { name: 'Sector C', status: 'Cleared' },
+  { name: 'Sector D', status: 'Pending' },
 ];
 
+const DISTRICTS = [
+  { name: 'Juneautown / Campus', calls: 5 },
+  { name: 'Third Ward', calls: 3 },
+  { name: 'Near West Side', calls: 12 },
+];
+
+const BASEMAP_PREVIEW = new URL('./assets/community-basemap.png', import.meta.url).href;
+
+type View = (typeof NAV_ITEMS)[number]['id'];
+type CommunityId = (typeof COMMUNITIES)[number]['id'];
+
 export default function App() {
-  const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
-  const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
-  const [view, setView] = useState<'communities' | 'map' | 'survey'>('communities');
+  const [selectedCommunity, setSelectedCommunity] = useState<CommunityId>('domestic-safety');
+  const [quickExitTriggered, setQuickExitTriggered] = useState(false);
+  const [view, setView] = useState<View>('communities');
   const exitHeading = useRef<HTMLHeadingElement>(null);
+  const searchGridHeading = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
     if (quickExitTriggered) {
@@ -64,173 +79,172 @@ export default function App() {
 
   if (quickExitTriggered) {
     return (
-      <div style={{ padding: '2rem', fontFamily: 'sans-serif' }}>
-        <h2 ref={exitHeading} tabIndex={-1}>Milwaukee Transit Schedule - Route 30</h2>
-        <p>Next bus arriving at N Broadway & E State St in 6 minutes.</p>
-        <button
-          onClick={() => setQuickExitTriggered(false)}
-          style={{ marginTop: '1rem', padding: '0.5rem 1rem' }}
-        >
-          Return to Portal
-        </button>
-      </div>
+      <main className="transit-screen">
+        <header className="transit-header">
+          <div className="transit-content">
+            <p>Milwaukee Transit Schedule</p>
+            <h2 ref={exitHeading} tabIndex={-1}>Route 30</h2>
+          </div>
+        </header>
+        <div className="transit-content transit-body">
+          <section aria-label="Next arrival" className="transit-arrival">
+            <span>Next arrival</span>
+            <strong>6 min</strong>
+            <p>N Broadway &amp; E State St</p>
+          </section>
+          <button type="button" onClick={() => setQuickExitTriggered(false)}>
+            Return to Portal
+          </button>
+        </div>
+      </main>
     );
   }
 
-  const active = COMMUNITIES.find((c) => c.id === selectedCommunity) || COMMUNITIES[0];
+  const active = COMMUNITIES.find((community) => community.id === selectedCommunity) ?? COMMUNITIES[0];
+
+  function openView(nextView: View) {
+    setView(nextView);
+    window.scrollTo(0, 0);
+  }
+
+  function openSearchGrid() {
+    setSelectedCommunity('missing-persons');
+    setView('communities');
+    requestAnimationFrame(() => searchGridHeading.current?.focus());
+  }
 
   return (
-    <div style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', color: '#0f172a' }}>
-      {/* Top Emergency Priority Banner */}
-      <div style={{ backgroundColor: '#dc2626', color: '#ffffff', padding: '0.75rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <strong>DEMO ALERT:</strong> Sample missing-person search near 27th & Wisconsin Ave.
+    <div className="hub-app">
+      <header className="hub-header">
+        <div className="hub-header-inner">
+          <div className="hub-brand">
+            <span className="hub-brand-mark" aria-hidden="true"><Plus size={22} strokeWidth={3} /></span>
+            <h1>ComForce <span>MKE</span><small>Community Hub</small></h1>
+          </div>
+          <nav aria-label="Main navigation" className="hub-view-nav">
+            {NAV_ITEMS.map(({ id, label, icon: Icon }) => (
+              <button
+                key={id}
+                type="button"
+                aria-current={view === id ? 'page' : undefined}
+                onClick={() => openView(id)}
+              >
+                <Icon size={18} aria-hidden="true" />
+                <span>{label}</span>
+              </button>
+            ))}
+          </nav>
+          <button
+            type="button"
+            className="hub-button hub-button--danger hub-exit"
+            aria-keyshortcuts="Escape"
+            onClick={() => setQuickExitTriggered(true)}
+          >
+            <LogOut size={16} aria-hidden="true" />
+            Quick Exit
+            <kbd aria-hidden="true">Esc</kbd>
+          </button>
         </div>
-        <button
-          onClick={() => {
-            setSelectedCommunity('missing-persons');
-            setView('communities');
-          }}
-          style={{ backgroundColor: '#ffffff', color: '#dc2626', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          View Search Grid
-        </button>
-      </div>
-
-      {/* Main Header */}
-      <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold', color: '#0f766e' }}>ComForce MKE Community Hub</h1>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Demo preview with sample data · Community Task Force MKE & MSOE</p>
-        </div>
-        <button
-          type="button"
-          aria-keyshortcuts="Escape"
-          onClick={() => setQuickExitTriggered(true)}
-          style={{ backgroundColor: '#ef4444', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
-        >
-          Quick Exit
-        </button>
       </header>
 
-      <nav aria-label="Main navigation" className="hub-view-nav">
-        <button type="button" aria-current={view === 'communities' ? 'page' : undefined} onClick={() => setView('communities')}>
-          Communities
-        </button>
-        <button type="button" aria-current={view === 'map' ? 'page' : undefined} onClick={() => setView('map')}>
-          Map
-        </button>
-        <button type="button" aria-current={view === 'survey' ? 'page' : undefined} onClick={() => setView('survey')}>
-          Request help
-        </button>
-      </nav>
+      <aside className="hub-alert-wrap hub-width" aria-label="Demo alert">
+        <div className="hub-alert">
+          <AlertCircle size={21} aria-hidden="true" />
+          <p><strong>Demo alert</strong><span>Sample missing-person search near 27th &amp; Wisconsin Ave.</span></p>
+          <button type="button" className="hub-button hub-button--alert" onClick={openSearchGrid}>
+            View Search Grid <ChevronRight size={16} aria-hidden="true" />
+          </button>
+        </div>
+      </aside>
 
       {view === 'map' && <CommunityMap />}
       {view === 'survey' && <HelpSurvey />}
-      <main className="hub-page" hidden={view !== 'communities'}>
-        {/* Community Tabs */}
-        <section style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1rem', color: '#475569', marginBottom: '0.75rem' }}>Active Initiatives & Communities</h2>
-          <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-            {COMMUNITIES.map((c) => {
-              const isSelected = c.id === selectedCommunity;
-              return (
-                <button
-                  key={c.id}
-                  onClick={() => setSelectedCommunity(c.id)}
-                  style={{
-                    padding: '0.75rem 1.25rem',
-                    borderRadius: '8px',
-                    border: isSelected ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                    backgroundColor: isSelected ? '#eff6ff' : '#ffffff',
-                    color: isSelected ? '#1e40af' : '#1e293b',
-                    fontWeight: isSelected ? 'bold' : 'normal',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                  }}
-                >
-                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b' }}>{c.tag}</div>
-                  <div>{c.name}</div>
-                </button>
-              );
-            })}
+
+      <main className="hub-page hub-home" hidden={view !== 'communities'}>
+        <section className="hub-hero" aria-labelledby="hub-hero-title">
+          <div className="hub-hero-copy">
+            <h2 id="hub-hero-title">Find help in Milwaukee<span>.</span></h2>
+            <p>Food, a ride, a warm place, or someone to talk to.</p>
+            <div className="hub-hero-actions">
+              <button type="button" className="hub-button hub-button--highlight" onClick={() => openView('survey')}>
+                Start a help request <ArrowRight size={18} aria-hidden="true" />
+              </button>
+              <button type="button" className="hub-button hub-button--on-dark" onClick={() => openView('map')}>
+                <MapPin size={17} aria-hidden="true" /> Explore the map
+              </button>
+            </div>
+          </div>
+          <div className="hub-hero-map">
+            <img src={BASEMAP_PREVIEW} alt="" width={1250} height={710} />
+            <a href="https://www.openstreetmap.org/copyright">© OpenStreetMap contributors</a>
           </div>
         </section>
 
-        {/* Selected Community Details */}
-        <div className="volunteer-board-layout">
-          {/* Main Card */}
-          <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-            <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>{active.name}</h3>
-            <p style={{ color: '#475569', margin: '0 0 1.25rem 0' }}>{active.description}</p>
+        <div className="hub-overview">
+          <VolunteerTickets />
 
-            {/* Custom initiative tool based on selection */}
-            {active.id === 'domestic-safety' && (
-              <div style={{ backgroundColor: '#f1f5f9', padding: '1rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>Safe Route Planner</h4>
-                <p style={{ fontSize: '0.9rem', color: '#475569' }}>
-                  If on the MSOE campus, this automatically routes along well-lit paths to MSOE Public Safety at 1025 N Broadway. In the wider city, it guides you to Sojourner Family Peace Center.
-                </p>
-                <button style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>
-                  Calculate Safe Walk Route
-                </button>
+          <div className="hub-overview-side">
+            <section className="hub-panel hub-communities" aria-labelledby="communities-title">
+              <h2 id="communities-title">Community hubs</h2>
+              <ul className="hub-community-list">
+                {COMMUNITIES.map(({ id, name, tag, icon: Icon }) => (
+                  <li key={id}>
+                    <button type="button" aria-pressed={id === active.id} onClick={() => setSelectedCommunity(id)}>
+                      <span className="hub-community-icon"><Icon size={19} aria-hidden="true" /></span>
+                      <span><strong>{name}</strong><small>{tag}</small></span>
+                      <ChevronRight size={17} aria-hidden="true" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+
+              <div className="hub-community-detail">
+                <p>{active.description}</p>
+                {active.id === 'domestic-safety' && (
+                  <>
+                    <h3>Safe Route Planner</h3>
+                    <button type="button" className="hub-button hub-button--secondary" onClick={() => openView('map')}>
+                      Explore sample locations
+                    </button>
+                  </>
+                )}
+                {active.id === 'missing-persons' && (
+                  <>
+                    <h3 ref={searchGridHeading} tabIndex={-1}>Volunteer Search Party Grid</h3>
+                    <ul className="hub-search-sectors" aria-label="Sample search sectors">
+                      {SEARCH_SECTORS.map(({ name, status }) => (
+                        <li key={name} data-status={status}><strong>{name}</strong><span>{status}</span></li>
+                      ))}
+                    </ul>
+                  </>
+                )}
+                {active.id === 'food-pantry' && (
+                  <>
+                    <h3>Pantry Stocking &amp; Relief Hub</h3>
+                    <button type="button" className="hub-button hub-button--secondary" onClick={() => openView('map')}>
+                      View pantry locations
+                    </button>
+                  </>
+                )}
               </div>
-            )}
+            </section>
 
-            {active.id === 'missing-persons' && (
-              <div style={{ backgroundColor: '#f1f5f9', padding: '1rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>Volunteer Search Party Grid</h4>
-                <p style={{ fontSize: '0.9rem', color: '#475569' }}>
-                  Coordinate volunteer sectors in real time. Click a sector to view volunteer status or mark as searched.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', margin: '1rem 0' }}>
-                  {['Sector A (Active)', 'Sector B (Searching)', 'Sector C (Cleared)', 'Sector D (Pending)'].map((sec, i) => (
-                    <div key={i} style={{ padding: '0.75rem', backgroundColor: i === 2 ? '#dcfce7' : '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.8rem', textAlign: 'center' }}>
-                      {sec}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {active.id === 'food-pantry' && (
-              <div style={{ backgroundColor: '#f1f5f9', padding: '1rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>Pantry Stocking & Relief Hub</h4>
-                <p style={{ fontSize: '0.9rem', color: '#475569' }}>
-                  AI recommendations based on neighborhood need: Juneautown pantries report shortages of high-protein canned foods, baby formula, and warm socks.
-                </p>
-                <button style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>
-                  Post Available Pantry Supplies
-                </button>
-              </div>
-            )}
-          </div>
-
-          {/* Sidebar: Volunteer Tickets & District Stats */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            <VolunteerTickets />
-
-            {/* District Stats */}
-            <div style={{ backgroundColor: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <h4 style={{ margin: '0 0 0.5rem 0' }}>District Overview</h4>
-              <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Juneautown / Campus:</span>
-                  <strong>5 active calls</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Third Ward:</span>
-                  <strong>3 active calls</strong>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span>Near West Side:</span>
-                  <strong>12 active calls</strong>
-                </div>
-              </div>
-            </div>
+            <section className="hub-panel hub-districts" aria-labelledby="districts-title">
+              <h2 id="districts-title">District overview</h2>
+              <dl>
+                {DISTRICTS.map(({ name, calls }) => (
+                  <div key={name}><dt>{name}</dt><dd>{calls} active calls</dd></div>
+                ))}
+              </dl>
+            </section>
           </div>
         </div>
       </main>
+
+      <footer className="hub-footer hub-width">
+        <span>Community Task Force MKE &amp; MSOE</span>
+        <span>Demo preview · sample data</span>
+      </footer>
     </div>
   );
 }
