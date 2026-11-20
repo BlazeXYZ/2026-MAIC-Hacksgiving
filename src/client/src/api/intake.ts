@@ -7,7 +7,7 @@ import {
   type TicketStatus,
   type TriageResult,
   type UrgencyLevel,
-} from '../contracts';
+} from '../contracts/intake';
 import { translate, type Language } from '../i18n/strings';
 
 /**
