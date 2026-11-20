@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import VolunteerTickets from './components/VolunteerTickets';
 
 interface Community {
   id: string;
@@ -39,7 +40,6 @@ const COMMUNITIES: Community[] = [
 export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
-  const [claimedTicketId, setClaimedTicketId] = useState<number | null>(null);
 
   if (quickExitTriggered) {
     return (
@@ -119,7 +119,7 @@ export default function App() {
         </section>
 
         {/* Selected Community Details */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+        <div className="volunteer-board-layout">
           {/* Main Card */}
           <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>{active.name}</h3>
@@ -169,33 +169,7 @@ export default function App() {
 
           {/* Sidebar: Volunteer Tickets & District Stats */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Volunteer Ticket Box */}
-            <div style={{ backgroundColor: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <h4 style={{ margin: '0 0 0.5rem 0' }}>Volunteer Support Tickets</h4>
-              <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 0.75rem 0' }}>
-                AI prioritized based on urgency and volunteer availability.
-              </p>
-              <div style={{ padding: '0.75rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.85rem' }}>
-                <div><strong>Ticket #104:</strong> Emergency meal delivery</div>
-                <div style={{ color: '#64748b', fontSize: '0.8rem' }}>Near 18th & Wells - Priority High</div>
-                <button
-                  onClick={() => setClaimedTicketId(104)}
-                  disabled={claimedTicketId === 104}
-                  style={{
-                    marginTop: '0.5rem',
-                    padding: '0.35rem 0.75rem',
-                    backgroundColor: claimedTicketId === 104 ? '#94a3b8' : '#2563eb',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: claimedTicketId === 104 ? 'default' : 'pointer',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  {claimedTicketId === 104 ? 'Claimed by You' : 'Claim Ticket'}
-                </button>
-              </div>
-            </div>
+            <VolunteerTickets />
 
             {/* District Stats */}
             <div style={{ backgroundColor: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>

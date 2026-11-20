@@ -17,10 +17,18 @@ try:
 except ModuleNotFoundError:
     from ai.hotspots import router as coordinator_hotspots_router
 
+try:
+    from src.server.ticket_routes import lifespan as ticket_lifespan
+    from src.server.ticket_routes import router as volunteer_ticket_router
+except ModuleNotFoundError:
+    from ticket_routes import lifespan as ticket_lifespan
+    from ticket_routes import router as volunteer_ticket_router
+
 app = FastAPI(
     title=settings.APP_NAME,
     description="FastAPI backend supporting web and Capacitor mobile clients for ComforceMKE initiatives.",
     version="0.2.0",
+    lifespan=ticket_lifespan,
 )
 
 # Enable CORS for local web development and Capacitor mobile bridge
@@ -34,6 +42,7 @@ app.add_middleware(
 
 # Coordinator-only hotspot density endpoints (key-gated, see #41)
 app.include_router(coordinator_hotspots_router)
+app.include_router(volunteer_ticket_router)
 
 class HealthResponse(BaseModel):
     status: str
