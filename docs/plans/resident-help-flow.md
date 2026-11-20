@@ -188,6 +188,22 @@ step 7: that still closes #2–#10.
 
 ---
 
+## Open items found while building
+
+- **Triage preview endpoint (backend).** #6 shows the AI's reading *before* the ticket is sent, but PR #50 only
+  triages inside `POST /intake/survey`, which also creates the ticket. The client calls
+  `POST /api/v1/intake/triage` (same body, returns `TriageResult`, creates nothing) and falls back to a
+  local keyword guess when that 404s. Ask `@TNTwise` to add it.
+- **"Keep this private" isn't sent.** `SurveyRequest` has no field for it. Today every request is treated as
+  private. If it should be a choice, add `keep_private: bool` to the contract.
+- **Hmong strings.** `i18n/strings.ts` falls back to English for `hmn`. Needs a person to translate, not a machine.
+- **For #8:** call `useQuickExit().exit()` from the button and the Esc listener, and remove the `exit-standin`
+  button in `App.tsx`. Esc also closes the privacy `<dialog>`, so listen on `window` in the capture phase.
+- **For #9:** replace `DisguiseStandIn` in `App.tsx`; spread `useTripleTap(restore)` on the blue header bar.
+- **For #2:** replace the `need-slot` list in `AskScreen.tsx`; set `need` through `useSurvey().update`.
+
+---
+
 ## Draft PR description
 
 ```markdown
