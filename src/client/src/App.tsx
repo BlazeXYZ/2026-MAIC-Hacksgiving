@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
+import CommunityMap from './components/CommunityMap';
+import VolunteerTickets from './components/VolunteerTickets';
 
 interface Community {
   id: string;
@@ -39,7 +41,7 @@ const COMMUNITIES: Community[] = [
 export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
-  const [claimedTicketId, setClaimedTicketId] = useState<number | null>(null);
+  const [view, setView] = useState<'communities' | 'map'>('communities');
 
   if (quickExitTriggered) {
     return (
@@ -63,10 +65,13 @@ export default function App() {
       {/* Top Emergency Priority Banner */}
       <div style={{ backgroundColor: '#dc2626', color: '#ffffff', padding: '0.75rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <strong>URGENT ALERT:</strong> Active Missing Person Search near 27th & Wisconsin Ave. Volunteer search parties are currently forming.
+          <strong>DEMO ALERT:</strong> Sample missing-person search near 27th & Wisconsin Ave.
         </div>
         <button
-          onClick={() => setSelectedCommunity('missing-persons')}
+          onClick={() => {
+            setSelectedCommunity('missing-persons');
+            setView('communities');
+          }}
           style={{ backgroundColor: '#ffffff', color: '#dc2626', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
         >
           View Search Grid
@@ -76,8 +81,8 @@ export default function App() {
       {/* Main Header */}
       <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>ComForce MKE Community Hub</h1>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Connected through Community Task Force MKE & MSOE</p>
+          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold', color: '#0f766e' }}>ComForce MKE Community Hub</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Demo preview with sample data · Community Task Force MKE & MSOE</p>
         </div>
         <button
           onClick={() => setQuickExitTriggered(true)}
@@ -87,8 +92,17 @@ export default function App() {
         </button>
       </header>
 
-      {/* Main Container */}
-      <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem' }}>
+      <nav aria-label="Main navigation" className="hub-view-nav">
+        <button type="button" aria-current={view === 'communities' ? 'page' : undefined} onClick={() => setView('communities')}>
+          Communities
+        </button>
+        <button type="button" aria-current={view === 'map' ? 'page' : undefined} onClick={() => setView('map')}>
+          Map
+        </button>
+      </nav>
+
+      {view === 'map' && <CommunityMap />}
+      <main className="hub-page" hidden={view !== 'communities'}>
         {/* Community Tabs */}
         <section style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1rem', color: '#475569', marginBottom: '0.75rem' }}>Active Initiatives & Communities</h2>
@@ -169,33 +183,7 @@ export default function App() {
 
           {/* Sidebar: Volunteer Tickets & District Stats */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-            {/* Volunteer Ticket Box */}
-            <div style={{ backgroundColor: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-              <h4 style={{ margin: '0 0 0.5rem 0' }}>Volunteer Support Tickets</h4>
-              <p style={{ fontSize: '0.85rem', color: '#64748b', margin: '0 0 0.75rem 0' }}>
-                AI prioritized based on urgency and volunteer availability.
-              </p>
-              <div style={{ padding: '0.75rem', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '6px', fontSize: '0.85rem' }}>
-                <div><strong>Ticket #104:</strong> Emergency meal delivery</div>
-                <div style={{ color: '#64748b', fontSize: '0.8rem' }}>Near 18th & Wells - Priority High</div>
-                <button
-                  onClick={() => setClaimedTicketId(104)}
-                  disabled={claimedTicketId === 104}
-                  style={{
-                    marginTop: '0.5rem',
-                    padding: '0.35rem 0.75rem',
-                    backgroundColor: claimedTicketId === 104 ? '#94a3b8' : '#2563eb',
-                    color: '#ffffff',
-                    border: 'none',
-                    borderRadius: '4px',
-                    cursor: claimedTicketId === 104 ? 'default' : 'pointer',
-                    fontSize: '0.8rem',
-                  }}
-                >
-                  {claimedTicketId === 104 ? 'Claimed by You' : 'Claim Ticket'}
-                </button>
-              </div>
-            </div>
+            <VolunteerTickets />
 
             {/* District Stats */}
             <div style={{ backgroundColor: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
