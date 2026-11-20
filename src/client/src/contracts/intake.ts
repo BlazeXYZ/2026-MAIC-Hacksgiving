@@ -36,3 +36,41 @@ export interface ServiceMatch {
   summary: string;
   next_step: string;
 }
+
+export interface TimelineEvent {
+  at: string;
+  status: TicketStatus;
+  label: string;
+}
+
+export interface PublicTicket {
+  token: string;
+  status: TicketStatus;
+  urgency: UrgencyLevel;
+  category: ServiceCategory;
+  summary: string;
+  district?: string | null;
+  language: string;
+  assigned_volunteer_alias?: string | null;
+  suggested_service_id?: string | null;
+  service: ServiceMatch;
+  timeline: TimelineEvent[];
+}
+
+export interface SurveyAccepted {
+  token: string;
+  status: TicketStatus;
+  urgency: UrgencyLevel;
+  category: ServiceCategory;
+  summary: string;
+  suggested_service_id?: string | null;
+  service: ServiceMatch;
+}
+
+export const apiPaths = {
+  survey: '/api/v1/intake/survey',
+  ticket: '/api/v1/intake/tickets',
+  safePlaces: '/api/v1/resources/safe-places',
+  pantries: '/api/v1/resources/pantries',
+  safeWalk: '/api/v1/resources/safe-walk',
+};

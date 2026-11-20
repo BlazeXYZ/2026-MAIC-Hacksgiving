@@ -1,5 +1,5 @@
 import { Pencil, Sparkles } from 'lucide-react';
-import type { TriageResult, UrgencyLevel } from '../../contracts';
+import type { TriageResult, UrgencyLevel } from '../../contracts/intake';
 import { DISTRICTS, useSurvey } from '../../state/survey';
 
 export const URGENCY_CLASS: Record<UrgencyLevel, string> = { urgent: 'urgent', today: 'today', this_week: 'week' };
