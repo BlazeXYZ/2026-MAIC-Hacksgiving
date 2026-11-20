@@ -59,54 +59,63 @@
   border-radius: 12px;
 }
 
-.community-map-image {
-  position: relative;
-}
-
-.community-map-image img {
-  display: block;
-  width: 100%;
-  height: auto;
+.community-map-canvas {
+  height: clamp(300px, 48vw, 460px);
   border-radius: 11px 11px 0 0;
+  isolation: isolate;
 }
 
-.community-map-marker {
-  position: absolute;
+.community-map-pin {
+  box-sizing: border-box;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  transform: translate(-50%, -75%);
-  color: #115e59;
   background: #fff;
   border: 2px solid #0f766e;
-  border-radius: 50%;
+  border-radius: 50% 50% 50% 12%;
   box-shadow: 0 2px 6px rgb(15 23 42 / 25%);
-  cursor: pointer;
 }
 
-.community-map-marker[aria-pressed='true'] {
-  z-index: 1;
-  color: #fff;
+.community-map-pin::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
   background: #0f766e;
 }
 
+.community-map-pin[aria-pressed='true'] {
+  background: #0f766e;
+}
+
+.community-map-pin[aria-pressed='true']::after {
+  background: #fff;
+}
+
+.community-map-pin:focus-visible,
 .community-map button:focus-visible,
 .hub-view-nav button:focus-visible {
   outline: 3px solid #1d4ed8;
   outline-offset: 3px;
 }
 
-.community-map-figure figcaption {
-  padding: 0.55rem 0.75rem;
-  font-size: 0.75rem;
+.community-map-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  font-size: 0.875rem;
   color: #475569;
-  text-align: right;
 }
 
-.community-map-figure a {
-  color: #115e59;
+.community-map-tools button {
+  padding: 0.5rem 0.65rem;
+  font: inherit;
+  color: #334155;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  cursor: pointer;
 }
 
 .community-map-event {
