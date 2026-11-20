@@ -6,18 +6,30 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, HTTPException
+from fastapi.encoders import jsonable_encoder
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 try:
+    from src.server.coordinator_api import router as coordinator_router
     from src.server.core.config import settings
     from src.server.db import close_database, init_database, list_services
     from src.server.hubs import router as hubs_router
+    from src.server.intake_api import router as intake_router
+    from src.server.resources_api import router as resources_router
+    from src.server.security import SecurityHeadersMiddleware
+    from src.server.walk_api import router as walk_router
 except ModuleNotFoundError:
+    from coordinator_api import router as coordinator_router
     from core.config import settings
     from db import close_database, init_database, list_services
     from hubs import router as hubs_router
+    from intake_api import router as intake_router
+    from resources_api import router as resources_router
+    from security import SecurityHeadersMiddleware
+    from walk_api import router as walk_router
 
 logger = logging.getLogger("comforce.api")
 
@@ -47,16 +59,44 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Enable CORS for local web development and Capacitor mobile bridge
+# Inner middleware first. CORS is added last so it stays the outer wrapper,
+# including on error responses and preflight.
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(settings.CORS_ORIGINS),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=list(settings.CORS_METHODS),
+    allow_headers=list(settings.CORS_HEADERS),
+    expose_headers=list(settings.CORS_EXPOSE_HEADERS),
 )
 
 app.include_router(hubs_router)
+app.include_router(intake_router)
+app.include_router(resources_router)
+app.include_router(walk_router)
+app.include_router(coordinator_router)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error(_request, exc: RequestValidationError) -> JSONResponse:
+    return JSONResponse(
+        status_code=422,
+        content={"detail": jsonable_encoder(exc.errors())},
+        headers={"X-Error-Type": "validation"},
+    )
+
+
+@app.exception_handler(HTTPException)
+async def http_error(_request, exc: HTTPException) -> JSONResponse:
+    headers = {"X-Error-Type": "http"}
+    if exc.headers:
+        headers.update(exc.headers)
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=headers,
+    )
 
 class HealthResponse(BaseModel):
     status: str
