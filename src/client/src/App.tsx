@@ -158,7 +158,7 @@ export default function App() {
         </section>
 
         {/* Selected Community Details */}
-        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '1.5rem' }}>
+        <div className="volunteer-board-layout">
           {/* Main Card */}
           <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>{active.name}</h3>
