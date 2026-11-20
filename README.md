@@ -23,7 +23,16 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 - [Core Features & Modular Communities](#core-features--modular-communities)
 - [Milwaukee Data Sources](#milwaukee-data-sources)
 - [Repository Structure](#repository-structure)
-- [Getting Started](#getting-started)
+- [Local Development Guide](#local-development-guide)
+  - [Prerequisites](#prerequisites)
+  - [Option 1: Native Process Development (Fastest Iteration)](#option-1-native-process-development-fastest-iteration)
+  - [Option 2: One-Command Docker Compose](#option-2-one-command-docker-compose)
+  - [Option 3: Local Kubernetes with Kind](#option-3-local-kubernetes-with-kind)
+- [Posting to Production (Deployment Guide)](#posting-to-production-deployment-guide)
+  - [1. AWS Cloud Deployment with EKS & Terraform (Recommended)](#1-aws-cloud-deployment-with-eks--terraform-recommended)
+  - [2. Existing Kubernetes Cluster Deployment](#2-existing-kubernetes-cluster-deployment)
+  - [3. Single-Node Production Deployment with Docker Compose](#3-single-node-production-deployment-with-docker-compose)
+  - [4. Mobile App Production Release (Android & iOS)](#4-mobile-app-production-release-android--ios)
 - [Hackathon Schedule](#hackathon-schedule)
 - [Submission Checklist](#submission-checklist)
 - [Team Members](#team-members)
@@ -139,67 +148,293 @@ Our team is reviewing real Milwaukee open data to ground the app in actual local
 
 ---
 
-## Getting Started
+## Local Development Guide
 
 ### Prerequisites
-* Python 3.10 or newer (with [`uv`](https://github.com/astral-sh/uv) or pip)
-* Node.js 18 or newer (with npm)
-* Git installed and configured
+* **Python 3.10+** (with [`uv`](https://github.com/astral-sh/uv) or standard `pip`)
+* **Node.js 18+** (with npm)
+* **Docker or Podman** (for containerized local dev or Kubernetes)
+* **Git** installed and configured
 
 ---
 
-### 1. Setting Up the Server (FastAPI + `uv`)
+### Option 1: Native Process Development (Fastest Iteration)
 
-Change to the server directory:
+Running services directly on your host machine offers the fastest feedback loop, hot module reloading (HMR) for frontend components, and instant Python debugger attachment.
 
-```bash
-cd src/server
-```
+#### 1. Backend Server Setup (FastAPI + SQLite)
 
-Using `uv` (recommended):
-```bash
-# Create and sync virtual environment
-uv venv
-uv sync
+1. Switch to the server directory:
+   ```bash
+   cd src/server
+   ```
+2. Using `uv` (recommended):
+   ```bash
+   # Create and sync virtual environment
+   uv venv
+   uv sync
 
-# Run backend development server
-uv run python main.py
-```
+   # Run backend development server
+   uv run python main.py
+   ```
+   *Alternative with standard pip:*
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Windows: .venv\Scripts\Activate.ps1
+   pip install -r ../../requirements.txt
+   python main.py
+   ```
+3. **Database initialization & automatic table creation:**
+   The backend automatically initializes an embedded SQLite database (`sqlite:///dev.db`) on startup when `DATABASE_URL` is unset, so no external database server is required.
+4. **Seed sample Milwaukee community data:**
+   In another terminal, populate the local database with verified safe places, 11 emergency food pantries, and sample support tickets:
+   ```bash
+   uv run python -m src.server.seed
+   ```
+   *The API will be running at `http://localhost:8000` with interactive Swagger docs at `http://localhost:8000/docs`.*
 
-Using standard `pip`:
-```bash
-# Windows (PowerShell)
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r ../../requirements.txt
-python main.py
-```
+#### 2. Frontend Client Setup (React + Vite + Capacitor)
 
-The API will be available at `http://localhost:8000`.
+1. In a separate terminal, switch to the client directory:
+   ```bash
+   cd src/client
+   ```
+2. Install frontend dependencies and start Vite dev server:
+   ```bash
+   npm install
+   npm run dev
+   ```
+3. Open `http://localhost:3000` in your browser. API requests to `/api` are automatically proxied to the backend at `http://localhost:8000`.
 
----
+#### 3. Mobile Device Sync (Capacitor)
 
-### 2. Setting Up the Client (React + Capacitor)
-
-In a separate terminal, switch to the client directory:
-
+Compile the web assets and synchronize with native mobile wrappers:
 ```bash
 cd src/client
-
-# Install frontend dependencies
-npm install
-
-# Run the web development server
-npm run dev
-```
-
-Open your browser to `http://localhost:3000`.
-
-To build and sync for mobile with Capacitor:
-```bash
 npm run build
 npx cap sync
 ```
+To launch in native emulators:
+```bash
+npm run cap:android  # Opens Android Studio
+npm run cap:ios      # Opens Xcode (macOS only)
+```
+
+---
+
+### Option 2: One-Command Docker Compose
+
+Launch the complete full-stack environment (PostgreSQL 16, FastAPI backend with live reload, and React frontend served via Nginx reverse proxy) with a single command from the project root:
+
+```bash
+docker compose up
+```
+
+#### Services & Standardized Ports:
+- **Client (Web):** `http://localhost:3000` (Nginx serving compiled React client with reverse proxy to `/api`)
+- **API (FastAPI Backend):** `http://localhost:8000` (Runs with `--reload` and volume-mounted `./src/server` for live code reload)
+- **Database (PostgreSQL 16):** `localhost:5432` (`comforce:comforce-dev@localhost:5432/comforce` with persistent `pgdata` volume)
+
+#### Seed Data Inside Container:
+```bash
+docker compose exec api python -m src.server.seed
+```
+
+#### Verification:
+```bash
+# Check that all three containers are healthy and running
+docker compose ps
+
+# Test API connectivity from client network
+curl http://localhost:8000/
+```
+
+To stop containers:
+```bash
+docker compose down
+```
+
+---
+
+### Option 3: Local Kubernetes with Kind
+
+Test production-style Kubernetes manifests and Terraform configurations locally on a one-node [kind](https://kind.sigs.k8s.io/) cluster.
+
+1. **Build local container images:**
+   ```bash
+   docker build -f deploy/docker/Dockerfile.api -t comforce-api:local .
+   docker build -f deploy/docker/Dockerfile.web -t comforce-web:local .
+   ```
+2. **Deploy to local kind cluster with Terraform:**
+   ```bash
+   cd deploy/terraform/envs/dev
+   cp terraform.tfvars.example terraform.tfvars
+   terraform init
+   terraform apply
+   ```
+3. **Connect and view:**
+   ```bash
+   export KUBECONFIG=$HOME/.kube/comforce-dev.yaml
+   kubectl -n comforce-dev get pods
+   kubectl -n comforce-dev port-forward svc/web 8080:80
+   ```
+   Open `http://localhost:8080` in your browser.
+
+---
+
+## Posting to Production (Deployment Guide)
+
+ComForce MKE supports multiple production deployment targets depending on your infrastructure.
+
+### 1. AWS Cloud Deployment with EKS & Terraform (Recommended)
+
+Production infrastructure is provisioned as code using Terraform under `deploy/terraform/envs/prod`. It creates a dedicated VPC, an Amazon EKS Kubernetes cluster, an Amazon ECR container registry, and EBS persistent storage for PostgreSQL.
+
+#### Step 1: Configure AWS CLI & Permissions
+Ensure your AWS CLI v2 is authenticated with credentials that have permissions to create VPC, EKS, IAM roles, and ECR:
+```bash
+aws configure
+aws sts get-caller-identity
+```
+
+#### Step 2: Configure Production Terraform Variables
+```bash
+cd deploy/terraform/envs/prod
+cp terraform.tfvars.example terraform.tfvars
+```
+Edit `terraform.tfvars`:
+```hcl
+target          = "aws"
+aws_region      = "us-east-1"
+environment     = "prod"
+db_password     = "ChooseAStrongSecureProductionPassword123!"
+```
+*(Note: `terraform.tfvars` and `*.tfstate` are excluded from git for security).*
+
+#### Step 3: Provision AWS Infrastructure
+```bash
+terraform init
+terraform apply
+```
+*This provisions the VPC, public subnets, internet gateway, EKS control plane, managed worker node group, EBS CSI driver with `comforce-gp3` StorageClass, and ECR repositories. (Takes ~10–15 minutes).*
+
+#### Step 4: Build & Push Production Images to Amazon ECR
+From the repository root, tag and push the production images using the outputs from Terraform:
+```bash
+cd deploy/terraform/envs/prod
+REGISTRY=$(terraform output -raw ecr_registry)
+API_IMAGE=$(terraform output -raw api_image)
+WEB_IMAGE=$(terraform output -raw web_image)
+REGION=$(terraform output -raw aws_region)
+
+# Authenticate Docker to Amazon ECR
+aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$REGISTRY"
+
+# Build and push production images
+docker build -f deploy/docker/Dockerfile.api -t "$API_IMAGE" .
+docker build -f deploy/docker/Dockerfile.web -t "$WEB_IMAGE" .
+docker push "$API_IMAGE"
+docker push "$WEB_IMAGE"
+```
+
+#### Step 5: Rollout Deployments and Verify
+Update your local kubeconfig to point to the new production cluster and trigger a rolling update:
+```bash
+aws eks update-kubeconfig --name "$(terraform output -raw cluster_name)" --region "$REGION"
+kubectl -n comforce-prod rollout restart deployment/api deployment/web
+kubectl -n comforce-prod get pods -w
+```
+
+#### Step 6: Access Production Services
+```bash
+# Port-forward to verify live production service:
+kubectl -n comforce-prod port-forward svc/web 8082:80
+```
+Open `http://localhost:8082`. When ready for public domain traffic, configure your Ingress controller or Route 53 DNS pointing to the Application Load Balancer.
+
+#### Step 7: Tearing Down Production (To Avoid Cloud Costs)
+```bash
+cd deploy/terraform/envs/prod
+terraform destroy
+```
+
+---
+
+### 2. Existing Kubernetes Cluster Deployment
+
+If deploying to an existing Kubernetes cluster (e.g., GKE, Azure AKS, or an internal on-premises cluster):
+
+1. Set `target = "existing"` in `deploy/terraform/envs/prod/terraform.tfvars`:
+   ```hcl
+   target          = "existing"
+   kubeconfig_path = "~/.kube/config"
+   db_password     = "<production-database-password>"
+   api_image       = "ghcr.io/your-org/comforce-api:latest"
+   web_image       = "ghcr.io/your-org/comforce-web:latest"
+   ```
+2. Run `terraform apply` to install the `comforce-prod` namespace, database StatefulSet, secrets, and deployments directly to your existing cluster.
+
+---
+
+### 3. Single-Node Production Deployment with Docker Compose
+
+For deploying on a single cloud VPS (e.g., AWS EC2, DigitalOcean Droplet, Linode, or Hetzner):
+
+1. Clone the repository on the server:
+   ```bash
+   git clone https://github.com/BlazeXYZ/2026-MAIC-Hacksgiving.git /opt/comforce
+   cd /opt/comforce
+   ```
+2. Create a secure production `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+   Set:
+   ```env
+   APP_ENV=production
+   DEBUG=False
+   DATABASE_URL=postgresql+psycopg://comforce:<strong-password>@db:5432/comforce
+   ```
+3. Start containers detached in the background:
+   ```bash
+   docker compose up -d
+   ```
+4. Configure Nginx with Let's Encrypt / Certbot on the host to provide HTTPS and proxy traffic to port 3000 (web) and 8000 (api).
+
+---
+
+### 4. Mobile App Production Release (Android & iOS)
+
+To post the Capacitor mobile application to public app stores:
+
+#### Google Play Store (Android)
+1. Build the production web bundle and sync:
+   ```bash
+   cd src/client
+   npm run build
+   npx cap sync android
+   npx cap open android
+   ```
+2. In Android Studio:
+   - Configure version code and version name in `android/app/build.gradle`.
+   - Select **Build > Generate Signed Bundle / APK**.
+   - Select **Android App Bundle (.aab)** and sign with your production upload keystore.
+   - Upload the generated `.aab` file to the [Google Play Console](https://play.google.com/console).
+
+#### Apple App Store (iOS)
+1. Build the production web bundle and sync:
+   ```bash
+   cd src/client
+   npm run build
+   npx cap sync ios
+   npx cap open ios
+   ```
+2. In Xcode:
+   - Configure Bundle Identifier and Version in the project settings.
+   - Select your registered Apple Developer Team under **Signing & Capabilities**.
+   - Select target device **Any iOS Device (arm64)**.
+   - Click **Product > Archive**.
+   - In the Organizer window, click **Distribute App** and submit to **TestFlight** and **App Store Connect**.
 
 ---
 

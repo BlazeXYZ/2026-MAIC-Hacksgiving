@@ -1,11 +1,17 @@
 """FastAPI application entry point for the ComforceMKE community platform."""
 
+from contextlib import asynccontextmanager
 from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+try:
+    from src.server.ai.advisor import router as advisors_router
+except ModuleNotFoundError:
+    from ai.advisor import router as advisors_router
 
 try:
     from src.server.core.config import settings
@@ -24,25 +30,56 @@ except ModuleNotFoundError:
     from ticket_routes import lifespan as ticket_lifespan
     from ticket_routes import router as volunteer_ticket_router
 
+try:
+    from src.server.db import close_db, init_db
+except ModuleNotFoundError:
+    from db import close_db, init_db
+
+try:
+    from src.server.api import mount_feature_routers
+except ModuleNotFoundError:
+    from api import mount_feature_routers
+
+try:
+    from src.server.security import SecurityHeadersMiddleware, install_api_guards
+except ModuleNotFoundError:
+    from security import SecurityHeadersMiddleware, install_api_guards
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    async with ticket_lifespan(app):
+        yield
+    close_db()
+
 app = FastAPI(
     title=settings.APP_NAME,
     description="FastAPI backend supporting web and Capacitor mobile clients for ComforceMKE initiatives.",
     version="0.2.0",
-    lifespan=ticket_lifespan,
+    lifespan=lifespan,
 )
 
-# Enable CORS for local web development and Capacitor mobile bridge
+install_api_guards(app)
+
+# Security headers sit inside CORS so preflight still carries the Vite
+# and Capacitor allow-list, including on error responses.
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=list(settings.CORS_ORIGINS),
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=list(settings.CORS_METHODS),
+    allow_headers=list(settings.CORS_HEADERS),
+    expose_headers=list(settings.CORS_EXPOSE_HEADERS),
 )
 
 # Coordinator-only hotspot density endpoints (key-gated, see #41)
 app.include_router(coordinator_hotspots_router)
 app.include_router(volunteer_ticket_router)
+# Pantry stocking advisor endpoints (see #47)
+app.include_router(advisors_router)
+mount_feature_routers(app)
 
 class HealthResponse(BaseModel):
     status: str
