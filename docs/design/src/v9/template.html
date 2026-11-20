@@ -1,4 +1,4 @@
-<title>ComForce MKE Hub</title>
+<title>ComForce MKE Hub - PROD</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -713,6 +713,26 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
 .hubhead>.city{position:absolute;right:40px;bottom:44px;width:520px;height:90px;fill:rgba(0,0,0,.2);pointer-events:none}
 .hubhead>*:not(.city){position:relative}
 .dfoot .made{font-weight:700;color:#fff}
+
+/* ---------- consistency pass ---------- */
+/* phone headers: one row height, controls pinned to the top so Exit never drifts when a title wraps */
+.ph-top,.ph-head{align-items:flex-start;min-height:48px}
+.ph-top .logo{margin-top:5px}
+.ph-top .exit,.ph-head .exit{margin-top:2px}
+.ph-head .t{padding-top:1px}
+.ph-top .iconbtn,.ph-head .iconbtn{margin-left:auto}
+.ph-top .iconbtn+.exit,.ph-head .iconbtn+.exit{margin-left:0}
+.ph-head .t+.exit{margin-left:auto}
+.floattop{left:20px;right:20px;top:64px;align-items:flex-start}
+/* phone section headings: one family. Big highlighted ones on home, small labels elsewhere, both with the panel marker */
+.ph-h h2::before,.ui .list-h::before{content:"";display:inline-block;width:8px;height:8px;margin-right:10px;border-radius:2px;background:var(--green);vertical-align:3px}
+.ui .list-h{font-size:15px;font-weight:700;color:var(--ink);margin:28px 20px 10px}
+/* the printed-card drop applies to anything you press or that holds content */
+.btn.primary{box-shadow:0 3px 0 #0A3D22}
+.btn.danger{box-shadow:0 3px 0 var(--red-deep)}
+.btn.primary:active,.btn.danger:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
+.ui .setrow,.ui .demo,.ui .locbtn{box-shadow:0 3px 0 rgba(15,74,40,.13)}
+.ui .setrow,.ui .demo{border-color:#C9D4C4}
 @media (prefers-reduced-motion:reduce){.live,.mini .x,.dnav .esc{animation:none!important}}
 </style>
 
@@ -1153,7 +1173,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
           <div class="island"></div>
           <div class="scroll" data-live>
             <div class="statusbar"><span>6:25</span><span class="sig"><i style="width:17px"></i><i style="width:15px"></i><i style="width:25px"></i></span></div>
-            <div class="ph-head"><a class="back" href="#p-route" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><div class="t"><span class="meta">Safe Threads</span><b>Safe places near you</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
+            <div class="ph-head"><a class="back" href="#p-route" aria-label="Back"><svg class="ic"><use href="#i-back"/></svg></a><div class="t"><span class="meta">Safe Threads · near you</span><b>Safe places</b></div><button class="exit" data-exit><svg class="ic"><use href="#i-eyeoff"/></svg>Exit</button></div>
             <div class="ph-pad"><div class="mapcard"><div class="mapwrap"><svg class="map" id="map-safe" viewBox="610 240 460 300" data-px="350" role="img" aria-label="Safe places in Westown, Haymarket and Juneautown"><use href="#basemap"/></svg><span class="attrib osm">© OpenStreetMap contributors</span></div></div></div>
             <div class="ph-pad" style="margin-top:16px"><div class="card rows" style="padding:16px">
               <div class="safe"><b>Central Library lobby</b><span class="confirm">12 confirm</span><p>814 W Wisconsin Ave</p><div class="chips"><span>Warm</span><span>Staffed</span><span>Restrooms</span><span>Bubbler</span><span>Well lit</span></div></div>
@@ -1299,6 +1319,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
           <div class="dirgrid" data-fitems><article class="hubcard" data-ftags="joined"><div class="band" style="background-color:var(--red)"><span class="sw" style="background:var(--red)"><svg class="ic"><use href="#i-search"/></svg></span><span class="flag2 hot">1 live search</span></div><div class="body"><h3><a href="#p-search">Missing Persons Network</a></h3><p>Verified alerts, search parties and tips for missing neighbors.</p><span class="stats">1,120 members · alerts on for everyone</span><div class="tools"><span class="tag plain">Search grid</span><span class="tag plain">Verified tips</span></div><button class="btn sm joined" data-toggle-class=".hubcard|left" data-on="Join"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div></article><article class="hubcard" data-ftags="joined"><div class="band" style="background-color:var(--green)"><span class="sw" style="background:var(--green)"><svg class="ic"><use href="#i-food"/></svg></span></div><div class="body"><h3><a href="#hub-inside">Food &amp; Mutual Aid</a></h3><p>Open pantries, food sharing, and what your block is short on.</p><span class="stats">245 members · 6 open requests</span><div class="tools"><span class="tag plain">Pantry finder</span><span class="tag plain">Stocking advisor</span></div><button class="btn sm joined" data-toggle-class=".hubcard|left" data-on="Join"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div></article><article class="hubcard" data-ftags="joined"><div class="band" style="background-color:#16201B"><span class="sw" style="background:#16201B"><svg class="ic"><use href="#i-shield"/></svg></span><span class="flag2">Private</span></div><div class="body"><h3><a href="#p-safe">Domestic Safety</a></h3><p>Safe routes, private check-ins and Sojourner's 24/7 help.</p><span class="stats">Private · members are never shown</span><div class="tools"><span class="tag plain">Find a way out</span><span class="tag plain">Quick Exit</span></div><button class="btn sm joined" data-toggle-class=".hubcard|left" data-on="Join"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div></article><article class="hubcard" data-ftags="joined"><div class="band" style="background-color:#2F5D9E"><span class="sw" style="background:#2F5D9E"><svg class="ic"><use href="#i-ride"/></svg></span></div><div class="body"><h3>Rides &amp; Transportation</h3><p>Free rides from volunteers to work, clinics and school.</p><span class="stats">310 members · 2 open requests</span><div class="tools"><span class="tag plain">Ride board</span><span class="tag plain">Driver check-in</span></div><button class="btn sm joined" data-toggle-class=".hubcard|left" data-on="Join"><svg class="ic"><use href="#i-check"/></svg><span data-label>Joined</span></button></div></article><article class="hubcard" data-ftags="suggested"><div class="band" style="background-color:#7A4FA0"><span class="sw" style="background:#7A4FA0"><svg class="ic"><use href="#i-youth"/></svg></span></div><div class="body"><h3><a href="#p-event">Youth Advocacy · Cycle Breakers</a></h3><p>Circles, mentors and events for ages 13–19.</p><span class="stats">96 members · event Thursday</span><div class="tools"><span class="tag plain">Events</span><span class="tag plain">Mentor match</span></div><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div></article><article class="hubcard" data-ftags="suggested"><div class="band" style="background-color:#B5651D"><span class="sw" style="background:#B5651D"><svg class="ic"><use href="#i-storm"/></svg></span></div><div class="body"><h3>Disaster Relief</h3><p>Supply drops, shelters and welfare checks when weather turns.</p><span class="stats">540 members · on standby</span><div class="tools"><span class="tag plain">Shelter map</span><span class="tag plain">Welfare checks</span></div><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div></article><article class="hubcard" data-ftags="suggested"><div class="band" style="background-color:#3E7DB3"><span class="sw" style="background:#3E7DB3"><svg class="ic"><use href="#i-family"/></svg></span></div><div class="body"><h3>MKE Parents Club</h3><p>Swaps, childcare help and advice from parents nearby.</p><span class="stats">410 members · 12 new posts</span><div class="tools"><span class="tag plain">Swap board</span><span class="tag plain">Childcare</span></div><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div></article><article class="hubcard" data-ftags="suggested"><div class="band" style="background-color:#4B5850"><span class="sw" style="background:#4B5850"><svg class="ic"><use href="#i-mic"/></svg></span></div><div class="body"><h3>Activist &amp; Advocacy Podcast</h3><p>Episodes and live tapings on Milwaukee issues.</p><span class="stats">180 members · new episode</span><div class="tools"><span class="tag plain">Episodes</span><span class="tag plain">Live Q&amp;A</span></div><button class="btn sm" data-once="Joined"><span data-label>Join</span></button></div></article></div>
           <div class="tip" style="margin-top:32px"><svg class="ic"><use href="#i-lamp"/></svg><span><b>Want a hub for your block club, school or church?</b> ComForce staff set hubs up with a community partner. <a href="#j-hub" style="color:var(--green);font-weight:700">Suggest one</a></span></div>
         </main>
+              <footer class="dfoot"><span><b>ComForce MKE</b> · Community Task Force MKE · Milwaukee, WI · 24/7: 414-395-0552</span><span>About · Privacy · Accessibility</span><span><span class="made">Made in Milwaukee</span> · prototype, sample data</span></footer>
       </div></div>
     </div></div></div>
     <div class="sub-shelf" id="hub-inside"><h3>Inside a hub</h3><span>Food &amp; Mutual Aid · try the tabs</span></div>
@@ -1410,6 +1431,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
             <div class="c4 stack"><div class="tip"><svg class="ic"><use href="#i-lamp"/></svg><span><b>Who sees this?</b> Pantry owners and coordinators. Residents never see who asked for what, only these totals.</span></div></div>
           </div>
         </div>
+              <footer class="dfoot"><span><b>ComForce MKE</b> · Community Task Force MKE · Milwaukee, WI · 24/7: 414-395-0552</span><span>About · Privacy · Accessibility</span><span><span class="made">Made in Milwaukee</span> · prototype, sample data</span></footer>
       </div></div>
     </div></div></div>
     <div class="notes2"><div><span><b>Same tabs everywhere</b>Threads, Map, Requests and News are in the same place in every hub. A hub's own tools come after the divider.</span></div><div><span><b>Private hubs say so</b>Domestic Safety never shows who joined, and its card says that up front.</span></div><div><span><b>Checked before it's public</b>Posts with addresses or names are held, and the author is told why in plain words.</span></div><div><span><b>Answers before replies</b>When a thread asks a question the hub can answer, the AI answer appears in the thread, marked as AI.</span></div></div>
@@ -1486,6 +1508,7 @@ details.tip ol{margin:10px 0 0;padding-left:30px;display:grid;gap:4px}
             </div>
           </div>
         </main>
+              <footer class="dfoot"><span><b>ComForce MKE</b> · Community Task Force MKE · Milwaukee, WI · 24/7: 414-395-0552</span><span>About · Privacy · Accessibility</span><span><span class="made">Made in Milwaukee</span> · prototype, sample data</span></footer>
       </div></div>
     </div></div></div>
     <div class="notes2"><div><span><b>Decide, don't dig</b>Everything that needs a coordinator lands in one queue with the AI's reasoning. Approve, edit or hold in one click.</span></div><div><span><b>Ping fewer people, better</b>Activation picks the 11 most likely volunteers instead of messaging all 310.</span></div><div><span><b>Real public data</b>Police-report squares come from MPD's public file, counts only, and only coordinators see them.</span></div><div><span><b>A different-looking workspace</b>The dark header makes it obvious you're acting as staff, not as a neighbor.</span></div></div>
