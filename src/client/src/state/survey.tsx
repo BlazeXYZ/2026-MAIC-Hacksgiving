@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { SurveyRequest } from '../contracts';
 import { translate, type Language, type StringKey } from '../i18n/strings';
 
@@ -32,16 +32,20 @@ export const DISTRICTS: District[] = [
 /** Answer to the welcome screen's "What brings you here today?". */
 export type Intent = 'need' | 'give' | 'look';
 
+export type HubId = 'food' | 'rides' | 'safety' | 'parents';
+
 export interface SurveyState {
   language: Language;
   intent: Intent;
+  /** Hubs picked during setup (mockup frame 2). Pre-checked from the welcome answer. */
+  hubs: HubId[];
   need: Need | null;
   freeText: string;
   district: DistrictId | null;
   keepPrivate: boolean;
 }
 
-const INITIAL: SurveyState = { language: 'en', intent: 'need', need: null, freeText: '', district: null, keepPrivate: true };
+const INITIAL: SurveyState = { language: 'en', intent: 'need', hubs: ['food', 'rides'], need: null, freeText: '', district: null, keepPrivate: true };
 
 interface SurveyContextValue {
   survey: SurveyState;
@@ -64,6 +68,11 @@ export function SurveyProvider({ children }: { children: ReactNode }) {
     (key: StringKey, vars?: Record<string, string | number>) => translate(survey.language, key, vars),
     [survey.language],
   );
+  // Tell the browser and screen readers which language the page is in, so Spanish and Hmong are read correctly.
+  useEffect(() => {
+    document.documentElement.lang = survey.language;
+  }, [survey.language]);
+
   const value = useMemo(() => ({ survey, update, reset, t }), [survey, update, reset, t]);
   return <SurveyContext.Provider value={value}>{children}</SurveyContext.Provider>;
 }

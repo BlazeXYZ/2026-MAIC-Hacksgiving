@@ -1,12 +1,14 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import type { PublicTicket } from '../contracts';
-import { getTicket, normalizeToken, type Sampled } from '../api/intake';
+import { cancelTicket, getTicket, normalizeToken, type Sampled } from '../api/intake';
 import { Icon } from '../components/Icon';
-import { PhoneHead, TabBar } from '../components/shell/Frame';
+import { PhoneHead, TabBar, type Tab } from '../components/shell/Frame';
 import { EmergencyBar, COMFORCE_HOTLINE } from '../components/shell/EmergencyBar';
 import { PrivacyBadge } from '../components/privacy/PrivacyNotice';
 import { StatusTimeline } from '../components/status/StatusTimeline';
 import { useSurvey } from '../state/survey';
+import { useQuickExit } from '../state/quickExit';
+import { LanguageSelector } from '../components/survey/LanguageSelector';
 
 const POLL_MS = 15_000;
 
@@ -16,8 +18,9 @@ type Load = { kind: 'idle' } | { kind: 'loading' } | { kind: 'found'; ticket: Sa
  * Mockup screen 6 · Help is on the way (#15). Anonymous: looked up by code, no login. Shows who is coming
  * (alias only), roughly when, and the timeline. Calls go through ComForce, never a personal number.
  */
-export function StatusScreen({ token, onToken, onBack, onAsk }: { token: string | null; onToken: (t: string) => void; onBack: () => void; onAsk: () => void }) {
+export function StatusScreen({ token, onToken, onBack, onNav }: { token: string | null; onToken: (t: string) => void; onBack: () => void; onNav: (tab: Tab) => void }) {
   const { t } = useSurvey();
+  const { shake, setShake } = useQuickExit();
   const [load, setLoad] = useState<Load>({ kind: token ? 'loading' : 'idle' });
   const [draft, setDraft] = useState('');
   const [copied, setCopied] = useState(false);
@@ -57,6 +60,7 @@ export function StatusScreen({ token, onToken, onBack, onAsk }: { token: string 
 
   const ticket = load.kind === 'found' ? load.ticket : null;
   const alias = ticket?.assigned_volunteer_alias ?? null;
+  const cancelled = ticket?.timeline.some((e) => e.label === 'Cancelled') ?? false;
   const showLookup = !token || load.kind === 'not-found' || load.kind === 'error';
 
   return (
@@ -104,7 +108,7 @@ export function StatusScreen({ token, onToken, onBack, onAsk }: { token: string 
                   {t(`category.${ticket.category}`)} · {t(`urgency.${ticket.urgency}`)}
                   {ticket.sample ? ` · ${t('sample')}` : ''}
                 </span>
-                <h2>{t(`status.head.${ticket.status}`, { name: alias ?? t('status.someone') })}</h2>
+                <h2>{cancelled ? t('status.cancelled') : t(`status.head.${ticket.status}`, { name: alias ?? t('status.someone') })}</h2>
                 {ticket.status !== 'resolved' && (
                   <div className="eta2">
                     <span className="live" />
@@ -166,17 +170,53 @@ export function StatusScreen({ token, onToken, onBack, onAsk }: { token: string 
             </div>
 
             <div className="ph-pad" style={{ marginTop: 16, display: 'grid', gap: 8 }}>
+              {ticket.status !== 'resolved' && ticket.sample && (
+                <button
+                  type="button"
+                  className="btn block"
+                  onClick={() => {
+                    if (cancelTicket(ticket.token)) void fetchTicket(ticket.token, true);
+                  }}
+                >
+                  {t('status.cancel')}
+                </button>
+              )}
               <a className="btn ghost block" href={COMFORCE_HOTLINE.tel}>
                 {t('status.wrong')}
               </a>
             </div>
           </>
         )}
+
+        {/* Settings from the mockup's "Me" frame (15) that work today. The only place to change language
+            or shake-to-exit after the first visit. */}
+        <section className="ph-sec" aria-labelledby="me-settings">
+          <div className="ph-h">
+            <h2 id="me-settings">{t('me.settings')}</h2>
+          </div>
+          <div className="ph-pad">
+            <div className="setlist">
+              <div>
+                <span>
+                  <b id="me-shake">{t('lesson.shake')}</b>
+                  <small>{t('lesson.shake.d')}</small>
+                </span>
+                <button type="button" className="switch" role="switch" aria-checked={shake} aria-labelledby="me-shake" onClick={() => void setShake(!shake)} />
+              </div>
+              <div>
+                <span>
+                  <b>{t('me.lang')}</b>
+                </span>
+                <LanguageSelector variant="seg" />
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
       <div className="view-foot">
         <EmergencyBar />
-        <TabBar onAsk={onAsk} />
+        <TabBar current="me" onNav={onNav} />
       </div>
     </div>
   );

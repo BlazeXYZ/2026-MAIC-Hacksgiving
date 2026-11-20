@@ -21,7 +21,7 @@ export function StatusTimeline({ status, events }: { status: TicketStatus; event
   // "assigned" is waiting on the trip; "in_progress" is the trip itself.
   const nowIndex = status === 'in_progress' ? current : current + 1;
   return (
-    <ol className="tl" aria-label="Progress">
+    <ol className="tl" aria-label={t('tl.label')}>
       {STAGES.map((stage, i) => {
         const state = status === 'resolved' || i < nowIndex ? 'done' : i === nowIndex ? 'now' : 'later';
         const at = events.find((e) => e.status === stage)?.at;

@@ -1,8 +1,11 @@
-import { Icon, LogoMark, type IconName } from '../components/Icon';
+import { Icon, LogoMark, Skyline, type IconName } from '../components/Icon';
 import { EmergencyBar } from '../components/shell/EmergencyBar';
 import { LanguageSelector } from '../components/survey/LanguageSelector';
-import { useSurvey, type Intent } from '../state/survey';
+import { useSurvey, type HubId, type Intent } from '../state/survey';
 import type { StringKey } from '../i18n/strings';
+
+/** Hubs pre-checked on the next screen, from this answer (mockup frame 2). */
+const HUBS_FOR: Record<Intent, HubId[]> = { need: ['food', 'rides'], give: ['food', 'parents'], look: ['food'] };
 
 const CHOICES: Array<{ id: Intent; icon: IconName; title: StringKey; sub: StringKey }> = [
   { id: 'need', icon: 'hand', title: 'welcome.need', sub: 'welcome.need.d' },
@@ -25,6 +28,7 @@ export function WelcomeScreen({ onContinue, onCheck }: { onContinue: () => void;
             <LogoMark />
           </span>
           <h1 className="voice">{t('welcome.title')}</h1>
+          <Skyline />
         </div>
         <div style={{ padding: '24px 24px 24px' }}>
           <p style={{ fontSize: 16, fontWeight: 700 }} id="welcome-q">
@@ -35,7 +39,7 @@ export function WelcomeScreen({ onContinue, onCheck }: { onContinue: () => void;
           </p>
           <div className="choice" role="group" aria-labelledby="welcome-q">
             {CHOICES.map((c) => (
-              <button key={c.id} type="button" aria-pressed={survey.intent === c.id} onClick={() => update({ intent: c.id })}>
+              <button key={c.id} type="button" aria-pressed={survey.intent === c.id} onClick={() => update({ intent: c.id, hubs: HUBS_FOR[c.id] })}>
                 <span className="sq">
                   <Icon name={c.icon} />
                 </span>

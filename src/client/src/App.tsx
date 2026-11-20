@@ -1,16 +1,20 @@
-import { useEffect, useState } from 'react';
-import { clearSampleTickets } from './api/intake';
+import { useState } from 'react';
+import DeliveryCover from './components/DeliveryCover';
+import { CrashScreen } from './components/shell/CrashScreen';
 import { IconSprite } from './components/Icon';
-import { DeskNav } from './components/shell/Frame';
+import { DeskNav, type Tab } from './components/shell/Frame';
 import { AreaScreen } from './screens/AreaScreen';
 import { AskScreen } from './screens/AskScreen';
+import { HomeScreen } from './screens/HomeScreen';
+import { LessonScreen } from './screens/LessonScreen';
+import { MapScreen, RequestsScreen } from './screens/HubScreens';
 import { StatusScreen } from './screens/StatusScreen';
 import { WelcomeScreen } from './screens/WelcomeScreen';
 import { QuickExitProvider, useQuickExit } from './state/quickExit';
-import { SurveyProvider } from './state/survey';
-import { useTripleTap } from './state/useTripleTap';
+import { SurveyProvider, useSurvey } from './state/survey';
+import { useFenceAlignment } from './state/useFenceAlignment';
 
-type Screen = 'welcome' | 'area' | 'ask' | 'status';
+type Screen = 'welcome' | 'area' | 'lesson' | Tab;
 
 export default function App() {
   return (
@@ -22,76 +26,76 @@ export default function App() {
 }
 
 function Root() {
-  const { exited, session, onExit } = useQuickExit();
+  const { exited, exit, restore } = useQuickExit();
 
-  useEffect(() => onExit(clearSampleTickets), [onExit]);
-
-  if (exited) return <DisguiseStandIn />;
-  // A new key after every exit throws away all survey answers and screen state below it (#10).
+  // Quick Exit (#8): the delivery catalog covers the app. The app stays mounted underneath (hidden, so it
+  // can't be seen, focused or read by a screen reader), and Return to Portal / three taps bring it back as it was.
   return (
-    <SurveyProvider key={session}>
-      <Shell />
-    </SurveyProvider>
-  );
-}
-
-/** Resident flow from the v9 mockup: Welcome → Area → Ask (chat) → Status. */
-function Shell() {
-  const [screen, setScreen] = useState<Screen>('welcome');
-  const [token, setToken] = useState<string | null>(null);
-
-  return (
-    <div className="app app-desk">
-      <DeskNav onLogo={() => setScreen('welcome')} />
-      {screen === 'welcome' && <WelcomeScreen onContinue={() => setScreen('area')} onCheck={() => setScreen('status')} />}
-      {screen === 'area' && <AreaScreen onBack={() => setScreen('welcome')} onContinue={() => setScreen('ask')} />}
-      {screen === 'ask' && (
-        <AskScreen
-          onBack={() => setScreen('area')}
-          onFollow={(code) => {
-            setToken(code);
-            setScreen('status');
-          }}
-        />
-      )}
-      {screen === 'status' && <StatusScreen token={token} onToken={setToken} onBack={() => setScreen(token ? 'ask' : 'welcome')} onAsk={() => setScreen('ask')} />}
-    </div>
+    <>
+      <div hidden={exited}>
+        <CrashScreen onExit={exit}>
+          <SurveyProvider>
+            <Shell start="welcome" />
+          </SurveyProvider>
+        </CrashScreen>
+      </div>
+      {exited && <DeliveryCover onReturn={restore} />}
+    </>
   );
 }
 
 /**
- * Stand-in for #9's disguise, matching the mockup's decoy screen. It exists so the #10 return gesture
- * can be used: three deliberate taps on the blue bar bring the app back.
+ * One app, two halves of the team's work:
+ * first visit (Welcome → Area → Quick Exit lesson) then the tabs: Home (hubs + need cards), Map (Leaflet), Ask (chat intake),
+ * Requests (volunteer tickets), Me (request status). Phone layout first; the mockup's desktop bar from 900px.
  */
-function DisguiseStandIn() {
-  const { restore } = useQuickExit();
-  const tripleTap = useTripleTap(restore);
+function Shell({ start }: { start: Screen }) {
+  const { survey } = useSurvey();
+  useFenceAlignment();
+  const [history, setHistory] = useState<Screen[]>([start]);
+  const [token, setToken] = useState<string | null>(null);
+  const screen = history[history.length - 1];
 
-  useEffect(() => {
-    const previous = document.title;
-    document.title = 'MCTS Route 30 Schedule';
-    return () => {
-      document.title = previous;
-    };
-  }, []);
+  function go(next: Screen) {
+    setHistory((h) => (h[h.length - 1] === next ? h : [...h, next]));
+  }
+
+  function back(fallback: Screen = 'home') {
+    setHistory((h) => (h.length > 1 ? h.slice(0, -1) : [fallback]));
+  }
+
+  // Tabs reset the back stack so Back from a tab goes Home, not through every tab visited.
+  function nav(tab: Tab) {
+    setHistory((h) => (h[h.length - 1] === tab ? h : tab === 'home' ? ['home'] : ['home', tab]));
+  }
+
+  function finishSetup() {
+    const next: Record<typeof survey.intent, Tab> = { need: 'ask', give: 'requests', look: 'home' };
+    setHistory(next[survey.intent] === 'home' ? ['home'] : ['home', next[survey.intent]]);
+  }
+
+  const current: Tab | null = screen === 'welcome' || screen === 'area' || screen === 'lesson' ? null : screen;
 
   return (
-    <div className="decoy">
-      <header {...tripleTap}>
-        <h3>Transit Schedule</h3>
-        <p>Route 30 · Sherman–Wisconsin · Eastbound</p>
-      </header>
-      <div className="next">
-        Next bus at N Broadway &amp; E State St<b>6 min</b>
-      </div>
-      <ol>
-        <li><span>N Broadway &amp; E State St</span><span>6:18 PM</span></li>
-        <li><span>N Water St &amp; E Kilbourn Ave</span><span>6:21 PM</span></li>
-        <li><span>E Wisconsin Ave &amp; N Jackson St</span><span>6:24 PM</span></li>
-        <li><span>N Prospect Ave &amp; E Ogden Ave</span><span>6:28 PM</span></li>
-        <li><span>N Farwell Ave &amp; E Brady St</span><span>6:31 PM</span></li>
-      </ol>
-      <p className="fine">Times are estimates. Arrivals refresh every 30 seconds.</p>
+    <div className="app app-desk">
+      <DeskNav current={current} onNav={nav} />
+      {screen === 'welcome' && <WelcomeScreen onContinue={() => go('area')} onCheck={() => go('me')} />}
+      {screen === 'area' && <AreaScreen onBack={() => back('welcome')} onContinue={() => go('lesson')} />}
+      {screen === 'lesson' && <LessonScreen onBack={() => back('area')} onFinish={finishSetup} />}
+      {screen === 'home' && <HomeScreen onNav={nav} onAsk={() => go('ask')} />}
+      {screen === 'map' && <MapScreen onNav={nav} onBack={() => back()} />}
+      {screen === 'requests' && <RequestsScreen onNav={nav} />}
+      {screen === 'ask' && (
+        <AskScreen
+          onBack={() => back()}
+          onMap={() => go('map')}
+          onFollow={(code) => {
+            setToken(code);
+            nav('me');
+          }}
+        />
+      )}
+      {screen === 'me' && <StatusScreen token={token} onToken={setToken} onBack={() => back()} onNav={nav} />}
     </div>
   );
 }

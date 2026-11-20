@@ -7,17 +7,18 @@ import { EmergencyBar } from '../components/shell/EmergencyBar';
 import { ChatInput } from '../components/survey/ChatInput';
 import { TriageReviewCard, type FixTarget } from '../components/survey/TriageReviewCard';
 import { PrivacyBadge } from '../components/privacy/PrivacyNotice';
-import { NEEDS, toSurveyRequest, useSurvey, type Need } from '../state/survey';
+import HelpSurvey from '../components/HelpSurvey';
+import { toSurveyRequest, useSurvey } from '../state/survey';
 
 /** need: pick a need · text: say more (or skip) · review: check what we understood · sent: done */
 type Phase = 'need' | 'text' | 'review' | 'sent';
 
 /**
- * Mockup screen 5 · Ask for help, as a chat. The resident picks a need (the #2 slot), can add words in
+ * Mockup screen 5 · Ask for help, as a chat. The resident picks a need (#2 cards), can add words in
  * the input bar (#5), then checks the AI's reading in a reply bubble (#6) before anything is sent.
  * Privacy (#16) is on by default, and the emergency line (#7) stays pinned above the input bar.
  */
-export function AskScreen({ onBack, onFollow }: { onBack: () => void; onFollow: (token: string) => void }) {
+export function AskScreen({ onBack, onFollow, onMap }: { onBack: () => void; onFollow: (token: string) => void; onMap: () => void }) {
   const { survey, update, t } = useSurvey();
   const [phase, setPhase] = useState<Phase>(survey.need ? 'text' : 'need');
   const [said, setSaid] = useState<string | null>(null);
@@ -29,6 +30,15 @@ export function AskScreen({ onBack, onFollow }: { onBack: () => void; onFollow: 
   const [inputKey, setInputKey] = useState(0);
   const [inputStartsEmpty, setInputStartsEmpty] = useState(false);
   const body = useRef<HTMLDivElement>(null);
+  // Two quick taps on "Looks right" / "Have a neighbor bring it" land before React re-renders the disabled
+  // state, so guard with a ref to never send the same request twice.
+  const submitting = useRef(false);
+  // Once a request is sent, leaving this screen clears it, so the next "+" starts a fresh request
+  // instead of reopening the old need and text. Language, area and hubs are kept.
+  const sentRef = useRef(false);
+  useEffect(() => () => {
+    if (sentRef.current) update({ need: null, freeText: '' });
+  }, [update]);
 
   // Ask the triage layer again whenever the inputs it reads change during review.
   useEffect(() => {
@@ -50,8 +60,7 @@ export function AskScreen({ onBack, onFollow }: { onBack: () => void; onFollow: 
     if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
   }, [phase, triage, fixing, said, accepted]);
 
-  function pickNeed(n: Need) {
-    update({ need: n });
+  function pickNeed() {
     if (phase === 'need') setPhase('text');
   }
 
@@ -77,14 +86,17 @@ export function AskScreen({ onBack, onFollow }: { onBack: () => void; onFollow: 
   }
 
   async function confirm() {
-    if (!triage) return;
+    if (!triage || submitting.current) return;
+    submitting.current = true;
     setSending(true);
     setError(null);
     try {
       setAccepted(await submitSurvey(toSurveyRequest(survey), triage));
+      sentRef.current = true;
       setPhase('sent');
     } catch {
       setError(t('review.failed'));
+      submitting.current = false;
     } finally {
       setSending(false);
     }
@@ -105,25 +117,14 @@ export function AskScreen({ onBack, onFollow }: { onBack: () => void; onFollow: 
         </div>
 
         <div className="chat" aria-live="polite">
-          <div className="bubble hub">
-            <span className="meta">{t('chat.ask')}</span>
-            {/* Stand-in for #2's need cards: same values, chip styling. */}
-            <div className="chips" role="radiogroup" aria-label={t('need.title')}>
-              {NEEDS.map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className="chip"
-                  role="radio"
-                  aria-checked={survey.need === n}
-                  disabled={phase === 'review' || phase === 'sent'}
-                  onClick={() => pickNeed(n)}
-                >
-                  {t(`need.${n}`)}
-                </button>
-              ))}
+          {/* The need tiles only until one is picked; after that the chat starts from the person's choice,
+              like the mockup's starts from their message. The need can still be changed from the review tags. */}
+          {phase === 'need' && (
+            <div className="bubble hub">
+              <span className="meta">{t('chat.ask')}</span>
+              <HelpSurvey compact onPick={pickNeed} />
             </div>
-          </div>
+          )}
 
           {survey.need && phase !== 'need' && <div className="bubble me">{t(`need.${survey.need}`)}</div>}
 
@@ -154,6 +155,30 @@ export function AskScreen({ onBack, onFollow }: { onBack: () => void; onFollow: 
               onConfirm={() => void confirm()}
               onEdit={edit}
             />
+          )}
+
+          {phase === 'review' && triage && !fixing && (
+            <div className="bubble hub">
+              <span className="meta">{t('close.title')}</span>
+              <div className="match">
+                <button type="button" onClick={onMap}>
+                  <Icon name="pin" />
+                  <span>
+                    <b>{t('close.map')}</b>
+                    <small>{t('close.map.d')}</small>
+                  </span>
+                  <Icon name="chev" />
+                </button>
+                <button type="button" onClick={() => void confirm()} disabled={sending}>
+                  <Icon name="hand" />
+                  <span>
+                    <b>{t('close.neighbor')}</b>
+                    <small>{t('close.neighbor.d')}</small>
+                  </span>
+                  <Icon name="chev" />
+                </button>
+              </div>
+            </div>
           )}
 
           {phase === 'sent' && accepted && (

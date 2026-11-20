@@ -29,9 +29,17 @@ export function useTripleTap(onTriple: () => void, opts: TripleTapOptions = {}) 
     clearTimeout(timer.current);
   }, []);
 
-  const onPointerDown = useCallback((e: PointerEvent) => {
-    press.current = { x: e.clientX, y: e.clientY, at: e.timeStamp };
-  }, []);
+  const onPointerDown = useCallback(
+    (e: PointerEvent) => {
+      // Taps on real controls inside the bar (e.g. the cover's Delivery/Pickup toggle) never count.
+      if ((e.target as Element).closest?.('button, a, input, select, textarea, [role="button"]')) {
+        reset();
+        return;
+      }
+      press.current = { x: e.clientX, y: e.clientY, at: e.timeStamp };
+    },
+    [reset],
+  );
 
   const onPointerMove = useCallback(
     (e: PointerEvent) => {

@@ -47,11 +47,11 @@ export function TriageReviewCard({ triage, settled, sending, error, fixing, onFi
       ) : (
         <>
           <div className="heard">
-            <span className={`tag ${URGENCY_CLASS[triage.urgency]} fixed`}>{t(`urgency.${triage.urgency}`)}</span>
             <button type="button" className="tag ai" disabled={settled} onClick={() => onFix(fixing === 'need' ? null : 'need')} aria-expanded={fixing === 'need'}>
               {t(`category.${triage.category}`)}
               {!settled && <Icon name="x" />}
             </button>
+            <span className={`tag ${URGENCY_CLASS[triage.urgency]} fixed`}>{t(`urgency.${triage.urgency}`)}</span>
             {district && (
               <button type="button" className="tag ai" disabled={settled} onClick={() => onFix(fixing === 'area' ? null : 'area')} aria-expanded={fixing === 'area'}>
                 {district.name}

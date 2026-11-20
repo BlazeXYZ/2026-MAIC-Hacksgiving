@@ -1,0 +1,29 @@
+/* Leaflet canvas and pins for the Map tab. Layout comes from the v9 classes in styles/tokens.css. */
+.community-map-canvas.leaflet-container {
+  isolation: isolate;
+  height: clamp(300px, 55vw, 485px);
+  background: var(--sunk);
+  font-family: inherit;
+}
+
+.community-map-canvas .leaflet-control-zoom a {
+  width: 40px;
+  height: 40px;
+  line-height: 40px;
+  color: var(--green-ink);
+}
+
+/* Pins as drawn in the PROD mockup's maps. */
+.map-pin { overflow: visible; }
+.map-pin .pin { display: grid; place-items: center; width: 22px; height: 22px; border: 2px solid #fff; border-radius: 50%; box-shadow: 0 1px 3px rgb(22 32 27 / 35%); }
+.map-pin .pin--square { width: 24px; height: 24px; border-radius: 5px; }
+.map-pin .pin .ic { width: 14px; height: 14px; color: #fff; stroke-width: 2.3; }
+.map-pin--pantry .pin { background: #C98A12; }
+.map-pin--drop .pin { background: var(--green); }
+.map-pin--market .pin { background: var(--ink); }
+.map-pin[aria-pressed='true'] .pin { box-shadow: 0 0 0 3px var(--hivis), 0 1px 3px rgb(22 32 27 / 35%); }
+.map-pin .pinlbl { position: absolute; left: 30px; top: 50%; transform: translateY(-50%); white-space: nowrap; font: 700 12.5px/1 var(--f); color: #17211C; text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; pointer-events: none; }
+
+/* Mute the OpenStreetMap tiles toward the PROD mockup's pale basemap so pins and labels carry the color. */
+.community-map-canvas .leaflet-tile-pane { filter: saturate(.35) brightness(1.06) contrast(.92); }
+.community-map-canvas.leaflet-container { background: #EDEFE8; }

@@ -1,69 +1,89 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 /**
- * Quick Exit state and the wipe that goes with it (#10).
+ * Quick Exit (#8, #10): the Esc shortcut and the state that shows the delivery-menu cover.
  *
- * The trigger button and Esc key (#8) call `exit()`. The disguise screen (#9) renders while
- * `exited` is true and puts `useTripleTap(restore)` on its header bar.
+ * The red Exit buttons and Esc call `exit()`. While `exited` is true the app stays mounted but hidden
+ * behind `DeliveryCover`, so nothing the person typed or chose is lost. `restore()` (the cover's
+ * "Return to Portal" button or three taps on its header bar) brings them back to exactly where they were.
  */
 interface QuickExitValue {
   exited: boolean;
-  /** Bumps on every exit. Use it as a `key` so all form state below it is thrown away. */
-  session: number;
   exit: () => void;
   restore: () => void;
-  /** Lets modules with their own memory (for example the API mock store) clear themselves on exit. */
-  onExit: (fn: () => void) => () => void;
+  /** Shake the phone to exit. */
+  shake: boolean;
+  setShake: (on: boolean) => Promise<void>;
 }
 
 const QuickExitContext = createContext<QuickExitValue | null>(null);
 
-/** Removes everything this app could have left in the browser. Runs synchronously so the swap is instant. */
-export function flushLocalState(): void {
-  for (const store of [globalThis.localStorage, globalThis.sessionStorage]) {
-    try {
-      store?.clear();
-    } catch {
-      // Storage can be blocked (private mode, sandboxed frames). Nothing to clear then.
-    }
-  }
-  try {
-    // Replace the current entry so Back does not lead into the crisis app,
-    // and drop any path or query that could hint at what was on screen.
-    history.replaceState(null, '', '/');
-  } catch {
-    // Ignore: some embedded webviews block history changes.
-  }
-}
-
 export function QuickExitProvider({ children }: { children: ReactNode }) {
   const [exited, setExited] = useState(false);
-  const [session, setSession] = useState(0);
-  const listeners = useRef(new Set<() => void>());
 
   const exit = useCallback(() => {
-    flushLocalState();
-    for (const fn of listeners.current) {
-      try {
-        fn();
-      } catch {
-        // A failing listener must never stop the exit.
-      }
+    // An open modal <dialog> (e.g. the privacy sheet) makes everything outside it inert, which would freeze the
+    // cover and its way back. Close them first; the sheet is transient UI, not something the person typed.
+    document.querySelectorAll('dialog[open]').forEach((d) => (d as HTMLDialogElement).close());
+    try {
+      // Replace the current history entry so Back doesn't flip from the cover to the app.
+      history.replaceState(null, '', '/');
+    } catch {
+      // Some embedded webviews block history changes.
     }
-    setSession((n) => n + 1);
     setExited(true);
   }, []);
 
   const restore = useCallback(() => setExited(false), []);
 
-  const onExit = useCallback((fn: () => void) => {
-    listeners.current.add(fn);
-    return () => {
-      listeners.current.delete(fn);
-    };
+  // Esc exits from anywhere (#8). Capture phase, so it wins over dialogs and inputs that handle Esc themselves.
+  useEffect(() => {
+    if (exited) return;
+    function onKey(event: KeyboardEvent) {
+      if (event.key === 'Escape' && !event.repeat) {
+        event.preventDefault();
+        event.stopPropagation();
+        exit();
+      }
+    }
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [exited, exit]);
+
+  // Optional shake-to-exit (mockup frame 3). Off by default; iOS asks for motion permission when it's turned on.
+  const [shake, setShakeState] = useState(false);
+  const setShake = useCallback(async (on: boolean) => {
+    if (on) {
+      const motion = globalThis.DeviceMotionEvent as unknown as { requestPermission?: () => Promise<string> } | undefined;
+      if (motion?.requestPermission) {
+        try {
+          if ((await motion.requestPermission()) !== 'granted') return;
+        } catch {
+          return;
+        }
+      }
+    }
+    setShakeState(on);
   }, []);
 
-  const value = useMemo(() => ({ exited, session, exit, restore, onExit }), [exited, session, exit, restore, onExit]);
+  useEffect(() => {
+    if (!shake || exited) return;
+    let last = 0;
+    function onMotion(e: DeviceMotionEvent) {
+      const a = e.accelerationIncludingGravity;
+      if (!a || a.x == null || a.y == null || a.z == null) return;
+      const force = Math.hypot(a.x, a.y, a.z);
+      // Roughly 2.5 g: a deliberate shake, not walking or setting the phone down.
+      if (force > 25 && e.timeStamp - last > 1000) {
+        last = e.timeStamp;
+        exit();
+      }
+    }
+    window.addEventListener('devicemotion', onMotion);
+    return () => window.removeEventListener('devicemotion', onMotion);
+  }, [shake, exited, exit]);
+
+  const value = useMemo(() => ({ exited, exit, restore, shake, setShake }), [exited, exit, restore, shake, setShake]);
   return <QuickExitContext.Provider value={value}>{children}</QuickExitContext.Provider>;
 }
 

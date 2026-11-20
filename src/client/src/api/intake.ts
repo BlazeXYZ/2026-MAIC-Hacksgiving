@@ -23,7 +23,16 @@ const TRIAGE_PREVIEW_PATH = '/api/v1/intake/triage';
 
 export type Sampled<T> = T & { sample?: boolean };
 
+/**
+ * POST endpoints that answered 404 this session. A 404 there can only mean the route doesn't exist on this
+ * server (e.g. PR #50 not merged yet), so later calls skip the network and go straight to the sample fallback
+ * instead of logging the same error every time.
+ */
+const missingRoutes = new Set<string>();
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const post = init?.method === 'POST';
+  if (post && missingRoutes.has(path)) throw new ApiError(404);
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
@@ -32,7 +41,10 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
       signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json', ...init?.headers },
     });
-    if (!res.ok) throw new ApiError(res.status);
+    if (!res.ok) {
+      if (post && res.status === 404) missingRoutes.add(path);
+      throw new ApiError(res.status);
+    }
     return (await res.json()) as T;
   } finally {
     clearTimeout(timer);
@@ -62,7 +74,7 @@ const NEED_CATEGORY: Record<string, ServiceCategory> = {
   other: 'other',
 };
 
-/** Whole-word match that also works for accented words (plain `\b` is ASCII-only). English + Spanish. */
+/** Whole-word match that also works for accented words (plain `\b` is ASCII-only). English, Spanish and Hmong. */
 function words(...list: string[]): RegExp {
   return new RegExp(`(?<!\\p{L})(${list.join('|')})(?!\\p{L})`, 'iu');
 }
@@ -70,15 +82,16 @@ function words(...list: string[]): RegExp {
 const URGENT_WORDS = words(
   'tonight', 'now', 'right away', 'emergency', 'unsafe', 'scared', 'hurt', 'danger', 'no heat', 'freezing', 'kids?', 'baby',
   'esta noche', 'ahora', 'urgente', 'emergencia', 'miedo', 'peligro', 'niños', 'hij[oa]s', 'bebé',
+  'hmo no', 'tam sim no', 'ceev', 'ntshai', 'txaus ntshai', 'menyuam', 'mob',
 );
-const TODAY_WORDS = words('today', 'this evening', 'soon', 'hungry', 'hoy', 'esta tarde', 'pronto', 'hambre');
+const TODAY_WORDS = words('today', 'this evening', 'soon', 'hungry', 'hoy', 'esta tarde', 'pronto', 'hambre', 'hnub no', 'tshaib plab');
 
 const KEYWORD_CATEGORY: Array<[RegExp, ServiceCategory]> = [
-  [words('food', 'hungry', 'groceries', 'formula', 'meal', 'eat', 'comida', 'hambre', 'despensa', 'leche', 'fórmula'), 'food'],
-  [words('ride', 'car', 'bus', 'drive', 'appointment', 'clinic', 'transporte', 'carro', 'coche', 'autobús', 'cita', 'clínica'), 'ride'],
-  [words('safe', 'unsafe', 'scared', 'abuse', 'leave', 'hide', 'shelter', 'seguro', 'segura', 'miedo', 'abuso', 'refugio'), 'shelter'],
-  [words('cold', 'warm', 'heat', 'coat', 'freezing', 'frío', 'calefacción', 'abrigo'), 'warmth'],
-  [words('talk', 'lonely', 'grief', 'sad', 'hablar', 'triste', 'duelo'), 'support'],
+  [words('food', 'hungry', 'groceries', 'formula', 'meal', 'eat', 'comida', 'hambre', 'despensa', 'leche', 'fórmula', 'zaub mov', 'mov', 'khoom noj', 'tshaib plab', 'mis'), 'food'],
+  [words('ride', 'car', 'bus', 'drive', 'appointment', 'clinic', 'transporte', 'carro', 'coche', 'autobús', 'cita', 'clínica', 'tsheb', 'caij'), 'ride'],
+  [words('safe', 'unsafe', 'scared', 'abuse', 'leave', 'hide', 'shelter', 'seguro', 'segura', 'miedo', 'abuso', 'refugio', 'nyab xeeb', 'ntshai', 'tsim txom', 'khiav'), 'shelter'],
+  [words('cold', 'warm', 'heat', 'coat', 'freezing', 'frío', 'calefacción', 'abrigo', 'txias', 'sov', 'tsho'), 'warmth'],
+  [words('talk', 'lonely', 'grief', 'sad', 'hablar', 'triste', 'duelo', 'tham', 'nyuaj siab', 'kho siab'), 'support'],
 ];
 
 /**
@@ -86,7 +99,7 @@ const KEYWORD_CATEGORY: Array<[RegExp, ServiceCategory]> = [
  * offline. The real triage (#33–#37) replaces this through `previewTriage`.
  */
 export function localTriage(req: SurveyRequest): TriageResult {
-  const lang: Language = req.language === 'es' ? 'es' : 'en';
+  const lang: Language = req.language === 'es' || req.language === 'hmn' ? req.language : 'en';
   const text = req.free_text?.trim() ?? '';
   const preset = req.selected_options[0];
   let category: ServiceCategory = preset ? NEED_CATEGORY[preset] ?? 'other' : 'other';
@@ -116,14 +129,10 @@ export async function previewTriage(req: SurveyRequest): Promise<Sampled<TriageR
 interface MockTicket {
   ticket: PublicTicket;
   createdAt: number;
+  cancelled?: boolean;
 }
 
 const mockTickets = new Map<string, MockTicket>();
-
-/** Called by Quick Exit so no request text survives in memory. */
-export function clearSampleTickets(): void {
-  mockTickets.clear();
-}
 
 /** Same shape as the server's tokens: `cf-` plus 6 characters from an alphabet without look-alikes. */
 function newToken(): string {
@@ -176,6 +185,9 @@ const SAMPLE_STEPS: Array<{ after: number; status: TicketStatus; label: string }
 ];
 
 function advanceSample(m: MockTicket): PublicTicket {
+  if (m.cancelled) {
+    return { ...m.ticket, status: 'resolved', timeline: [...m.ticket.timeline, { at: new Date().toISOString(), status: 'resolved', label: 'Cancelled' }] };
+  }
   const elapsed = Date.now() - m.createdAt;
   const timeline = [...m.ticket.timeline];
   let status = m.ticket.status;
@@ -189,6 +201,17 @@ function advanceSample(m: MockTicket): PublicTicket {
     }
   }
   return { ...m.ticket, status, assigned_volunteer_alias: alias, timeline };
+}
+
+/**
+ * "I don't need this anymore". PR #50 has no cancel endpoint yet, so this only works for sample tickets;
+ * it returns false for real ones so the screen can send people to ComForce instead.
+ */
+export function cancelTicket(token: string): boolean {
+  const m = mockTickets.get(normalizeToken(token));
+  if (!m) return false;
+  m.cancelled = true;
+  return true;
 }
 
 export type TicketLookup = { kind: 'found'; ticket: Sampled<PublicTicket> } | { kind: 'not-found' };
