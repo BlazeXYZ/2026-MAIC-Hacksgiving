@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import DeliveryCover from './components/DeliveryCover';
+import HelpSurvey from './components/HelpSurvey';
 
 interface Community {
   id: string;
@@ -95,6 +96,11 @@ export default function App() {
 
       {/* Main Container */}
       <main style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem' }}>
+        <details className="help-survey-entry">
+          <summary>Request help</summary>
+          <HelpSurvey />
+        </details>
+
         {/* Community Tabs */}
         <section style={{ marginBottom: '1.5rem' }}>
           <h2 style={{ fontSize: '1rem', color: '#475569', marginBottom: '0.75rem' }}>Active Initiatives & Communities</h2>

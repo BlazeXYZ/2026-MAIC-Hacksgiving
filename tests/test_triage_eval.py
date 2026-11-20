@@ -11,7 +11,6 @@ import sys
 from pathlib import Path
 
 import pytest
-from pydantic import BaseModel, ConfigDict
 
 # Ensure repository root is on sys.path
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -19,125 +18,11 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 
-# ---------------------------------------------------------------------------
-# TEMPORARY: until #33/#34/#35 merge — must mirror src/server/ai/* exactly.
-# When the real modules land on main these imports take precedence and the
-# inline fallbacks below are never used.
-# ---------------------------------------------------------------------------
-try:
-    from src.server.ai.mock import MockTriageEngine
-    from src.server.ai.parser import parse_triage_output
-    from src.server.ai.schemas import (
-        TriageCategory,
-        TriageOutputSchema,
-        UrgencyTier,
-    )
-
-    _USING_REAL_CONTRACT = True
-except ModuleNotFoundError:
-
-    _USING_REAL_CONTRACT = False
-    from enum import Enum
-
-    class TriageCategory(str, Enum):
-        food = "food"
-        ride = "ride"
-        shelter = "shelter"
-        warmth = "warmth"
-        support = "support"
-        other = "other"
-
-    class UrgencyTier(str, Enum):
-        urgent = "urgent"
-        today = "today"
-        this_week = "this_week"
-
-    class TriageOutputSchema(BaseModel):
-        model_config = ConfigDict(use_enum_values=True)
-
-        category: TriageCategory
-        urgency: UrgencyTier
-        escalate: bool = False
-        clarifying_question: str = ""
-
-    class MockTriageEngine:
-        """Minimal keyword heuristic replicating the #35 mock contract."""
-
-        async def triage(self, text: str) -> TriageOutputSchema:
-            t = text.lower()
-            # Prompt-injection attempt: refuse to follow embedded
-            # instructions; fall back to clarification.
-            if "ignore all previous instructions" in t:
-                return TriageOutputSchema(
-                    category=TriageCategory.other,
-                    urgency=UrgencyTier.today,
-                    escalate=False,
-                    clarifying_question=(
-                        "I want to make sure I help with your actual request."
-                        " What do you need assistance with?"
-                    ),
-                )
-            if any(w in t for w in ("threatening", "unsafe", "scared")):
-                return TriageOutputSchema(
-                    category=TriageCategory.support,
-                    urgency=UrgencyTier.urgent,
-                    escalate=True,
-                )
-            if any(
-                w in t
-                for w in ("shelter", "evicted", "place to stay", "sleeping")
-            ):
-                return TriageOutputSchema(
-                    category=TriageCategory.shelter,
-                    urgency=UrgencyTier.urgent,
-                )
-            if "ride" in t or "bus fare" in t:
-                urgency = (
-                    UrgencyTier.today if "today" in t else UrgencyTier.this_week
-                )
-                return TriageOutputSchema(
-                    category=TriageCategory.ride,
-                    urgency=urgency,
-                )
-            if any(w in t for w in ("pantry", "grocer", "meal", "dinner")):
-                urgency = (
-                    UrgencyTier.this_week
-                    if "this week" in t
-                    else UrgencyTier.today
-                )
-                return TriageOutputSchema(
-                    category=TriageCategory.food,
-                    urgency=urgency,
-                )
-            if "electricity" in t or "shut off" in t:
-                return TriageOutputSchema(
-                    category=TriageCategory.food,
-                    urgency=UrgencyTier.today,
-                )
-            if any(w in t for w in ("heat", "freez", "cold", "coat")):
-                urgency = (
-                    UrgencyTier.urgent
-                    if "no heat" in t or "freez" in t
-                    else UrgencyTier.this_week
-                )
-                return TriageOutputSchema(
-                    category=TriageCategory.warmth,
-                    urgency=urgency,
-                )
-            # Greetings / unparseable input: ask for clarification.
-            return TriageOutputSchema(
-                category=TriageCategory.other,
-                urgency=UrgencyTier.today,
-                escalate=False,
-                clarifying_question=(
-                    "Can you tell me more about what you need help with?"
-                ),
-            )
-
-    def parse_triage_output(raw: str) -> TriageOutputSchema:
-        """Minimal parser replicating the #34 parser contract."""
-        return TriageOutputSchema.model_validate_json(raw)
-
+from src.server.ai.mock import MockTriageEngine
+from src.server.ai.parser import parse_triage_output
+from src.server.ai.schemas import (
+    TriageOutputSchema,
+)
 
 # ---------------------------------------------------------------------------
 # Evaluation scenario table — 15 synthetic resident prompts.
