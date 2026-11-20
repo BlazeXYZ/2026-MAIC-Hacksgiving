@@ -12,6 +12,11 @@ try:
 except ModuleNotFoundError:
     from core.config import settings
 
+try:
+    from src.server.ai.hotspots import router as coordinator_hotspots_router
+except ModuleNotFoundError:
+    from ai.hotspots import router as coordinator_hotspots_router
+
 app = FastAPI(
     title=settings.APP_NAME,
     description="FastAPI backend supporting web and Capacitor mobile clients for ComforceMKE initiatives.",
@@ -26,6 +31,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Coordinator-only hotspot density endpoints (key-gated, see #41)
+app.include_router(coordinator_hotspots_router)
 
 class HealthResponse(BaseModel):
     status: str
