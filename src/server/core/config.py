@@ -46,6 +46,7 @@ class Settings:
         self._demo_mode_override = None
 
     # API Keys
+    COORDINATOR_API_KEY: str | None = os.getenv("COORDINATOR_API_KEY")
     GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")
     OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")
     GOOGLE_PLACES_API_KEY: str | None = os.getenv("GOOGLE_PLACES_API_KEY")

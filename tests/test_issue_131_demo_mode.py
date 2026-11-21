@@ -18,6 +18,8 @@ from src.server.db import init_db
 from src.server.intake import store
 from src.server.main import app
 
+SYNTHETIC_PROD_KEY = "synth-coord-sec-555"
+
 
 def test_production_mode_does_not_seed_demo_tickets_and_has_no_active_alert() -> None:
     """In production mode with DEMO_MODE=False, startup leaves queue clean and alerts inactive."""
@@ -27,12 +29,13 @@ def test_production_mode_does_not_seed_demo_tickets_and_has_no_active_alert() ->
     with (
         patch.object(settings, "APP_ENV", "production"),
         patch.object(settings, "DEMO_MODE", False),
+        patch.object(settings, "COORDINATOR_API_KEY", SYNTHETIC_PROD_KEY),
         TestClient(app) as client,
     ):
         # 1. No demo tickets in queue
         resp = client.get(
             "/api/v1/coordinator/queue",
-            headers={"X-Coordinator-Key": COORDINATOR_API_KEY},
+            headers={"X-Coordinator-Key": SYNTHETIC_PROD_KEY},
         )
         assert resp.status_code == 200
         data = resp.json()
@@ -82,6 +85,7 @@ def test_production_with_explicit_demo_mode_override() -> None:
     with (
         patch.object(settings, "APP_ENV", "production"),
         patch.object(settings, "DEMO_MODE", True),
+        patch.object(settings, "COORDINATOR_API_KEY", SYNTHETIC_PROD_KEY),
         TestClient(app) as client,
     ):
         alert_resp = client.get("/api/alerts/priority")
@@ -90,6 +94,6 @@ def test_production_with_explicit_demo_mode_override() -> None:
 
         resp = client.get(
             "/api/v1/coordinator/queue",
-            headers={"X-Coordinator-Key": COORDINATOR_API_KEY},
+            headers={"X-Coordinator-Key": SYNTHETIC_PROD_KEY},
         )
         assert len(resp.json()["tickets"]) >= 10

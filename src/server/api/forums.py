@@ -16,7 +16,10 @@ from typing import Literal, NoReturn
 from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
-from src.server.ai.hotspots import COORDINATOR_API_KEY, require_coordinator
+from src.server.ai.hotspots import (
+    get_coordinator_api_key,
+    require_coordinator,
+)
 from src.server.forums import store
 from src.server.forums.rules import HUB_IDS
 
@@ -148,7 +151,8 @@ def _fail(err: store.ForumError) -> NoReturn:
 
 
 def _is_coordinator(key: str | None) -> bool:
-    return key is not None and secrets.compare_digest(key, COORDINATOR_API_KEY)
+    active_key = get_coordinator_api_key()
+    return active_key is not None and key is not None and secrets.compare_digest(key, active_key)
 
 
 def _reply_out(reply: store.Reply) -> ReplyOut:
