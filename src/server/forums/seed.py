@@ -3,6 +3,9 @@
 Every name here is a pseudonym and every place is a public corner or a
 listed service. The missing-persons threads follow the same sample case as
 the alert banner and the Search grid (sector C2 holds the lead).
+
+`SEED_CASES` holds the one synthetic missing-person case. The store opens a
+pinned lead thread for each case when it loads.
 """
 
 from __future__ import annotations
@@ -11,6 +14,15 @@ from typing import Literal, TypedDict
 
 Role = Literal["neighbor", "volunteer", "coordinator", "organization"]
 Flair = Literal["Alert", "Question", "Offer", "Verified", "Event"]
+CaseStatus = Literal["active", "resolved"]
+
+
+class SeedCase(TypedDict):
+    id: str
+    display_name: str
+    last_known_point: str
+    status: CaseStatus
+    minutes_ago: int
 
 
 class SeedReply(TypedDict):
@@ -339,4 +351,17 @@ SEED_THREADS: tuple[SeedThread, ...] = (
         300,
         helpful=11,
     ),
+)
+
+
+#: Same sample case as the alert banner and the Search grid. Display name only,
+#: and the last-known point is a public intersection, never a home.
+SEED_CASES: tuple[SeedCase, ...] = (
+    {
+        "id": "case-jordan",
+        "display_name": "Jordan, 19",
+        "last_known_point": "27th & W Wisconsin Ave",
+        "status": "active",
+        "minutes_ago": 45,
+    },
 )

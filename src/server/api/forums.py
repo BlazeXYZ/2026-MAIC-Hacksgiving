@@ -5,6 +5,11 @@ or SSN, or one the abuse classifier flags, is held: it stays off the public
 list until a coordinator publishes it (with private details scrubbed) or
 removes it. Routes under `/admin` sit behind `X-Coordinator-Key`. Posts sent
 with a valid key are labeled as ComForce staff and skip the hold.
+
+Missing-person cases: each active case has one pinned lead thread in the
+Missing Persons hub. Every neighbor reply to it is a tip and is held, whatever
+the usual check says. A coordinator publishes it as `Verified` (scrubbed),
+keeps it private (it then only shows on `/admin/private-tips`), or removes it.
 """
 
 from __future__ import annotations
@@ -41,6 +46,10 @@ class ReplyOut(BaseModel):
     created_at: datetime
     parent_id: str | None
     helpful: int
+    flair: str | None = None
+    sector: str | None = Field(
+        default=None, description="Search grid sector a lead tip names, like C2."
+    )
 
 
 class ThreadSummary(BaseModel):
@@ -59,6 +68,12 @@ class ThreadSummary(BaseModel):
     )
     helpful: int
     reply_count: int
+    case_id: str | None = Field(
+        default=None, description="Set on a case's lead thread. Replies are held."
+    )
+    locked: bool = Field(
+        default=False, description="A resolved case's lead thread takes no replies."
+    )
 
 
 class ThreadDetail(ThreadSummary):
@@ -103,6 +118,11 @@ class ReplyCreate(BaseModel):
     body: str = Field(min_length=1, max_length=1000)
     parent_id: str | None = Field(default=None, max_length=40)
     handle: str | None = Field(default=None, max_length=40)
+    sector: str | None = Field(
+        default=None,
+        pattern=r"^\s*[A-Za-z][0-9]{1,2}\s*$",
+        description="Optional Search grid sector for a lead tip, like C2.",
+    )
 
 
 class HelpfulIn(BaseModel):
@@ -124,10 +144,44 @@ class HeldPost(BaseModel):
     body: str
     held_reason: str
     created_at: datetime
+    case_id: str | None = Field(
+        default=None, description="Set when this is a tip on a case lead thread."
+    )
+    sector: str | None = None
+
+
+class PrivateTip(BaseModel):
+    id: str
+    case_id: str
+    thread_id: str
+    thread_title: str
+    author: str
+    body: str
+    sector: str | None
+    created_at: datetime
+
+
+class CaseOut(BaseModel):
+    id: str
+    display_name: str
+    last_known_point: str
+    status: Literal["active", "resolved"]
+    thread_id: str
+    created_at: datetime
+    resolved_at: datetime | None
+
+
+class CaseCreate(BaseModel):
+    display_name: str = Field(
+        min_length=1, max_length=40, description="Initials or a first name and age."
+    )
+    last_known_point: str = Field(
+        min_length=3, max_length=120, description="A public corner or landmark."
+    )
 
 
 class ReviewIn(BaseModel):
-    action: Literal["publish", "remove"]
+    action: Literal["publish", "keep_private", "remove"]
     body: str | None = Field(
         default=None,
         max_length=2000,
@@ -137,7 +191,7 @@ class ReviewIn(BaseModel):
 
 class ReviewOut(BaseModel):
     id: str
-    action: Literal["publish", "remove"]
+    action: Literal["publish", "keep_private", "remove"]
     body: str | None = Field(
         description="The text as published, after scrubbing. None when removed."
     )
@@ -165,6 +219,8 @@ def _reply_out(reply: store.Reply) -> ReplyOut:
         created_at=reply.created_at,
         parent_id=reply.parent_id,
         helpful=reply.helpful,
+        flair=reply.flair,
+        sector=reply.sector,
     )
 
 
@@ -183,6 +239,20 @@ def _summary(thread: store.Thread) -> ThreadSummary:
         answer=thread.answer,
         helpful=thread.helpful,
         reply_count=len(thread.public_replies()),
+        case_id=thread.case_id,
+        locked=thread.locked,
+    )
+
+
+def _case_out(case: store.Case) -> CaseOut:
+    return CaseOut(
+        id=case.id,
+        display_name=case.display_name,
+        last_known_point=case.last_known_point,
+        status=case.status,
+        thread_id=case.thread_id,
+        created_at=case.created_at,
+        resolved_at=case.resolved_at,
     )
 
 
@@ -264,6 +334,7 @@ def create_reply(
             body.parent_id,
             body.handle,
             coordinator=_is_coordinator(x_coordinator_key),
+            sector=body.sector,
         )
     except store.ForumError as err:
         _fail(err)
@@ -293,6 +364,12 @@ def reply_helpful(reply_id: str, body: HelpfulIn | None = None) -> HelpfulOut:
         )
     except store.ForumError as err:
         _fail(err)
+
+
+@router.get("/cases", response_model=list[CaseOut])
+def cases() -> list[CaseOut]:
+    """Missing-person cases and their lead threads. Display names only."""
+    return [_case_out(c) for c in store.list_cases()]
 
 
 # ---------- coordinator ----------
@@ -331,9 +408,50 @@ def held() -> list[HeldPost]:
                     body=post.body,
                     held_reason=post.held_reason or "",
                     created_at=post.created_at,
+                    case_id=parent.case_id,
+                    sector=post.sector,
                 )
             )
     return rows
+
+
+@admin.get("/private-tips", response_model=list[PrivateTip])
+def private_tips() -> list[PrivateTip]:
+    """Lead tips kept private, for example ones passed to police."""
+    rows: list[PrivateTip] = []
+    for tip in store.private_tips():
+        parent = store.thread_of(tip)
+        rows.append(
+            PrivateTip(
+                id=tip.id,
+                case_id=parent.case_id or "",
+                thread_id=parent.id,
+                thread_title=parent.title,
+                author=tip.author,
+                body=tip.body,
+                sector=tip.sector,
+                created_at=tip.created_at,
+            )
+        )
+    return rows
+
+
+@admin.post("/cases", response_model=CaseOut, status_code=201)
+def open_case(body: CaseCreate) -> CaseOut:
+    """Open a case. Its pinned lead thread goes up in the Missing Persons hub."""
+    try:
+        return _case_out(store.open_case(body.display_name, body.last_known_point))
+    except store.ForumError as err:
+        _fail(err)
+
+
+@admin.post("/cases/{case_id}/resolve", response_model=CaseOut)
+def resolve_case(case_id: str) -> CaseOut:
+    """Close a case. Its lead thread is unpinned and locked."""
+    try:
+        return _case_out(store.resolve_case(case_id))
+    except store.ForumError as err:
+        _fail(err)
 
 
 @admin.post("/held/{post_id}/review", response_model=ReviewOut)
