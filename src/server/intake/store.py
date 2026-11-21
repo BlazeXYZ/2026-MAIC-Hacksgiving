@@ -9,6 +9,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 
 from sqlalchemy import select
+from sqlalchemy import update as sql_update
 
 from src.server import db as database
 from src.server.db import Ticket as DbTicket
@@ -23,6 +24,10 @@ _by_token: dict[str, str] = {}
 
 class TicketNotFound(Exception):
     """Raised when a ticket id is not in this process."""
+
+
+class TicketConcurrentUpdate(Exception):
+    """Raised when SQLite loses a compare-and-set update to another replica."""
 
 
 @dataclass
@@ -219,7 +224,37 @@ def mutate(ticket_id: str, update: Callable[[Ticket], None]) -> Ticket:
             if row is None:
                 raise TicketNotFound(ticket_id)
             ticket = _from_row(row)
+            original_status = row.status
+            original_volunteer_id = row.assigned_volunteer_id
             update(ticket)
+            if session.bind.dialect.name == "sqlite":
+                result = session.execute(
+                    sql_update(DbTicket)
+                    .where(DbTicket.ticket_id == ticket_id)
+                    .where(DbTicket.status == original_status)
+                    .where(DbTicket.assigned_volunteer_id == original_volunteer_id)
+                    .values(
+                        status=ticket.status.value,
+                        assigned_volunteer_id=ticket.volunteer_id,
+                        assigned_volunteer_alias=ticket.volunteer_alias,
+                        notes=ticket.notes,
+                        token=ticket.token,
+                        updated_at=datetime.now(timezone.utc),
+                        timeline=[
+                            {"at": moment.isoformat(), "status": status.value}
+                            for moment, status in ticket.timeline
+                        ],
+                    )
+                )
+                if result.rowcount != 1:
+                    raise TicketConcurrentUpdate(ticket_id)
+                session.commit()
+                session.refresh(row)
+                result_ticket = _from_row(row)
+                with _lock:
+                    _tickets[result_ticket.ticket_id] = result_ticket
+                    _by_token[result_ticket.token] = result_ticket.ticket_id
+                return result_ticket
             row.status = ticket.status.value
             row.assigned_volunteer_id = ticket.volunteer_id
             row.assigned_volunteer_alias = ticket.volunteer_alias
