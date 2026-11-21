@@ -26,10 +26,18 @@ function placeKind(place: SafePlace): { variant: string; label: string } {
 
 function SafePlacePopup({ place }: { place: SafePlace }) {
   const kind = placeKind(place);
+  const isSample = place.verified === false || place.provenance === 'sample';
   return (
     <article aria-label={place.name}>
       <h3>{place.name}</h3>
-      <span className={`community-map-badge community-map-badge--${kind.variant}`}>{kind.label}</span>
+      <div className="community-map-badge-group">
+        <span className={`community-map-badge community-map-badge--${kind.variant}`}>{kind.label}</span>
+        {isSample ? (
+          <span className="community-map-badge" style={{ background: '#f59e0b', color: '#fff' }}>Sample Listing</span>
+        ) : (
+          <span className="community-map-badge" style={{ background: '#10b981', color: '#fff' }}>Verified</span>
+        )}
+      </div>
       <dl>
         <div>
           <dt>Hours</dt>
@@ -55,6 +63,7 @@ function SafePlacePopup({ place }: { place: SafePlace }) {
 }
 
 function PantryPopup({ pantry }: { pantry: Pantry }) {
+  const isSample = pantry.verified === false || pantry.provenance === 'sample';
   return (
     <article aria-label={pantry.name}>
       <h3>{pantry.name}</h3>
@@ -65,6 +74,11 @@ function PantryPopup({ pantry }: { pantry: Pantry }) {
         </span>
         {pantry.no_id_required && (
           <span className="community-map-badge community-map-badge--noid">No ID Required</span>
+        )}
+        {isSample ? (
+          <span className="community-map-badge" style={{ background: '#f59e0b', color: '#fff' }}>Sample Listing</span>
+        ) : (
+          <span className="community-map-badge" style={{ background: '#10b981', color: '#fff' }}>Verified</span>
         )}
       </div>
       <dl>
@@ -138,7 +152,8 @@ function CheckpointPopup({ checkpoint }: { checkpoint: RouteCheckpoint }) {
 export default function CommunityMap() {
   const [places, setPlaces] = useState<readonly SafePlace[]>(SAMPLE_SAFE_PLACES);
   const [pantries, setPantries] = useState<readonly Pantry[]>(SAMPLE_PANTRIES);
-  const [source, setSource] = useState<DataSource>('sample');
+  const [placesSource, setPlacesSource] = useState<DataSource>('sample');
+  const [pantriesSource, setPantriesSource] = useState<DataSource>('sample');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   // Filters for issue #13
@@ -156,7 +171,8 @@ export default function CommunityMap() {
       .then((live) => {
         if (live.length === 0) return;
         setPlaces(live);
-        setSource('live');
+        const hasVerified = live.some((p) => p.verified !== false);
+        setPlacesSource(hasVerified ? 'live' : 'sample');
       })
       .catch(() => undefined);
 
@@ -164,7 +180,8 @@ export default function CommunityMap() {
       .then((live) => {
         if (live.length === 0) return;
         setPantries(live);
-        setSource('live');
+        const hasVerified = live.some((p) => p.verified !== false);
+        setPantriesSource(hasVerified ? 'live' : 'sample');
       })
       .catch(() => undefined);
 
@@ -358,39 +375,63 @@ export default function CommunityMap() {
               </li>
             )}
 
-            {showPantries && filteredPantries.map((pantry) => (
-              <li key={pantry.id}>
-                <button
-                  type="button"
-                  aria-pressed={selectedId === pantry.id}
-                  onClick={() => setSelectedId(pantry.id)}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <strong>{pantry.name}</strong>
-                    <span className={`community-map-badge-mini ${pantry.open_now ? 'community-map-badge-mini--open' : 'community-map-badge-mini--closed'}`}>
-                      {pantry.open_now ? 'Open' : 'Closed'}
-                    </span>
-                  </div>
-                  <span>{pantry.district} · Food Pantry {pantry.no_id_required ? '· No ID' : ''}</span>
-                </button>
-              </li>
-            ))}
+            {showPantries && filteredPantries.map((pantry) => {
+              const isSample = pantry.verified === false || pantry.provenance === 'sample';
+              return (
+                <li key={pantry.id}>
+                  <button
+                    type="button"
+                    aria-pressed={selectedId === pantry.id}
+                    onClick={() => setSelectedId(pantry.id)}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong>{pantry.name}</strong>
+                      <div style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}>
+                        {isSample ? (
+                          <span className="community-map-badge-mini" style={{ background: '#fef3c7', color: '#b45309' }}>Sample</span>
+                        ) : (
+                          <span className="community-map-badge-mini" style={{ background: '#d1fae5', color: '#047857' }}>Verified</span>
+                        )}
+                        <span className={`community-map-badge-mini ${pantry.open_now ? 'community-map-badge-mini--open' : 'community-map-badge-mini--closed'}`}>
+                          {pantry.open_now ? 'Open' : 'Closed'}
+                        </span>
+                      </div>
+                    </div>
+                    <span>{pantry.district} · Food Pantry {pantry.no_id_required ? '· No ID' : ''}</span>
+                  </button>
+                </li>
+              );
+            })}
 
-            {showSafePlaces && places.map((place) => (
-              <li key={place.id}>
-                <button
-                  type="button"
-                  aria-pressed={selectedId === place.id}
-                  onClick={() => setSelectedId(place.id)}
-                >
-                  <strong>{place.name}</strong>
-                  <span>{place.district} · {placeKind(place).label}</span>
-                </button>
-              </li>
-            ))}
+            {showSafePlaces && places.map((place) => {
+              const isSample = place.verified === false || place.provenance === 'sample';
+              return (
+                <li key={place.id}>
+                  <button
+                    type="button"
+                    aria-pressed={selectedId === place.id}
+                    onClick={() => setSelectedId(place.id)}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <strong>{place.name}</strong>
+                      {isSample ? (
+                        <span className="community-map-badge-mini" style={{ background: '#fef3c7', color: '#b45309' }}>Sample</span>
+                      ) : (
+                        <span className="community-map-badge-mini" style={{ background: '#d1fae5', color: '#047857' }}>Verified</span>
+                      )}
+                    </div>
+                    <span>{place.district} · {placeKind(place).label}</span>
+                  </button>
+                </li>
+              );
+            })}
           </ul>
-          {source === 'sample' && (
+          {placesSource === 'sample' && pantriesSource === 'sample' ? (
             <p className="community-map-detail">Showing sample data. Start the API to load live community resources.</p>
+          ) : (
+            <p className="community-map-detail">
+              Data status: {placesSource === 'live' ? 'Safe places live' : 'Safe places sample'} · {pantriesSource === 'live' ? 'Food pantries live' : 'Food pantries sample'}. Sample listings are labeled.
+            </p>
           )}
         </section>
       </div>

@@ -15,10 +15,12 @@ def pantries(
     open_now: bool | None = Query(default=None),
     no_id_required: bool | None = Query(default=None),
     district: str | None = Query(default=None, max_length=80),
+    include_sample: bool | None = Query(default=None),
 ) -> list[Pantry]:
     """Emergency food sites. `open_now` uses the seeded weekly schedule."""
     return list_pantries(
         open_now=open_now,
         no_id_required=no_id_required,
         district=district,
+        include_sample=include_sample,
     )
