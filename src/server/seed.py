@@ -308,6 +308,114 @@ SAMPLE_TICKETS: tuple[dict[str, Any], ...] = (
     },
 )
 
+# Additional synthetic demo records. Kept apart from the core fixtures above so
+# seed_database() counts stay stable; applied by main() via seed_demo_extras().
+DEMO_EXTRA_RESOURCES: tuple[dict[str, Any], ...] = (
+    {
+        "id": "demo-pantry-eastside",
+        "name": "Eastside Neighbors Pantry (demo)",
+        "category": "Food Pantry",
+        "address": "1500 E Example St, Milwaukee, WI 53202",
+        "district": "Juneautown",
+        "latitude": 43.0505,
+        "longitude": -87.8995,
+        "phone": "414-555-0140",
+        "hours_description": "Mon-Sat 10:00 AM - 4:00 PM",
+        "is_staffed": True,
+        "no_id_required": True,
+        "open_now": True,
+        "accessibility_notes": "Demo record. Ramp at side entrance.",
+    },
+    {
+        "id": "demo-pantry-northside",
+        "name": "Northside Family Table (demo)",
+        "category": "Food Pantry",
+        "address": "3300 N Demo Blvd, Milwaukee, WI 53206",
+        "district": "Harambee",
+        "latitude": 43.0795,
+        "longitude": -87.9170,
+        "phone": "414-555-0141",
+        "hours_description": "Mon-Sat 9:00 AM - 3:00 PM",
+        "is_staffed": True,
+        "no_id_required": False,
+        "open_now": True,
+        "accessibility_notes": "Demo record. Infant supplies available.",
+    },
+    {
+        "id": "demo-safe-fire-station-2",
+        "name": "Neighborhood Fire Station 2 (demo)",
+        "category": "Safe Place",
+        "address": "800 W Placeholder St, Milwaukee, WI 53233",
+        "district": "Avenues West",
+        "latitude": 43.0395,
+        "longitude": -87.9230,
+        "phone": "414-555-0142",
+        "hours_description": "Staffed around the clock",
+        "is_staffed": True,
+        "no_id_required": True,
+        "open_now": True,
+        "accessibility_notes": "Demo record. Knock at the main door.",
+    },
+)
+
+DEMO_EXTRA_TICKETS: tuple[dict[str, Any], ...] = (
+    {
+        "token": "tok_mke_demo_ride_clinic",
+        "status": "pending",
+        "urgency": "today",
+        "category": "ride",
+        "summary": "Ride needed to a morning clinic visit. Resident uses a walker.",
+        "district": "Bay View",
+        "language": "en",
+        "suggested_service_id": "demo-safe-fire-station-2",
+        "notes": "Demo record only.",
+    },
+    {
+        "token": "tok_mke_demo_support_call",
+        "status": "assigned",
+        "urgency": "this_week",
+        "category": "support",
+        "summary": "Wants a volunteer to check in by phone about a housing question.",
+        "district": "Riverwest",
+        "language": "en",
+        "assigned_volunteer_id": "vol_neighbor_sam",
+        "assigned_volunteer_alias": "Volunteer Sam",
+        "notes": "Demo record only.",
+    },
+    {
+        "token": "tok_mke_demo_groceries",
+        "status": "resolved",
+        "urgency": "this_week",
+        "category": "food",
+        "summary": "Grocery box delivered to a homebound neighbor.",
+        "district": "Harambee",
+        "language": "en",
+        "suggested_service_id": "demo-pantry-northside",
+        "assigned_volunteer_id": "vol_neighbor_dave",
+        "assigned_volunteer_alias": "Volunteer Dave",
+        "notes": "Demo record only. Completed.",
+    },
+)
+
+
+def seed_demo_extras(db_url: str | None = None) -> dict[str, int]:
+    """Add the extra synthetic demo resources and tickets idempotently."""
+    init_db(db_url)
+    session = next(get_db())
+    resources_added = 0
+    tickets_added = 0
+    for item in DEMO_EXTRA_RESOURCES:
+        _validate_milwaukee_coordinates(item["name"], item["latitude"], item["longitude"])
+        if session.scalar(select(Resource).where(Resource.id == item["id"])) is None:
+            session.add(Resource(**item))
+            resources_added += 1
+    for item in DEMO_EXTRA_TICKETS:
+        if session.scalar(select(Ticket).where(Ticket.token == item["token"])) is None:
+            session.add(Ticket(**item))
+            tickets_added += 1
+    session.commit()
+    return {"resources_added": resources_added, "tickets_added": tickets_added}
+
 
 def seed_database(db_url: str | None = None) -> dict[str, int]:
     """Populate database with verified fixtures idempotently."""
@@ -364,6 +472,12 @@ def main() -> None:
         f"Done! Added {results['safe_places_added']} safe places, "
         f"{results['pantries_added']} food pantries, and "
         f"{results['tickets_added']} sample tickets."
+    )
+    close_db()
+    extras = seed_demo_extras()
+    print(
+        f"Demo extras: {extras['resources_added']} resources and "
+        f"{extras['tickets_added']} tickets added."
     )
     close_db()
 

@@ -41,6 +41,31 @@ SAMPLE_TICKETS = (
         title="Set up a pantry pickup table",
         description="Organize grocery bags and supplies before a pantry pickup.",
     ),
+    VolunteerTicket(
+        id=107,
+        title="Deliver groceries to a neighbor",
+        description="Drop off a prepared grocery box to a homebound resident on the near north side.",
+    ),
+    VolunteerTicket(
+        id=108,
+        title="Staff the warm-clothing table",
+        description="Help hand out donated coats, hats, and gloves for two hours on Saturday morning.",
+    ),
+    VolunteerTicket(
+        id=109,
+        title="Join a search party sector",
+        description="Walk an assigned sector with a partner and report back to the coordinator desk.",
+    ),
+    VolunteerTicket(
+        id=110,
+        title="Offer a ride to a clinic visit",
+        description="Drive a neighbor to a daytime clinic appointment and wait for the return trip.",
+    ),
+    VolunteerTicket(
+        id=111,
+        title="Translate at the pantry intake desk",
+        description="Spanish and English speakers wanted to greet visitors and explain the sign-in steps.",
+    ),
 )
 
 

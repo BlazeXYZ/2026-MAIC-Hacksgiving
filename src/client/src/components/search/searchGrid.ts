@@ -88,6 +88,22 @@ export function generateInitialSectors(): SearchSector[] {
       } else if (id === 'A2') {
         status = 'Searching';
         volunteers = ['Juniper'];
+      } else if (id === 'A1') {
+        status = 'Cleared';
+        volunteers = ['Sparrow', 'Cedar'];
+        notes = 'Park paths and parking lots checked. Nothing noted.';
+      } else if (id === 'B1') {
+        status = 'Cleared';
+        volunteers = ['Harbor'];
+        notes = 'Residential blocks walked twice. Neighbors asked to check garages.';
+      } else if (id === 'C1') {
+        status = 'Searching';
+        volunteers = ['Maple', 'Brook'];
+        notes = 'Team checking bus stops and the corner market.';
+      } else if (id === 'A3') {
+        status = 'Cleared';
+        volunteers = ['Willow'];
+        notes = 'Wisconsin Ave storefronts and side streets cleared.';
       }
 
       const coordinates: LatLngTuple[] = [
