@@ -5,6 +5,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
 from zoneinfo import ZoneInfo
@@ -27,7 +28,7 @@ class PantrySeed:
     windows: tuple[HoursWindow, ...]
 
 
-def _weekdays(start_hour: int, end_hour: int, days: range) -> tuple[HoursWindow, ...]:
+def _weekdays(start_hour: int, end_hour: int, days: Iterable[int]) -> tuple[HoursWindow, ...]:
     start = start_hour * 60
     end = end_hour * 60
     return tuple(HoursWindow(day, start, end) for day in days)
@@ -75,6 +76,89 @@ _PANTRY_SEEDS: tuple[PantrySeed, ...] = (
             open_now=False,
         ),
         windows=_weekdays(10, 14, range(2, 5, 2)),
+    ),
+)
+
+
+def _demo_pantry(
+    pantry_id: str,
+    name: str,
+    address: str,
+    latitude: float,
+    longitude: float,
+    phone: str,
+    district: str,
+    hours: str,
+    days: tuple[int, ...],
+    start_hour: int,
+    end_hour: int,
+    *,
+    no_id_required: bool = True,
+    notes: str = "Demo seed. Confirm hours before you go.",
+) -> PantrySeed:
+    """Build a synthetic pantry with one weekly window repeated over ``days``."""
+    return PantrySeed(
+        place=Pantry(
+            id=pantry_id,
+            name=name,
+            category="food",
+            address=address,
+            latitude=latitude,
+            longitude=longitude,
+            phone=phone,
+            hours_description=f"Demo schedule: {hours}",
+            is_staffed=True,
+            no_id_required=no_id_required,
+            district=district,
+            accessibility_notes=notes,
+            open_now=False,
+        ),
+        windows=_weekdays(start_hour, end_hour, days),
+    )
+
+
+_PANTRY_SEEDS = _PANTRY_SEEDS + (
+    _demo_pantry(
+        "riverbend-pantry", "Riverbend Neighbors Pantry",
+        "1200 E Example Ave, Milwaukee, WI 53212", 43.0610, -87.9015,
+        "414-555-0112", "Riverwest", "Tuesday and Saturday 9am-1pm.",
+        (1, 5), 9, 13,
+        notes="Demo seed. Ramp at side door. Produce table on Saturdays.",
+    ),
+    _demo_pantry(
+        "harbor-district-cupboard", "Harbor District Community Cupboard",
+        "410 N Sample St, Milwaukee, WI 53202", 43.0442, -87.9068,
+        "414-555-0113", "Juneautown", "Monday-Saturday 10am-6pm.",
+        (0, 1, 2, 3, 4, 5), 10, 18,
+        notes="Demo seed. Street-level entrance. Shelf-stable and fresh items.",
+    ),
+    _demo_pantry(
+        "northside-family-table", "Northside Family Table",
+        "3300 N Demo Blvd, Milwaukee, WI 53206", 43.0795, -87.9170,
+        "414-555-0114", "Harambee", "Monday-Saturday 9am-3pm.",
+        (0, 1, 2, 3, 4, 5), 9, 15, no_id_required=False,
+        notes="Demo seed. Bring a piece of mail if you have one. Infant supplies available.",
+    ),
+    _demo_pantry(
+        "southside-sharing-shelf", "Southside Sharing Shelf",
+        "1800 S Placeholder St, Milwaukee, WI 53204", 43.0150, -87.9300,
+        "414-555-0115", "Clarke Square", "Wednesday and Saturday 10am-2pm.",
+        (2, 5), 10, 14,
+        notes="Demo seed. Spanish and English volunteers on site.",
+    ),
+    _demo_pantry(
+        "bay-view-grocery-share", "Bay View Grocery Share",
+        "2500 S Fictional Ave, Milwaukee, WI 53207", 42.9930, -87.8960,
+        "414-555-0116", "Bay View", "Thursday-Saturday 12pm-5pm.",
+        (3, 4, 5), 12, 17,
+        notes="Demo seed. Curbside pickup available on request.",
+    ),
+    _demo_pantry(
+        "westside-warm-meals", "Westside Warm Meals and Pantry",
+        "2900 W Sample Ave, Milwaukee, WI 53208", 43.0430, -87.9520,
+        "414-555-0117", "Avenues West", "Monday-Saturday 8am-8pm.",
+        (0, 1, 2, 3, 4, 5), 8, 20,
+        notes="Demo seed. Hot meal at noon. Wheelchair accessible.",
     ),
 )
 

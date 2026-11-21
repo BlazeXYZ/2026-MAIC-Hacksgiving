@@ -36,6 +36,11 @@ except ModuleNotFoundError:
     from db import close_db, init_db
 
 try:
+    from src.server.intake.demo import seed_demo_tickets
+except ModuleNotFoundError:
+    from intake.demo import seed_demo_tickets
+
+try:
     from src.server.api import mount_feature_routers
 except ModuleNotFoundError:
     from api import mount_feature_routers
@@ -49,6 +54,7 @@ except ModuleNotFoundError:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
+    seed_demo_tickets()
     async with ticket_lifespan(app):
         yield
     close_db()
@@ -160,6 +166,24 @@ def list_communities():
             open_tickets=6,
             has_emergency_alert=False,
         ),
+        Community(
+            id="ride-share",
+            name="Neighbor Ride Share",
+            category="Mutual Aid",
+            description="Match volunteer drivers with neighbors who need a ride to clinics, groceries, or work.",
+            active_members=96,
+            open_tickets=3,
+            has_emergency_alert=False,
+        ),
+        Community(
+            id="warming-centers",
+            name="Warming Centers & Winter Gear",
+            category="Community Relief",
+            description="Find open warming rooms and donate or request coats, blankets, and boots.",
+            active_members=174,
+            open_tickets=5,
+            has_emergency_alert=False,
+        ),
     ]
 
 @app.get("/api/alerts/priority", response_model=PriorityAlert)
@@ -200,6 +224,24 @@ def get_district_stats():
             open_requests=9,
             active_volunteers=11,
             urgency_score=7.2,
+        ),
+        DistrictStat(
+            district_name="Walker's Point",
+            open_requests=7,
+            active_volunteers=10,
+            urgency_score=5.6,
+        ),
+        DistrictStat(
+            district_name="Riverwest",
+            open_requests=4,
+            active_volunteers=13,
+            urgency_score=3.0,
+        ),
+        DistrictStat(
+            district_name="Bay View",
+            open_requests=2,
+            active_volunteers=8,
+            urgency_score=1.8,
         ),
     ]
 
