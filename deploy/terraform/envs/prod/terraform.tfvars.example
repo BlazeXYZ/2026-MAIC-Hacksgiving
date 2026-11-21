@@ -1,0 +1,20 @@
+# Copy to terraform.tfvars. That file is gitignored because it holds the database password.
+# Apply only this directory. dev and qa are separate roots with separate state.
+# The default target is a local kind cluster. Switch to AWS only for an account you choose.
+
+target      = "local"
+db_password = "replace-with-a-real-password"
+
+# Optional overrides. Names default to comforce-prod.
+# api_replicas    = 2
+# web_replicas    = 2
+# db_storage_size = "5Gi"
+# ingress_enabled = true
+# ingress_host    = "comforce.example.org"
+
+# AWS (EKS). This creates billable resources. Leave target = "local" until you mean to.
+# target                 = "aws"
+# aws_region             = "us-east-1"
+# aws_profile            = "default"
+# kubernetes_version     = "1.35"
+# aws_node_instance_type = "t3.medium"
