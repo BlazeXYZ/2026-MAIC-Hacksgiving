@@ -8,6 +8,7 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 
 ## Quick Links
 
+- [Kubernetes setup](deploy/KUBERNETES.md) — dev, qa, and prod on a local kind cluster or EKS
 - [Project Ideas & Brainstorming](IDEAS.md)
 - [Contributing & Style Guide](CONTRIBUTING.md)
 - [Project Documentation](docs/README.md)
@@ -45,7 +46,8 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 - **Project Title:** ComForce MKE Community Hub
 - **Summary:** A combined web and mobile application (exported through Capacitor) that makes connecting with ComforceMKE initiatives interactive and responsive instead of just filling out static web forms.
 - **Client Stack:** React, TypeScript, Vite, Capacitor (iOS and Android export), OpenStreetMap, Tailwind CSS
-- **Server Stack:** Python 3.10+, FastAPI, `uv` package manager, Uvicorn
+- **Server Stack:** Python 3.10+, FastAPI, PostgreSQL, `uv` package manager, Uvicorn
+- **Deploy:** Docker Compose locally. Terraform keeps dev, qa, and prod in separate state. Each one can run as a local Kubernetes cluster or, when you choose an account, on AWS EKS.
 - **AI Models:** Transformer-based need heatmaps, small classifier for content moderation and triage, and LLM recommendations
 
 ---
@@ -125,6 +127,10 @@ Our team is reviewing real Milwaukee open data to ground the app in actual local
 ├── data/                     # Sample data and schemas
 │   ├── raw/                  # Raw sample files (git-ignored)
 │   └── processed/            # Cleaned mock data for testing
+├── deploy/                   # Images and Terraform for Kubernetes
+│   ├── docker/               # API and web Dockerfiles, nginx proxy
+│   ├── KUBERNETES.md         # Step-by-step dev, qa, and prod on kind or EKS
+│   └── terraform/            # Shared stack, with a separate root for dev, qa, and prod
 ├── docs/                     # Pitch notes, slides, and diagrams
 ├── notebooks/                # Jupyter notebooks for data tests and prompt trials
 ├── src/
@@ -304,10 +310,9 @@ cp terraform.tfvars.example terraform.tfvars
 ```
 Edit `terraform.tfvars`:
 ```hcl
-target          = "aws"
-aws_region      = "us-east-1"
-environment     = "prod"
-db_password     = "ChooseAStrongSecureProductionPassword123!"
+target      = "aws"
+aws_region  = "us-east-1"
+db_password = "ChooseAStrongSecureProductionPassword123!"
 ```
 *(Note: `terraform.tfvars` and `*.tfstate` are excluded from git for security).*
 
