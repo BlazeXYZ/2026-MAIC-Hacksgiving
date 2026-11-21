@@ -5,6 +5,7 @@ import type {
   UrgencyLevel,
   ServiceCategory,
 } from '../contracts/coordinator';
+import { coordinatorHeaders } from '../coordinator/access';
 import './CoordinatorDashboard.css';
 
 const SAMPLE_COORDINATOR_TICKETS: CoordinatorTicket[] = [
@@ -95,7 +96,7 @@ const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   other: 'General Support',
 };
 
-export default function CoordinatorDashboard() {
+export default function CoordinatorDashboard({ accessKey }: { accessKey: string }) {
   const [tickets, setTickets] = useState<CoordinatorTicket[]>(SAMPLE_COORDINATOR_TICKETS);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [districtFilter, setDistrictFilter] = useState<string>('all');
@@ -115,7 +116,7 @@ export default function CoordinatorDashboard() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/v1/coordinator/queue', { signal: controller.signal })
+    fetch('/api/v1/coordinator/queue', { signal: controller.signal, headers: coordinatorHeaders(accessKey) })
       .then((res) => {
         if (!res.ok) return;
         return res.json();
@@ -128,7 +129,7 @@ export default function CoordinatorDashboard() {
       .catch(() => undefined);
 
     return () => controller.abort();
-  }, []);
+  }, [accessKey]);
 
   // District summary counts for badges
   const districtCounts = useMemo(() => {
@@ -140,6 +141,26 @@ export default function CoordinatorDashboard() {
       if (ticket.urgency === 'urgent') counts[d].urgent += 1;
     }
     return counts;
+  }, [tickets]);
+
+  // Headline numbers for the KPI tiles
+  const kpis = useMemo(() => {
+    const now = Date.now();
+    const waiting = tickets.filter((t) => t.status === 'pending' && !t.volunteer_id);
+    const oldest = waiting.reduce<number | null>((min, t) => {
+      const created = new Date(t.created_at).getTime();
+      return min === null || created < min ? created : min;
+    }, null);
+    return {
+      urgentUnassigned: waiting.filter((t) => t.urgency === 'urgent').length,
+      open: tickets.filter((t) => t.status !== 'resolved').length,
+      volunteersOut: new Set(
+        tickets
+          .filter((t) => (t.status === 'assigned' || t.status === 'in_progress') && t.volunteer_id)
+          .map((t) => t.volunteer_id),
+      ).size,
+      oldestWaitingMin: oldest === null ? null : Math.max(0, Math.round((now - oldest) / 60000)),
+    };
   }, [tickets]);
 
   // Filtering & Sorting
@@ -242,7 +263,7 @@ export default function CoordinatorDashboard() {
     try {
       await fetch(`/api/v1/coordinator/tickets/${activeModalTicket.ticket_id}/assign`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: coordinatorHeaders(accessKey, { 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           volunteer_id: assignVolunteerId,
           status: assignStatus,
@@ -267,10 +288,35 @@ export default function CoordinatorDashboard() {
 
   return (
     <main className="coordinator-dashboard" aria-labelledby="coordinator-title">
-      <div className="coordinator-header">
-        <h2 id="coordinator-title">Coordinator Dispatch Queue</h2>
-        <p>Live district triage &amp; volunteer allocation queue for Milwaukee emergency requests.</p>
+      <div className="pagehead">
+        <div>
+          <h1 id="coordinator-title">Tonight, across the district</h1>
+          <p>Live triage and volunteer dispatch for Milwaukee requests. AI sorts by urgency, you decide.</p>
+        </div>
       </div>
+
+      <section className="kpis" aria-label="Queue summary">
+        <div className={kpis.urgentUnassigned > 0 ? 'kpi bad' : 'kpi'}>
+          <span>Urgent, nobody has it</span>
+          <b>{kpis.urgentUnassigned}</b>
+          <small>{kpis.urgentUnassigned > 0 ? 'Assign these first' : 'All urgent requests covered'}</small>
+        </div>
+        <div className="kpi">
+          <span>Open requests</span>
+          <b>{kpis.open}</b>
+          <small>of {tickets.length} in the queue</small>
+        </div>
+        <div className="kpi">
+          <span>Volunteers out now</span>
+          <b>{kpis.volunteersOut}</b>
+          <small>assigned or in progress</small>
+        </div>
+        <div className="kpi">
+          <span>Oldest waiting</span>
+          <b>{kpis.oldestWaitingMin === null ? '–' : `${kpis.oldestWaitingMin} min`}</b>
+          <small>pending, unassigned</small>
+        </div>
+      </section>
 
       {/* District summary badges at the top of the view */}
       <section aria-label="District Summaries" className="coordinator-district-badges">
@@ -404,7 +450,7 @@ export default function CoordinatorDashboard() {
           <tbody>
             {displayedTickets.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--ink-3)' }}>
                   No requests match the current filters.
                 </td>
               </tr>
@@ -438,9 +484,9 @@ export default function CoordinatorDashboard() {
                     </td>
                     <td>
                       {t.volunteer_alias ? (
-                        <span style={{ fontWeight: 600, color: '#0369a1' }}>{t.volunteer_alias}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--police)' }}>{t.volunteer_alias}</span>
                       ) : (
-                        <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Unassigned</span>
+                        <span style={{ color: 'var(--ink-3)', fontStyle: 'italic' }}>Unassigned</span>
                       )}
                     </td>
                     <td>
@@ -492,7 +538,7 @@ export default function CoordinatorDashboard() {
             onClick={(e) => e.stopPropagation()}
           >
             <h4 id="assign-modal-title">Dispatch Action: {activeModalTicket.ticket_id}</h4>
-            <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 1rem' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--ink-2)', margin: '0 0 1rem' }}>
               {activeModalTicket.summary}
             </p>
 

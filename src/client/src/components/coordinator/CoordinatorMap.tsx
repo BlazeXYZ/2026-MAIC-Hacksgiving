@@ -15,12 +15,13 @@ import {
   polygonToLatLngTuples,
   type HotspotCollection,
 } from '../../coordinator/hotspots';
+import { CoordinatorAccessError } from '../../coordinator/access';
 import './CoordinatorMap.css';
 
 const MILWAUKEE_CENTER: LatLngTuple = [43.0389, -87.9065];
 const ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 
-export default function CoordinatorMap() {
+export default function CoordinatorMap({ accessKey }: { accessKey: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const hotspotLayerGroupRef = useRef<ReturnType<typeof layerGroup> | null>(null);
@@ -31,17 +32,19 @@ export default function CoordinatorMap() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchCoordinatorHotspots('dev-coordinator-key', controller.signal)
+    fetchCoordinatorHotspots(accessKey, controller.signal)
       .then((collection) => {
         setHotspots(collection);
         setStatusMessage(`Loaded ${collection.features.length} hotspot density sectors.`);
       })
-      .catch(() => {
-        setStatusMessage('Using local fallback hotspot sectors.');
+      .catch((error: unknown) => {
+        setStatusMessage(error instanceof CoordinatorAccessError
+          ? 'Coordinator access was rejected. Sign out and sign in again.'
+          : 'Using local fallback hotspot sectors.');
       });
 
     return () => controller.abort();
-  }, []);
+  }, [accessKey]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -101,13 +104,13 @@ export default function CoordinatorMap() {
       });
 
       const popupHtml = `
-        <div style="font-family: system-ui, sans-serif; font-size: 0.85rem; color: #0f172a;">
+        <div style="font-family: var(--f); font-size: 0.85rem; color: #16201B;">
           <strong style="color: ${color}; display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">
             ⚠️ Incident Density Zone
           </strong>
           <div><strong>Police / Dispatch Calls:</strong> ${feature.properties.count}</div>
           <div><strong>Relative Density:</strong> ${(feature.properties.density * 100).toFixed(0)}%</div>
-          <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.35rem;">
+          <div style="font-size: 0.75rem; color: #6C776F; margin-top: 0.35rem;">
             Restricted coordinator intelligence for safe volunteer pairing.
           </div>
         </div>
@@ -170,7 +173,7 @@ export default function CoordinatorMap() {
           </li>
         </ul>
 
-        <div style={{ color: '#64748b', fontSize: '0.8rem' }}>
+        <div style={{ color: 'var(--ink-3)', fontSize: '0.8rem' }}>
           {statusMessage}
         </div>
       </div>

@@ -1,211 +1,150 @@
-/* Missing person urgent priority alert banner (#45) */
-.urgent-alert-container {
-  width: 100%;
-  position: relative;
-  z-index: 50;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+/* Missing-person alert (#45), styled as the mockup's alert card: the one red block on the page. */
+.alertcard {
+  background: var(--card);
+  border: 2px solid var(--red);
+  border-radius: var(--r);
+  overflow: hidden;
+  box-shadow: var(--sh);
+  margin-bottom: 32px;
 }
 
-.urgent-alert-banner {
-  background: #ffffff;
-  border-bottom: 3px solid #dc2626;
-  border-top: 1px solid #fecaca;
-}
+.alertcard--min { border-width: 0; }
 
-.urgent-alert-strip {
+.alert-strip {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding: 0.5rem 1.5rem;
-  background: #dc2626;
-  color: #ffffff;
-  font-size: 0.8125rem;
+  gap: 8px;
+  min-height: 38px;
+  padding: 4px 8px 4px 16px;
+  background-color: var(--red);
+  background-image: var(--fence-dark);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.urgent-alert-badge {
+.alert-strip .live {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hivis);
+  animation: alert-blink 1.4s steps(2, start) infinite;
+  flex: none;
+}
+
+@keyframes alert-blink { to { visibility: hidden; } }
+
+.alert-strip-actions { margin-left: auto; display: flex; gap: 4px; }
+
+.alert-strip-btn {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  font-weight: 800;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.urgent-alert-pulse {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #fef08a;
-  box-shadow: 0 0 0 0 rgba(254, 240, 138, 0.7);
-  animation: urgent-pulse 1.6s infinite;
-}
-
-@keyframes urgent-pulse {
-  0% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(254, 240, 138, 0.7);
-  }
-  70% {
-    transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(254, 240, 138, 0);
-  }
-  100% {
-    transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(254, 240, 138, 0);
-  }
-}
-
-.urgent-alert-meta {
-  font-size: 0.75rem;
-  opacity: 0.95;
-}
-
-.urgent-alert-strip-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.urgent-alert-strip-btn {
-  background: rgba(255, 255, 255, 0.2);
-  border: none;
-  color: #ffffff;
-  font-size: 0.75rem;
-  padding: 0.2rem 0.5rem;
-  border-radius: 4px;
+  gap: 4px;
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, .16);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
   cursor: pointer;
-  transition: background 0.15s ease;
 }
 
-.urgent-alert-strip-btn:hover {
-  background: rgba(255, 255, 255, 0.35);
-}
+.alert-strip-btn:hover { background: rgba(255, 255, 255, .28); }
+.alert-strip-btn .ic { width: 14px; height: 14px; }
 
-.urgent-alert-body {
+.d-alert {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  gap: 1.25rem;
+  grid-template-columns: 72px minmax(0, 1fr) 240px auto;
+  gap: 24px;
   align-items: center;
-  padding: 1rem 1.5rem;
-  max-width: 1200px;
-  margin: 0 auto;
+  padding: 20px 24px;
 }
 
-.urgent-alert-thumbnail {
-  width: 64px;
-  height: 64px;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-  border: 2px solid #ef4444;
+.d-alert-photo {
+  width: 72px;
+  height: 86px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
   display: grid;
   place-items: center;
-  color: #991b1b;
-  font-weight: 700;
-  font-size: 1.25rem;
-  flex-shrink: 0;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  overflow: hidden;
+  background-color: #E5E8DF;
+  background-image: radial-gradient(#17211C 1.2px, transparent 1.4px);
+  background-size: 5px 5px;
 }
 
-.urgent-alert-info h3 {
-  margin: 0 0 0.25rem;
-  font-size: 1.1rem;
-  color: #0f172a;
-}
-
-.urgent-alert-info h3 span {
-  font-size: 0.9rem;
-  color: #dc2626;
+.d-alert-photo span {
+  padding: 2px 8px;
+  border-radius: 5px;
+  background: var(--card);
+  font-family: var(--f-voice);
   font-weight: 600;
-  margin-left: 0.4rem;
+  font-size: 20px;
+  color: var(--ink);
 }
 
-.urgent-alert-location {
-  margin: 0 0 0.25rem;
-  font-size: 0.85rem;
-  color: #334155;
-  font-weight: 500;
+.d-alert-photo img { width: 100%; height: 100%; object-fit: cover; }
+
+.d-alert-info h2 {
+  font-family: var(--f-voice);
+  font-weight: 600;
+  font-size: 28px;
+  line-height: 1.05;
 }
 
-.urgent-alert-desc {
-  margin: 0;
-  font-size: 0.8rem;
-  color: #64748b;
-  line-height: 1.4;
-}
+.d-alert-info p { margin-top: 6px; font-size: 15px; color: var(--ink-2); }
 
-.urgent-alert-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.urgent-alert-cta {
-  background: #dc2626;
-  color: #ffffff;
-  border: none;
-  padding: 0.6rem 1.25rem;
-  border-radius: 6px;
-  font-weight: 700;
-  font-size: 0.875rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.15s ease;
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
-}
-
-.urgent-alert-cta:hover {
-  background: #b91c1c;
-}
-
-.urgent-alert-snooze-btn {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #cbd5e1;
-  padding: 0.35rem 0.75rem;
-  border-radius: 6px;
-  font-size: 0.75rem;
-  cursor: pointer;
-  white-space: nowrap;
-  text-align: center;
-}
-
-.urgent-alert-snooze-btn:hover {
-  background: #e2e8f0;
-}
-
-/* Minimized compact pill banner */
-.urgent-alert-minimized {
-  background: #fef2f2;
-  border-bottom: 2px solid #ef4444;
-  padding: 0.4rem 1.5rem;
-  display: flex;
+.verified {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  font-size: 0.8rem;
-  color: #991b1b;
+  gap: 4px;
+  margin-top: 6px;
+  color: var(--green);
+  font-size: 13px;
+  font-weight: 700;
 }
 
-.urgent-alert-expand-btn {
-  background: #fee2e2;
-  border: 1px solid #fca5a5;
-  color: #991b1b;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 0.2rem 0.6rem;
-  border-radius: 4px;
-  cursor: pointer;
+.verified .ic { width: 14px; height: 14px; stroke-width: 3; }
+
+.d-alert-prog { display: grid; gap: 8px; }
+.d-alert-prog span { font-size: 13px; font-weight: 600; color: var(--ink-2); }
+
+.segs { display: flex; gap: 3px; }
+.segs i { flex: 1; height: 8px; border-radius: 2px; background: var(--sunk); }
+.segs i.done { background: var(--green); }
+.segs i.on { background: var(--hivis); box-shadow: inset 0 0 0 1px #B9C42A; }
+
+.d-alert-acts { display: flex; flex-direction: column; gap: 8px; }
+
+.d-alert-why {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 24px;
+  border-top: 1px solid var(--line);
+  font-size: 14px;
+  color: var(--ink-2);
+  background: #FFF8F7;
 }
 
-.urgent-alert-expand-btn:hover {
-  background: #fecaca;
+.d-alert-why .ic { width: 16px; height: 16px; color: var(--red); }
+
+@media (max-width: 1000px) {
+  .d-alert { grid-template-columns: 72px minmax(0, 1fr); }
+  .d-alert-prog, .d-alert-acts { grid-column: 1 / -1; }
+  .d-alert-acts { flex-direction: row; flex-wrap: wrap; }
 }
 
-@media (max-width: 720px) {
-  .urgent-alert-body {
-    grid-template-columns: 1fr;
-    text-align: left;
-  }
-  .urgent-alert-actions {
-    flex-direction: row;
-  }
+@media (max-width: 640px) {
+  .d-alert { grid-template-columns: 56px minmax(0, 1fr); gap: 12px 16px; padding: 16px; }
+  .d-alert-photo { width: 56px; height: 68px; }
+  .d-alert-photo span { font-size: 16px; padding: 1px 6px; }
+  .d-alert-info h2 { font-size: 22px; }
+  .d-alert-info p { font-size: 14px; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  .d-alert-acts { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .d-alert-acts .btn { padding: 0 14px; }
+  .d-alert-why { padding: 10px 16px; font-size: 13px; }
+  .alert-strip { font-size: 12.5px; }
 }

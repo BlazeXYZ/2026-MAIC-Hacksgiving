@@ -91,7 +91,7 @@ export default function SearchGridMap() {
       const palette = STATUS_COLORS[sector.status];
 
       const poly = polygon(sector.coordinates, {
-        color: isSelected ? '#1e40af' : palette.border,
+        color: isSelected ? '#0F6B3A' : palette.border,
         weight: isSelected ? 3.5 : 2,
         fillColor: palette.fill,
         fillOpacity: isSelected ? 0.65 : 0.45,
@@ -152,16 +152,16 @@ export default function SearchGridMap() {
           <p>Real-time sector coordination over Milwaukee neighborhood blocks. Tap a sector to update status or join.</p>
         </div>
         <div className="search-grid-stats">
-          <span className="search-grid-stat-pill" style={{ background: '#dcfce7', color: '#166534' }}>
+          <span className="search-grid-stat-pill" style={{ background: 'var(--green-wash)', color: 'var(--green-ink)' }}>
             {stats.Cleared} Cleared
           </span>
-          <span className="search-grid-stat-pill" style={{ background: '#fef9c3', color: '#854d0e' }}>
+          <span className="search-grid-stat-pill" style={{ background: 'var(--amber-wash)', color: 'var(--amber-ink)' }}>
             {stats.Searching} Searching
           </span>
-          <span className="search-grid-stat-pill" style={{ background: '#dbeafe', color: '#1e40af' }}>
+          <span className="search-grid-stat-pill" style={{ background: 'var(--police-wash)', color: 'var(--police)' }}>
             {stats['Lead Found']} Lead Found
           </span>
-          <span className="search-grid-stat-pill" style={{ background: '#f1f5f9', color: '#475569' }}>
+          <span className="search-grid-stat-pill" style={{ background: 'var(--sunk)', color: 'var(--ink-2)' }}>
             {stats.Unsearched} Unsearched
           </span>
         </div>
@@ -208,7 +208,7 @@ export default function SearchGridMap() {
           <div className="search-sector-panel-content">
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                <strong id="selected-sector-title" style={{ fontSize: '1rem', color: '#0f172a' }}>
+                <strong id="selected-sector-title" style={{ fontSize: '1rem', color: 'var(--ink)' }}>
                   {selectedSector.name}
                 </strong>
                 <span
@@ -223,21 +223,21 @@ export default function SearchGridMap() {
                 >
                   {selectedSector.status}
                 </span>
-                <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                <span style={{ fontSize: '0.75rem', color: 'var(--ink-3)' }}>
                   Updated {selectedSector.updatedAt}
                 </span>
               </div>
 
               {selectedSector.notes && (
-                <p style={{ margin: '0.35rem 0', fontSize: '0.825rem', color: '#334155' }}>
+                <p style={{ margin: '0.35rem 0', fontSize: '0.825rem', color: 'var(--ink-2)' }}>
                   <strong>Notes / Field Report:</strong> {selectedSector.notes}
                 </p>
               )}
 
               <div style={{ marginTop: '0.5rem', fontSize: '0.825rem' }}>
-                <strong style={{ color: '#475569' }}>Assigned Searchers ({selectedSector.volunteers.length}):</strong>{' '}
+                <strong style={{ color: 'var(--ink-2)' }}>Assigned Searchers ({selectedSector.volunteers.length}):</strong>{' '}
                 {selectedSector.volunteers.length === 0 ? (
-                  <span style={{ fontStyle: 'italic', color: '#94a3b8' }}>None assigned yet</span>
+                  <span style={{ fontStyle: 'italic', color: 'var(--ink-3)' }}>None assigned yet</span>
                 ) : (
                   selectedSector.volunteers.map((vol, i) => (
                     <span key={i} className="search-volunteer-pill">
@@ -249,7 +249,7 @@ export default function SearchGridMap() {
 
               {/* Status Toggle Buttons */}
               <div className="search-sector-status-group">
-                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#475569' }}>Update Status:</span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--ink-2)' }}>Update Status:</span>
                 {(['Unsearched', 'Searching', 'Cleared', 'Lead Found'] as SectorStatus[]).map((statusOption) => (
                   <button
                     key={statusOption}
@@ -257,9 +257,9 @@ export default function SearchGridMap() {
                     className="search-status-btn"
                     onClick={() => handleUpdateStatus(selectedSector.id, statusOption)}
                     style={{
-                      backgroundColor: selectedSector.status === statusOption ? STATUS_COLORS[statusOption].badgeBg : '#ffffff',
+                      backgroundColor: selectedSector.status === statusOption ? STATUS_COLORS[statusOption].badgeBg : 'var(--card)',
                       color: STATUS_COLORS[statusOption].text,
-                      borderColor: selectedSector.status === statusOption ? STATUS_COLORS[statusOption].border : '#cbd5e1',
+                      borderColor: selectedSector.status === statusOption ? STATUS_COLORS[statusOption].border : 'var(--line-2)',
                     }}
                   >
                     {statusOption}

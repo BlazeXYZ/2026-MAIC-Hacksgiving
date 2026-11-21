@@ -58,6 +58,8 @@ const NEED_CATEGORY: Record<string, ServiceCategory> = {
   ride: 'ride',
   safe: 'shelter',
   warm: 'warmth',
+  'safe-place': 'shelter',
+  'warm-lobby': 'warmth',
   talk: 'support',
   other: 'other',
 };
