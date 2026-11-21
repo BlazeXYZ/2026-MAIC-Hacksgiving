@@ -35,3 +35,23 @@ python main.py
 - `POST /api/tickets/{ticket_id}/unclaim` reopens a ticket when given the same 64-character hexadecimal key as the claim body.
 
 The demo stores claims in memory. Restarting the server resets the board.
+
+## Community inventory
+
+Pantries and community safe places can list what they **have**, what they **need**, and what is **offered**. People pick an item from the shared catalog or describe it in their own words; free text is mapped to a catalog item through an alias table.
+
+Matching order, cheapest first: exact alias, known phrase inside the text, fuzzy match, then a **decision model** for wording nothing else could place, and finally a hold for a coordinator. The alias table stays human-curated:
+
+- Only seeded and coordinator-approved wordings are stored. Fuzzy matches and model answers are recomputed each time and kept on the entry as guesses, flagged `verified: false`, so a misspelling never reaches the table.
+- The decision model is [Jev](https://github.com/sebastianbennis/jev-system-one-reference) (set `TYPESAFE_API_KEY`; model pinned by `TYPESAFE_MODEL`, default `jev-1.13.0`), with Gemini or OpenAI as fallbacks and nothing at all in mock mode. It answers a `choice` question over the catalog plus a **"None fit"** option and returns a probability for each, so the top 3 candidates are kept on the entry. An answer is used (still flagged) when its best item is at least 0.6 likely and beats "None fit". Otherwise the entry is held with its candidates. Only scrubbed, 120-character wording is sent, and the Jev integration is tested against stubs, so run one real call with a key before relying on it.
+- A coordinator settles a held or guessed entry with `resolve` (pick an item, and optionally type the **correct wording** to remember) or `promote` (make a new item, with a clean `name` and an optional `alias_text`). Needs and donations with the same wording are settled together. Rejected wordings are never guessed again.
+
+Public routes (`/api/v1/inventory`): `catalog`, `locations`, `locations/{id}`, `locations/{id}/matches`, `locations/{id}/advice`, and `POST entries`.
+
+Coordinator routes (`/api/v1/inventory/admin`, need `X-Coordinator-Key`): list, create, rename, remap, reject or restore aliases; review `guesses`; rename catalog items; list and resolve held entries; close entries.
+
+**Privacy:** shelters are excluded from inventory entirely (see `inventory/locations.py`). They are left out of every list and answer 404 like an unknown place. Entries never store who made them, and typed text is scrubbed of contact details. Needs expire after 14 days, offers after 7, stock after 30. Data is held in memory and resets on restart.
+
+**Unknown items work both ways.** A need or a donation of something not in the catalog (say, a crib) is held for a coordinator. Held needs and donations with the same wording are grouped (`same_wording` on `GET admin/unresolved`). One coordinator decision, `promote` (make it a new catalog item) or `resolve` (point it at an existing item), settles all of them, and `POST admin/items` adds an item up front. From then on the wording matches instantly for both sides. `GET locations/{id}/matches` shows who can fill a place's needs, and `GET locations/{id}/demand` shows which open needs elsewhere a place's stock or offers could fill.
+
+**New item or another name?** The coordinator decides, and the system helps. Each held entry lists the closest existing items (`similar`, with the wording that looked closest and a score), so "crib" shows up next to "Baby crib". Creating or promoting an item that looks like an existing one is refused with a 409 that lists those items; the coordinator either resolves it to the existing item or repeats the request with `confirm_new: true`. A short wording fully inside a longer one counts as close ("crib" and "baby crib"), but sharing one generic word does not ("baby monitor" and "baby formula").
