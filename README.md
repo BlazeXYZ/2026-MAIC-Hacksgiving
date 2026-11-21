@@ -389,19 +389,21 @@ For deploying on a single cloud VPS (e.g., AWS EC2, DigitalOcean Droplet, Linode
    git clone https://github.com/BlazeXYZ/2026-MAIC-Hacksgiving.git /opt/comforce
    cd /opt/comforce
    ```
-2. Create a secure production `.env`:
+2. Create a secure production environment:
    ```bash
-   cp .env.example .env
+   export POSTGRES_PASSWORD='<strong-password>'
    ```
-   Set:
+   Compose requires that secret to be supplied by the deployment environment. Do not put the production password in the checked-in Compose file or commit a production `.env`.
+
+   Then start with the production override:
    ```env
-   APP_ENV=production
-   DEBUG=False
-   DATABASE_URL=postgresql+psycopg://comforce:<strong-password>@db:5432/comforce
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
    ```
-3. Start containers detached in the background:
+   The production override sets `APP_ENV=production`, `DEBUG=False`, disables reload, removes the source-volume mount, and keeps PostgreSQL private on the Compose network. Database credentials are read from `POSTGRES_PASSWORD` and no database port is published.
+3. Verify the resolved production configuration before deployment:
    ```bash
-   docker compose up -d
+   POSTGRES_PASSWORD='<strong-password>' docker compose -f docker-compose.yml -f docker-compose.prod.yml config
+   docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
    ```
 4. Configure Nginx with Let's Encrypt / Certbot on the host to provide HTTPS and proxy traffic to port 3000 (web) and 8000 (api).
 

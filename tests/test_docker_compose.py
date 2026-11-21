@@ -1,10 +1,13 @@
 """Unit tests verifying docker-compose.yml configuration and service definitions."""
 
+import os
+import subprocess
 from pathlib import Path
 
 import yaml
 
 COMPOSE_FILE = Path(__file__).resolve().parent.parent / "docker-compose.yml"
+PRODUCTION_COMPOSE_FILE = Path(__file__).resolve().parent.parent / "docker-compose.prod.yml"
 
 
 def test_compose_file_exists_and_is_valid_yaml() -> None:
@@ -46,3 +49,41 @@ def test_dockerfiles_exist() -> None:
     assert (repo_root / "deploy/docker/Dockerfile.api").is_file()
     assert (repo_root / "deploy/docker/Dockerfile.web").is_file()
     assert (repo_root / "deploy/docker/nginx.conf").is_file()
+
+
+def test_production_compose_override_resolves_secure_runtime() -> None:
+    repo_root = Path(__file__).resolve().parent.parent
+    env = os.environ.copy()
+    env["POSTGRES_PASSWORD"] = "test-only-production-password"
+    result = subprocess.run(
+        [
+            "docker",
+            "compose",
+            "-f",
+            str(COMPOSE_FILE),
+            "-f",
+            str(PRODUCTION_COMPOSE_FILE),
+            "config",
+            "--format",
+            "json",
+        ],
+        cwd=repo_root,
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+
+    import json
+
+    data = json.loads(result.stdout)
+    db = data["services"]["db"]
+    api = data["services"]["api"]
+
+    assert not db.get("ports")
+    assert db["environment"]["POSTGRES_PASSWORD"] == "test-only-production-password"
+    assert api["environment"]["APP_ENV"] == "production"
+    assert str(api["environment"]["DEBUG"]).lower() == "false"
+    assert "@db:5432/comforce" in api["environment"]["DATABASE_URL"]
+    assert not api.get("volumes")
+    assert "--reload" not in api["command"]
