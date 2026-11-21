@@ -56,8 +56,11 @@ def test_seed_is_idempotent() -> None:
     assert second["tickets_added"] == 0
 
     session = next(get_db())
-    total_resources = session.scalars(select(Resource)).all()
-    total_tickets = session.scalars(select(Ticket)).all()
+    try:
+        total_resources = session.scalars(select(Resource)).all()
+        total_tickets = session.scalars(select(Ticket)).all()
+    finally:
+        session.close()
 
     assert len(total_resources) == len(SAFE_PLACES) + len(FOOD_PANTRIES)
     assert len(total_tickets) == 5

@@ -7,6 +7,7 @@ import VolunteerTickets from './components/VolunteerTickets';
 import SearchGridMap from './components/search/SearchGridMap';
 import UrgentAlertBanner from './components/alerts/UrgentAlertBanner';
 import CoordinatorMap from './components/coordinator/CoordinatorMap';
+import CoordinatorSignIn from './components/coordinator/CoordinatorSignIn';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
 import InventoryHub from './components/inventory/InventoryHub';
 import InventoryReview from './components/inventory/review/InventoryReview';
@@ -15,7 +16,7 @@ import { Icon, LogoMark } from './components/ui/Icon';
 import type { IconName } from './components/ui/Icon';
 
 type HubId = 'domestic-safety' | 'missing-persons' | 'food-pantry';
-type Tab = 'home' | 'map' | 'inventory' | 'coordinator' | 'coordinator-ops' | 'inventory-review';
+type Tab = 'home' | 'map' | 'inventory' | 'coordinator' | 'coordinator-ops' | 'inventory-review' | 'staff-sign-in';
 
 interface Community {
   id: HubId;
@@ -81,8 +82,16 @@ export default function App(): ReactElement {
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [askingForHelp, setAskingForHelp] = useState<boolean>(false);
+  // Held in memory only: a reload or Quick Exit signs staff out.
+  const [coordinatorKey, setCoordinatorKey] = useState<string | null>(null);
   const surveyRef = useRef<HTMLElement>(null);
   const hubRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (!quickExitTriggered) return;
+    setCoordinatorKey(null);
+    setActiveTab('home');
+  }, [quickExitTriggered]);
 
   useEffect(() => {
     if (quickExitTriggered) return;
@@ -107,7 +116,7 @@ export default function App(): ReactElement {
   }
 
   const active = COMMUNITIES.find((c) => c.id === selectedCommunity) ?? COMMUNITIES[0];
-  const isStaff = STAFF_TABS.has(activeTab);
+  const isStaff = coordinatorKey !== null && STAFF_TABS.has(activeTab);
   const now = new Date();
   const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
 
@@ -144,6 +153,7 @@ export default function App(): ReactElement {
               {navButton('coordinator', 'Tonight')}
               {navButton('coordinator-ops', 'Ops map')}
               {navButton('inventory-review', 'Inventory')}
+              <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
               <button type="button" className="switch" onClick={() => go('home')}>Resident view</button>
             </>
           ) : (
@@ -151,7 +161,14 @@ export default function App(): ReactElement {
               {navButton('home', 'Home')}
               {navButton('map', 'Map')}
               {navButton('inventory', 'Inventory')}
-              <button type="button" className="switch" onClick={() => go('coordinator')}>Coordinator</button>
+              {coordinatorKey ? (
+                <>
+                  <button type="button" className="switch" onClick={() => go('coordinator')}>Coordinator</button>
+                  <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
+                </>
+              ) : (
+                <button type="button" className="switch" onClick={() => go('staff-sign-in')}>Staff sign in</button>
+              )}
             </>
           )}
         </nav>
@@ -174,12 +191,18 @@ export default function App(): ReactElement {
 
         {activeTab === 'inventory' && <InventoryHub />}
 
-        {activeTab === 'inventory-review' && <InventoryReview />}
+        {(activeTab === 'staff-sign-in' || (STAFF_TABS.has(activeTab) && !coordinatorKey)) && (
+          <CoordinatorSignIn onSignIn={(key) => { setCoordinatorKey(key); go(activeTab === 'staff-sign-in' ? 'coordinator' : activeTab); }} />
+        )}
 
-        {activeTab === 'coordinator' && <CoordinatorDashboard />}
+        {activeTab === 'inventory-review' && coordinatorKey && <InventoryReview initialKey={coordinatorKey} />}
 
-        {activeTab === 'coordinator-ops' && (
-          <CoordinatorMap />
+        {activeTab === 'coordinator' && coordinatorKey && (
+          <CoordinatorDashboard accessKey={coordinatorKey} />
+        )}
+
+        {activeTab === 'coordinator-ops' && coordinatorKey && (
+          <CoordinatorMap accessKey={coordinatorKey} />
         )}
 
         <div hidden={activeTab !== 'home'}>

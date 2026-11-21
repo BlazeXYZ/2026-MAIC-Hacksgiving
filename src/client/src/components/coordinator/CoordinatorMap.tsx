@@ -15,12 +15,13 @@ import {
   polygonToLatLngTuples,
   type HotspotCollection,
 } from '../../coordinator/hotspots';
+import { CoordinatorAccessError } from '../../coordinator/access';
 import './CoordinatorMap.css';
 
 const MILWAUKEE_CENTER: LatLngTuple = [43.0389, -87.9065];
 const ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 
-export default function CoordinatorMap() {
+export default function CoordinatorMap({ accessKey }: { accessKey: string }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapInstance | null>(null);
   const hotspotLayerGroupRef = useRef<ReturnType<typeof layerGroup> | null>(null);
@@ -31,17 +32,19 @@ export default function CoordinatorMap() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchCoordinatorHotspots('dev-coordinator-key', controller.signal)
+    fetchCoordinatorHotspots(accessKey, controller.signal)
       .then((collection) => {
         setHotspots(collection);
         setStatusMessage(`Loaded ${collection.features.length} hotspot density sectors.`);
       })
-      .catch(() => {
-        setStatusMessage('Using local fallback hotspot sectors.');
+      .catch((error: unknown) => {
+        setStatusMessage(error instanceof CoordinatorAccessError
+          ? 'Coordinator access was rejected. Sign out and sign in again.'
+          : 'Using local fallback hotspot sectors.');
       });
 
     return () => controller.abort();
-  }, []);
+  }, [accessKey]);
 
   useEffect(() => {
     const container = containerRef.current;
