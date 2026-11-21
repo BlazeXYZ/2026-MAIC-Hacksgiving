@@ -61,7 +61,7 @@ If you want to suggest a new community hub or feature, copy this template and ad
   An AI path planning tool that helps users in unsafe situations find a safe way out of a tense area, guiding them along lit streets toward trusted open buildings.
 * **AI Automated Routing to Services:**
   Automates directions to verified service locations. For example, if a user is on the MSOE campus, it automatically routes along lit campus paths to MSOE Public Safety (Public Services) at 1025 N Broadway. In the wider city, it routes to facilities like Sojourner Family Peace Center.
-* **Quick Exit (Safe Mode):**
+* **~~Quick Exit (Safe Mode):~~** *(retired in #125, removed in #126)*
   A discreet safety toggle for people in domestic abuse situations. Tapping the button immediately swaps the screen to an ordinary Milwaukee transit schedule and wipes local session history.
 * **Missing Persons Search Parties:**
   If a person is lost, coordinators can create search parties, broadcast verified information to everyone, and let volunteers mark off map grid areas as searched in real time.
