@@ -12,6 +12,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from fastapi.testclient import TestClient
 
+from src.server.ai.hotspots import COORDINATOR_API_KEY
 from src.server.main import app
 
 # 555 exchange, as AGENTS.md requires: 414-555-0100 through 414-555-0199.
@@ -25,7 +26,8 @@ def test_demo_data_is_present_for_every_service() -> None:
         assert len(client.get("/api/tickets").json()) >= 8
         assert len(client.get("/api/v1/resources/pantries").json()) >= 8
         assert len(client.get("/api/v1/resources/safe-places").json()) >= 9
-        assert len(client.get("/api/v1/coordinator/queue").json()["tickets"]) >= 10
+        resp = client.get("/api/v1/coordinator/queue", headers={"X-Coordinator-Key": COORDINATOR_API_KEY})
+        assert len(resp.json()["tickets"]) >= 10
 
 
 def test_demo_phone_numbers_are_synthetic() -> None:
@@ -37,10 +39,11 @@ def test_demo_phone_numbers_are_synthetic() -> None:
 
 
 def test_demo_queue_is_seeded_once() -> None:
+    headers = {"X-Coordinator-Key": COORDINATOR_API_KEY}
     with TestClient(app) as client:
-        first = client.get("/api/v1/coordinator/queue").json()["tickets"]
+        first = client.get("/api/v1/coordinator/queue", headers=headers).json()["tickets"]
     with TestClient(app) as client:  # a second startup must not duplicate the tickets
-        second = client.get("/api/v1/coordinator/queue").json()["tickets"]
+        second = client.get("/api/v1/coordinator/queue", headers=headers).json()["tickets"]
     tokens = [t["token"] for t in second]
     assert len(tokens) == len(set(tokens))
     assert len(second) == len(first)
