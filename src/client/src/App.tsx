@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import type { ReactElement } from 'react';
 import CommunityMap from './components/CommunityMap';
 import HelpSurvey from './components/HelpSurvey';
@@ -20,6 +20,9 @@ type HubId = 'domestic-safety' | 'missing-persons' | 'food-pantry';
 type Tab =
   | 'home'
   | 'map'
+  | 'help'
+  | 'requests'
+  | 'me'
   | 'inventory'
   | 'coordinator'
   | 'coordinator-ops'
@@ -90,6 +93,26 @@ const STAFF_TABS: ReadonlySet<Tab> = new Set([
   'forum-review',
 ]);
 
+const PHONE_TABS = [
+  { tab: 'home', label: 'Home', icon: 'home' },
+  { tab: 'map', label: 'Map', icon: 'pin' },
+  { tab: 'help', label: 'Ask for help', icon: 'plus' },
+  { tab: 'requests', label: 'Requests', icon: 'board' },
+  { tab: 'me', label: 'Me', icon: 'user' },
+] as const;
+const PHONE_ONLY_TABS: ReadonlySet<Tab> = new Set(['help', 'requests', 'me']);
+const PHONE_WIDTH = '(max-width: 640px)';
+
+function subscribeToPhoneWidth(notify: () => void): () => void {
+  const media = window.matchMedia(PHONE_WIDTH);
+  media.addEventListener('change', notify);
+  return () => media.removeEventListener('change', notify);
+}
+
+function atPhoneWidth(): boolean {
+  return window.matchMedia(PHONE_WIDTH).matches;
+}
+
 function partOfDay(date: Date): string {
   const hour = date.getHours();
   if (hour < 12) return 'morning';
@@ -110,6 +133,17 @@ export default function App(): ReactElement {
   const [priorityAlert, setPriorityAlert] = useState<MissingPersonAlert | null>(null);
   const surveyRef = useRef<HTMLElement>(null);
   const hubRef = useRef<HTMLElement>(null);
+  const phoneWidth = useSyncExternalStore(subscribeToPhoneWidth, atPhoneWidth);
+  const isStaff = coordinatorKey !== null && STAFF_TABS.has(activeTab);
+  const phoneShell = phoneWidth && !isStaff;
+  const currentTab = !phoneShell && PHONE_ONLY_TABS.has(activeTab) ? 'home' : activeTab;
+  const showHome = currentTab === 'home';
+  const showRequests = currentTab === 'requests';
+  const surveyOpen = activeTab === 'help' || askingForHelp;
+  const showSurvey = currentTab === 'help' || (!phoneShell && showHome && surveyOpen);
+  const currentPhoneTab = currentTab === 'inventory' || STAFF_TABS.has(currentTab) || currentTab === 'staff-sign-in'
+    ? 'me'
+    : currentTab;
 
   useEffect(() => {
     const ctrl = new AbortController();
@@ -136,15 +170,15 @@ export default function App(): ReactElement {
   }, []);
 
   useEffect(() => {
-    if (askingForHelp) surveyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [askingForHelp]);
+    if (showSurvey && showHome) surveyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [showSurvey, showHome]);
 
   const active = COMMUNITIES.find((c) => c.id === selectedCommunity) ?? COMMUNITIES[0];
-  const isStaff = coordinatorKey !== null && STAFF_TABS.has(activeTab);
   const now = new Date();
   const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
 
   function go(tab: Tab): void {
+    if (tab === 'help') setAskingForHelp(true);
     setActiveTab(tab);
     window.scrollTo({ top: 0 });
   }
@@ -158,49 +192,107 @@ export default function App(): ReactElement {
 
   function navButton(tab: Tab, label: string): ReactElement {
     return (
-      <button type="button" aria-current={activeTab === tab ? 'page' : undefined} onClick={() => go(tab)}>
+      <button type="button" aria-current={currentTab === tab ? 'page' : undefined} onClick={() => go(tab)}>
         <span>{label}</span>
       </button>
     );
   }
 
-  return (
-    <div className="app">
-      <header className={isStaff ? 'dnav staff' : 'dnav'}>
-        <button type="button" className="logo" onClick={() => go(isStaff ? 'coordinator' : 'home')} aria-label="ComForce MKE home">
-          <LogoMark />
-          <b>ComForce <span>MKE</span></b>
+  const emergencyLine = (
+    <div className="sos">
+      <Icon name="phone" />
+      <span>
+        In danger? Call <a href="tel:911">911</a> · 24/7 line <a href={COMFORCE_HOTLINE.tel}>{COMFORCE_HOTLINE.display}</a>
+      </span>
+    </div>
+  );
+
+  const needsSection = (
+    <section key="home-needs" className="mod c5 home-needs" aria-labelledby="needs-title">
+      <div className="mod-h">
+        <h2 id="needs-title">What do you need?</h2>
+      </div>
+      <div className="needs">
+        <button type="button" className="primary" onClick={() => {
+          if (phoneShell) go('help');
+          else setAskingForHelp(true);
+        }}>
+          <span className="sq"><Icon name="plus" /></span>
+          <span><b>Ask for help</b><small>Food, a ride, a check-in</small></span>
+          <Icon name="chev" className="ic chev" />
         </button>
-        {isStaff && <span className="ws">Coordinator</span>}
-        <nav aria-label="Main navigation">
-          {isStaff ? (
-            <>
-              {navButton('coordinator', 'Tonight')}
-              {navButton('coordinator-ops', 'Ops map')}
-              {navButton('inventory-review', 'Inventory')}
-              {navButton('forum-review', 'Held posts')}
-              <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
-              <button type="button" className="switch" onClick={() => go('home')}>Resident view</button>
-            </>
-          ) : (
-            <>
-              {navButton('home', 'Home')}
-              {navButton('map', 'Map')}
-              {navButton('inventory', 'Inventory')}
-              {coordinatorKey ? (
-                <>
-                  <button type="button" className="switch" onClick={() => go('coordinator')}>Coordinator</button>
-                  <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
-                </>
-              ) : (
-                <button type="button" className="switch" onClick={() => go('staff-sign-in')}>Staff sign in</button>
-              )}
-            </>
-          )}
-        </nav>
-      </header>
+        <button type="button" onClick={() => go('map')}>
+          <span className="sq"><Icon name="shield" /></span>
+          <span><b>Get somewhere safe</b><small>Verified safe places and lit walking routes</small></span>
+          <Icon name="chev" className="ic chev" />
+        </button>
+        <button type="button" onClick={() => openHub('food-pantry')}>
+          <span className="sq"><Icon name="food" /></span>
+          <span><b>Find food tonight</b><small>Pantries and mutual aid near you</small></span>
+          <Icon name="chev" className="ic chev" />
+        </button>
+        <button type="button" onClick={() => openHub('missing-persons', 'tool')}>
+          <span className="sq"><Icon name="search" /></span>
+          <span><b>Join a search</b><small>Help cover a sector with other neighbors</small></span>
+          <Icon name="chev" className="ic chev" />
+        </button>
+      </div>
+      {emergencyLine}
+    </section>
+  );
+
+  return (
+    <div className={phoneShell ? 'app resident-phone' : 'app'}>
+      {phoneShell ? (
+        <header className="ph-top">
+          <button type="button" className="logo" onClick={() => go('home')} aria-label="ComForce MKE home">
+            <LogoMark />
+            <b>ComForce <span>MKE</span></b>
+          </button>
+        </header>
+      ) : (
+        <header className={isStaff ? 'dnav staff' : 'dnav'}>
+          <button type="button" className="logo" onClick={() => go(isStaff ? 'coordinator' : 'home')} aria-label="ComForce MKE home">
+            <LogoMark />
+            <b>ComForce <span>MKE</span></b>
+          </button>
+          {isStaff && <span className="ws">Coordinator</span>}
+          <nav aria-label="Main navigation">
+            {isStaff ? (
+              <>
+                {navButton('coordinator', 'Tonight')}
+                {navButton('coordinator-ops', 'Ops map')}
+                {navButton('inventory-review', 'Inventory')}
+                {navButton('forum-review', 'Held posts')}
+                <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
+                <button type="button" className="switch" onClick={() => go('home')}>Resident view</button>
+              </>
+            ) : (
+              <>
+                {navButton('home', 'Home')}
+                {navButton('map', 'Map')}
+                {navButton('inventory', 'Inventory')}
+                {coordinatorKey ? (
+                  <>
+                    <button type="button" className="switch" onClick={() => go('coordinator')}>Coordinator</button>
+                    <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
+                  </>
+                ) : (
+                  <button type="button" className="switch" onClick={() => go('staff-sign-in')}>Staff sign in</button>
+                )}
+              </>
+            )}
+          </nav>
+        </header>
+      )}
 
       <main className="dpage">
+        {phoneShell && showHome && (
+          <section className="greet" aria-labelledby="phone-greet-title">
+            <div className="kicker">Milwaukee · {weekday}</div>
+            <h1 id="phone-greet-title">Good {partOfDay(now)}, <em>neighbor.</em></h1>
+          </section>
+        )}
         {!isStaff && priorityAlert && (
           <UrgentAlertBanner
             alert={priorityAlert}
@@ -230,7 +322,31 @@ export default function App(): ReactElement {
           <CoordinatorMap accessKey={coordinatorKey} />
         )}
 
-        <div hidden={activeTab !== 'home'}>
+        {phoneShell && currentTab === 'me' && (
+          <div className="phone-menu-page">
+            <section className="mod" aria-labelledby="phone-me-title">
+              <div className="mod-h"><h2 id="phone-me-title">Me</h2></div>
+              <div className="mod-b phone-menu">
+                <button type="button" className="btn" onClick={() => go('inventory')}>Inventory</button>
+                {coordinatorKey ? (
+                  <>
+                    <button type="button" className="btn" onClick={() => go('coordinator')}>Coordinator</button>
+                    <button type="button" className="btn" onClick={() => setCoordinatorKey(null)}>Sign out</button>
+                  </>
+                ) : (
+                  <button type="button" className="btn" onClick={() => go('staff-sign-in')}>Staff sign in</button>
+                )}
+              </div>
+            </section>
+            <section className="mod" aria-labelledby="phone-safety-title">
+              <div className="mod-h"><h2 id="phone-safety-title">Privacy &amp; safety</h2></div>
+              <p className="mod-b">Keep your request code private. Anyone with the code can check your request status.</p>
+              {emergencyLine}
+            </section>
+          </div>
+        )}
+
+        {!phoneShell && showHome && (
           <section className="greet" aria-labelledby="greet-title">
             <div className="kicker">Milwaukee · {weekday} {partOfDay(now)}</div>
             <h1 id="greet-title">Welcome. <em>Glad you&rsquo;re here.</em></h1>
@@ -239,21 +355,31 @@ export default function App(): ReactElement {
               happening near you.
             </p>
           </section>
+        )}
 
-          {askingForHelp && (
+        {surveyOpen && (
+          <div hidden={!showSurvey}>
             <section className="mod" ref={surveyRef} aria-label="Ask for help" style={{ marginBottom: 24, scrollMarginTop: 96 }}>
               <div className="mod-h">
                 <h2>Ask for help</h2>
-                <button type="button" className="more" onClick={() => setAskingForHelp(false)}>Close</button>
+                {showHome && (
+                  <button type="button" className="more" onClick={() => {
+                    setAskingForHelp(false);
+                    if (activeTab === 'help') go('home');
+                  }}>Close</button>
+                )}
               </div>
               <div className="mod-b">
                 <HelpSurvey />
               </div>
             </section>
-          )}
+          </div>
+        )}
 
+        <div hidden={!showHome}>
           <div className="g12 stretch">
-            <section className="mod c7" ref={hubRef} aria-labelledby="hubs-title" style={{ scrollMarginTop: 96 }}>
+            {phoneShell && needsSection}
+            <section key="home-hubs" className="mod c7" ref={hubRef} aria-labelledby="hubs-title" style={{ scrollMarginTop: 96 }}>
               <div className="mod-h">
                 <h2 id="hubs-title">Your hubs</h2>
                 <span className="count">{COMMUNITIES.length} active</span>
@@ -354,67 +480,67 @@ export default function App(): ReactElement {
               </div>
             </section>
 
-            <section className="mod c5" aria-labelledby="needs-title">
-              <div className="mod-h">
-                <h2 id="needs-title">What do you need?</h2>
-              </div>
-              <div className="needs">
-                <button type="button" className="primary" onClick={() => setAskingForHelp(true)}>
-                  <span className="sq"><Icon name="plus" /></span>
-                  <span><b>Ask for help</b><small>Food, a ride, a check-in</small></span>
-                  <Icon name="chev" className="ic chev" />
-                </button>
-                <button type="button" onClick={() => go('map')}>
-                  <span className="sq"><Icon name="shield" /></span>
-                  <span><b>Get somewhere safe</b><small>Verified safe places and lit walking routes</small></span>
-                  <Icon name="chev" className="ic chev" />
-                </button>
-                <button type="button" onClick={() => openHub('food-pantry')}>
-                  <span className="sq"><Icon name="food" /></span>
-                  <span><b>Find food tonight</b><small>Pantries and mutual aid near you</small></span>
-                  <Icon name="chev" className="ic chev" />
-                </button>
-                <button type="button" onClick={() => openHub('missing-persons', 'tool')}>
-                  <span className="sq"><Icon name="search" /></span>
-                  <span><b>Join a search</b><small>Help cover a sector with other neighbors</small></span>
-                  <Icon name="chev" className="ic chev" />
-                </button>
-              </div>
-              <div className="sos">
-                <Icon name="phone" />
-                <span>
-                  In danger? Call <a href="tel:911">911</a> · 24/7 line <a href={COMFORCE_HOTLINE.tel}>{COMFORCE_HOTLINE.display}</a>
-                </span>
-              </div>
-            </section>
+            {!phoneShell && needsSection}
           </div>
+        </div>
 
+        <div hidden={!showHome && !showRequests}>
           <div className="g12">
-            <div className="c7">
+            <div className={showRequests ? 'c12' : 'c7'} hidden={phoneShell && showHome}>
               <VolunteerTickets />
             </div>
-            <section className="mod c5" aria-labelledby="districts-title">
-              <div className="mod-h">
-                <h2 id="districts-title">Where help is short</h2>
-                <button type="button" className="more" onClick={() => go('coordinator')}>Coordinator view</button>
-              </div>
-              <div className="mod-b dist-rows">
-                {DISTRICTS.map((d) => (
-                  <div key={d.name}>
-                    <span>{d.name}</span>
-                    <b className={d.short ? 'short' : undefined}>{d.calls} active calls</b>
-                  </div>
-                ))}
-              </div>
-            </section>
+            {phoneShell && showHome && (
+              <section className="mod c12" aria-labelledby="phone-requests-title">
+                <div className="mod-h"><h2 id="phone-requests-title">Neighbors who need a hand</h2></div>
+                <div className="mod-b">
+                  <button type="button" className="btn" onClick={() => go('requests')}>
+                    Browse requests <Icon name="chev" />
+                  </button>
+                </div>
+              </section>
+            )}
+            {!phoneShell && (
+              <section className="mod c5" aria-labelledby="districts-title">
+                <div className="mod-h">
+                  <h2 id="districts-title">Where help is short</h2>
+                  <button type="button" className="more" onClick={() => go('coordinator')}>Coordinator view</button>
+                </div>
+                <div className="mod-b dist-rows">
+                  {DISTRICTS.map((d) => (
+                    <div key={d.name}>
+                      <span>{d.name}</span>
+                      <b className={d.short ? 'short' : undefined}>{d.calls} active calls</b>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
         </div>
       </main>
 
-      <footer className="dfoot">
-        <span><b>ComForce MKE</b> · Community Task Force MKE · Milwaukee, WI</span>
-        <span><b>Made in Milwaukee</b> · prototype, sample data</span>
-      </footer>
+      {phoneShell ? (
+        <nav className="tabbar" aria-label="Resident navigation">
+          {PHONE_TABS.map(({ tab, label, icon }) => (
+            <button
+              key={tab}
+              type="button"
+              className={tab === 'help' ? 'post' : undefined}
+              aria-label={tab === 'help' ? label : undefined}
+              aria-current={currentPhoneTab === tab ? 'page' : undefined}
+              onClick={() => go(tab)}
+            >
+              <Icon name={icon} />
+              {tab !== 'help' && <span>{label}</span>}
+            </button>
+          ))}
+        </nav>
+      ) : (
+        <footer className="dfoot">
+          <span><b>ComForce MKE</b> · Community Task Force MKE · Milwaukee, WI</span>
+          <span><b>Made in Milwaukee</b> · prototype, sample data</span>
+        </footer>
+      )}
     </div>
   );
 }

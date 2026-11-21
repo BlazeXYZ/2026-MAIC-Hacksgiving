@@ -3,6 +3,14 @@ import type { ReactElement } from 'react';
 /* Stroke icons and the ComForce logo mark, copied from the symbol set in
    docs/design/src/common/defs.html so the app matches the mockup exactly. */
 const PATHS = {
+  home: <path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z" />,
+  board: <path d="M8 4H5a1 1 0 0 0-1 1v15a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V5a1 1 0 0 0-1-1h-3M8 4V2h8v5H8zM8 12h8M8 16h8" />,
+  user: (
+    <>
+      <circle cx="12" cy="7" r="4" />
+      <path d="M4 21v-2a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v2" />
+    </>
+  ),
   plus: <path d="M12 5v14M5 12h14" />,
   shield: <path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3z" />,
   food: <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2M7 2v20M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7" />,
