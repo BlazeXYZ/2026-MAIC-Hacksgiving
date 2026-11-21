@@ -46,6 +46,9 @@ class CoordinatorTicket(BaseModel):
 class QueueCounts(BaseModel):
     total_urgent: int
     total_pending: int
+    total_open: int = 0
+    total_matching: int = 0
+    district_counts: dict[str, dict[str, int]] = Field(default_factory=dict)
 
 
 class QueuePage(BaseModel):

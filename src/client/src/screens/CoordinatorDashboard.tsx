@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import type {
   CoordinatorTicket,
   TicketStatus,
-  UrgencyLevel,
   ServiceCategory,
 } from '../contracts/coordinator';
 import { coordinatorHeaders } from '../coordinator/access';
@@ -81,12 +80,6 @@ const SAMPLE_COORDINATOR_TICKETS: CoordinatorTicket[] = [
   },
 ];
 
-const URGENCY_WEIGHT: Record<UrgencyLevel, number> = {
-  urgent: 3,
-  today: 2,
-  this_week: 1,
-};
-
 const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   food: 'Food Pantry',
   safe_place: 'Safe Haven',
@@ -103,6 +96,16 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
   const [urgencyFilter, setUrgencyFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const pageSize = 20;
+  const [totalMatching, setTotalMatching] = useState<number>(SAMPLE_COORDINATOR_TICKETS.length);
+  const [serverCounts, setServerCounts] = useState<{
+    total_urgent: number;
+    total_pending: number;
+    total_open?: number;
+    total_matching?: number;
+    district_counts?: Record<string, { total: number; urgent: number }>;
+  } | null>(null);
 
   // Sorting state (criteria: sorting by time and urgency)
   const [sortField, setSortField] = useState<'time' | 'urgency'>('urgency');
@@ -114,25 +117,54 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
   const [assignStatus, setAssignStatus] = useState<TicketStatus>('assigned');
   const [assignNotes, setAssignNotes] = useState<string>('');
 
+  const updateDistrict = (d: string) => { setDistrictFilter(d); setCurrentPage(1); };
+  const updateUrgency = (u: string) => { setUrgencyFilter(u); setCurrentPage(1); };
+  const updateStatus = (s: string) => { setStatusFilter(s); setCurrentPage(1); };
+  const updateSearch = (q: string) => { setSearchTerm(q); setCurrentPage(1); };
+
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/v1/coordinator/queue', { signal: controller.signal, headers: coordinatorHeaders(accessKey) })
+    const params = new URLSearchParams();
+    params.set('limit', String(pageSize));
+    params.set('offset', String((currentPage - 1) * pageSize));
+    if (districtFilter !== 'all') params.set('district', districtFilter);
+    if (urgencyFilter !== 'all') params.set('urgency', urgencyFilter);
+    if (statusFilter !== 'all') params.set('status', statusFilter);
+    if (searchTerm.trim()) params.set('search', searchTerm.trim());
+    params.set('sort_by', sortField);
+    params.set('sort_order', sortOrder);
+
+    fetch(`/api/v1/coordinator/queue?${params.toString()}`, {
+      signal: controller.signal,
+      headers: coordinatorHeaders(accessKey),
+    })
       .then((res) => {
         if (!res.ok) return;
+        const total = res.headers.get('X-Total-Count');
+        if (total !== null) setTotalMatching(parseInt(total, 10) || 0);
         return res.json();
       })
       .then((data) => {
-        if (data?.tickets && Array.isArray(data.tickets) && data.tickets.length > 0) {
+        if (data?.tickets && Array.isArray(data.tickets)) {
           setTickets(data.tickets);
+        }
+        if (data?.counts) {
+          setServerCounts(data.counts);
+          if (data.counts.total_matching !== undefined) {
+            setTotalMatching(data.counts.total_matching);
+          }
         }
       })
       .catch(() => undefined);
 
     return () => controller.abort();
-  }, [accessKey]);
+  }, [accessKey, currentPage, pageSize, districtFilter, urgencyFilter, statusFilter, searchTerm, sortField, sortOrder]);
 
   // District summary counts for badges
   const districtCounts = useMemo(() => {
+    if (serverCounts?.district_counts && Object.keys(serverCounts.district_counts).length > 0) {
+      return serverCounts.district_counts;
+    }
     const counts: Record<string, { total: number; urgent: number }> = {};
     for (const ticket of tickets) {
       const d = ticket.district || 'Unassigned';
@@ -141,7 +173,11 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
       if (ticket.urgency === 'urgent') counts[d].urgent += 1;
     }
     return counts;
-  }, [tickets]);
+  }, [tickets, serverCounts]);
+
+  const totalTickets = useMemo(() => {
+    return Object.values(districtCounts).reduce((acc, c) => acc + c.total, 0);
+  }, [districtCounts]);
 
   // Headline numbers for the KPI tiles
   const kpis = useMemo(() => {
@@ -152,8 +188,8 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
       return min === null || created < min ? created : min;
     }, null);
     return {
-      urgentUnassigned: waiting.filter((t) => t.urgency === 'urgent').length,
-      open: tickets.filter((t) => t.status !== 'resolved').length,
+      urgentUnassigned: serverCounts?.total_urgent ?? waiting.filter((t) => t.urgency === 'urgent').length,
+      open: serverCounts?.total_open ?? tickets.filter((t) => t.status !== 'resolved').length,
       volunteersOut: new Set(
         tickets
           .filter((t) => (t.status === 'assigned' || t.status === 'in_progress') && t.volunteer_id)
@@ -161,37 +197,10 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
       ).size,
       oldestWaitingMin: oldest === null ? null : Math.max(0, Math.round((now - oldest) / 60000)),
     };
-  }, [tickets]);
+  }, [tickets, serverCounts]);
 
-  // Filtering & Sorting
-  const displayedTickets = useMemo(() => {
-    const filtered = tickets.filter((t) => {
-      if (districtFilter !== 'all' && (t.district || 'Unassigned') !== districtFilter) return false;
-      if (urgencyFilter !== 'all' && t.urgency !== urgencyFilter) return false;
-      if (statusFilter !== 'all' && t.status !== statusFilter) return false;
-      if (searchTerm) {
-        const query = searchTerm.toLowerCase();
-        const matchesSummary = t.summary.toLowerCase().includes(query);
-        const matchesId = t.ticket_id.toLowerCase().includes(query);
-        const matchesVolunteer = t.volunteer_alias?.toLowerCase().includes(query);
-        if (!matchesSummary && !matchesId && !matchesVolunteer) return false;
-      }
-      return true;
-    });
-
-    filtered.sort((a, b) => {
-      if (sortField === 'urgency') {
-        const diff = URGENCY_WEIGHT[b.urgency] - URGENCY_WEIGHT[a.urgency];
-        return sortOrder === 'desc' ? diff : -diff;
-      } else {
-        const timeA = new Date(a.created_at).getTime();
-        const timeB = new Date(b.created_at).getTime();
-        return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
-      }
-    });
-
-    return filtered;
-  }, [tickets, districtFilter, urgencyFilter, statusFilter, searchTerm, sortField, sortOrder]);
+  // Displayed tickets are returned sorted and paged by server
+  const displayedTickets = tickets;
 
   const toggleSort = (field: 'time' | 'urgency') => {
     if (sortField === field) {
@@ -304,7 +313,7 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
         <div className="kpi">
           <span>Open requests</span>
           <b>{kpis.open}</b>
-          <small>of {tickets.length} in the queue</small>
+          <small>of {totalTickets} in the queue</small>
         </div>
         <div className="kpi">
           <span>Volunteers out now</span>
@@ -323,16 +332,16 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
         <button
           type="button"
           className={`coordinator-badge-pill ${districtFilter === 'all' ? 'coordinator-badge-pill--active' : ''}`}
-          onClick={() => setDistrictFilter('all')}
+          onClick={() => updateDistrict('all')}
         >
-          All Districts <span className="coordinator-badge-count">{tickets.length}</span>
+          All Districts <span className="coordinator-badge-count">{totalTickets}</span>
         </button>
         {Object.entries(districtCounts).map(([dist, info]) => (
           <button
             key={dist}
             type="button"
             className={`coordinator-badge-pill ${districtFilter === dist ? 'coordinator-badge-pill--active' : ''}`}
-            onClick={() => setDistrictFilter(dist)}
+            onClick={() => updateDistrict(dist)}
           >
             {dist}{' '}
             <span className={`coordinator-badge-count ${info.urgent > 0 ? 'coordinator-badge-count--urgent' : ''}`}>
@@ -349,13 +358,13 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
             type="search"
             placeholder="Search request or ID…"
             value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            onChange={(e) => updateSearch(e.target.value)}
             className="coordinator-search-input"
             aria-label="Search requests"
           />
           <select
             value={urgencyFilter}
-            onChange={(e) => setUrgencyFilter(e.target.value)}
+            onChange={(e) => updateUrgency(e.target.value)}
             className="coordinator-select"
             aria-label="Filter by urgency"
           >
@@ -366,7 +375,7 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
           </select>
           <select
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
+            onChange={(e) => updateStatus(e.target.value)}
             className="coordinator-select"
             aria-label="Filter by status"
           >
@@ -521,6 +530,42 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
             )}
           </tbody>
         </table>
+        <div
+          className="coordinator-pagination"
+          style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            padding: '1rem',
+            borderTop: '1px solid var(--line, #e2e8f0)',
+          }}
+        >
+          <div style={{ color: 'var(--ink-2, #64748b)', fontSize: '0.875rem' }}>
+            Showing {totalMatching === 0 ? 0 : (currentPage - 1) * pageSize + 1} to{' '}
+            {Math.min(currentPage * pageSize, totalMatching)} of {totalMatching} requests
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            <button
+              type="button"
+              className="coordinator-action-btn"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+            >
+              Previous
+            </button>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>
+              Page {currentPage} of {Math.max(1, Math.ceil(totalMatching / pageSize))}
+            </span>
+            <button
+              type="button"
+              className="coordinator-action-btn"
+              disabled={currentPage >= Math.ceil(totalMatching / pageSize)}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              Next
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Assign / Edit Modal */}
