@@ -44,6 +44,6 @@ Before pushing and opening a PR, the agent must run:
 
 ## 3. Data Privacy & Standards
 
-- **Privacy by Default:** Always scrub phone numbers, addresses, and private contact information from user input before sending to external LLMs or logs. Use `src/server/privacy.py:scrub()`.
+- **Privacy by Default:** Always scrub phone numbers, addresses, and private contact information from user input before sending to external LLMs or logs. Use `src/server/ai/pii.py:scrub_pii()` (or `src/server/privacy.py:scrub()`).
 - **Synthetic Test Data Only:** Never hardcode real phone numbers or addresses in test fixtures. Use `555` exchange numbers and synthetic street addresses.
 - **Strict Typing:** All Python functions must include type annotations on arguments and return values.
