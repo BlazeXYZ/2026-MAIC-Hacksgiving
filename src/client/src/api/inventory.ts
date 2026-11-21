@@ -18,8 +18,8 @@ import type {
 /**
  * Client for the community inventory API (`/api/v1/inventory`).
  *
- * Coordinator calls send `X-Coordinator-Key`. The key lives only in memory, so Quick Exit, which
- * unmounts the app, wipes it.
+ * Coordinator calls send `X-Coordinator-Key`. The key lives only in memory, so closing or
+ * reloading the tab wipes it.
  */
 
 const BASE = '/api/v1/inventory';

@@ -89,7 +89,6 @@ The platform is designed around **Modular Communities**. Every community shares 
 
 ### 1. Domestic Abuse Support (Initial Flagship Community)
 * **Safe Walk & Routing:** If you are on the MSOE campus, it automatically plans a route along lit paths to MSOE Public Safety at 1025 N Broadway. In the city, it directs to Sojourner Family Peace Center.
-* **Quick Exit (Safe Mode):** Tapping the red Quick Exit button immediately swaps the screen to an ordinary Milwaukee bus schedule and wipes all local session data.
 * **Confidential Support Tickets:** Residents can request discrete check-ins without sharing their full contact details publicly.
 
 ### 2. Missing Persons Search Network

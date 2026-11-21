@@ -46,7 +46,7 @@ export default function KeyPrompt({ reason, onUnlock }: Props): ReactElement {
         autoComplete="off"
         spellCheck={false}
       />
-      <p className="meta">The key stays in this tab&rsquo;s memory only. Closing the tab or using Quick Exit clears it.</p>
+      <p className="meta">The key stays in this tab&rsquo;s memory only. Closing or reloading the tab clears it.</p>
       {error && (
         <p className="inv-error" role="alert">
           {error}

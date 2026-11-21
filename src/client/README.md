@@ -41,7 +41,6 @@ For fast local testing of touch interactions, mobile safe areas, and responsive 
 5. Verify:
    - **Safe area insets:** The sticky emergency alert banner and navigation respect top notch / Dynamic Island and bottom gesture pill bar (`viewport-fit=cover` and `env(safe-area-inset-*)`).
    - **Touch targets:** All buttons, community selector pills, and ticket claim actions have a minimum touch target of 44x44px.
-   - **Quick Exit gesture:** The prominent red "Quick Exit" button triggers immediately and smoothly displays the transit disguise screen.
 
 ### 3. Native Platform Export
 

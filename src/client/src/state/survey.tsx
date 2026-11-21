@@ -50,7 +50,7 @@ const SurveyContext = createContext<SurveyContextValue | null>(null);
 
 /**
  * Holds survey answers in React memory only. Nothing is written to localStorage or sessionStorage,
- * so Quick Exit can wipe everything by remounting this provider (see `QuickExitProvider`).
+ * so a reload or tab close wipes everything.
  */
 export function SurveyProvider({ children }: { children: ReactNode }) {
   const [survey, setSurvey] = useState<SurveyState>(INITIAL);

@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import CommunityMap from './components/CommunityMap';
-import DeliveryCover from './components/DeliveryCover';
 import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
 import SearchGridMap from './components/search/SearchGridMap';
@@ -100,46 +99,20 @@ function partOfDay(date: Date): string {
 
 export default function App(): ReactElement {
   const [selectedCommunity, setSelectedCommunity] = useState<HubId>('domestic-safety');
-  const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [askingForHelp, setAskingForHelp] = useState<boolean>(false);
   const [inventoryAction, setInventoryAction] = useState<'request' | 'give' | 'remove' | null>(null);
-  // Held in memory only: a reload or Quick Exit signs staff out.
+  // Held in memory only: a reload signs staff out.
   const [coordinatorKey, setCoordinatorKey] = useState<string | null>(null);
-  // Forum pseudonym for this session. Memory only, so a reload or Quick Exit drops it.
+  // Forum pseudonym for this session. Memory only, so a reload drops it.
   const [forumHandle, setForumHandle] = useState<string | null>(null);
   const [hubView, setHubView] = useState<HubView>('threads');
   const surveyRef = useRef<HTMLElement>(null);
   const hubRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (!quickExitTriggered) return;
-    setCoordinatorKey(null);
-    setForumHandle(null);
-    setActiveTab('home');
-  }, [quickExitTriggered]);
-
-  useEffect(() => {
-    if (quickExitTriggered) return;
-
-    function handleQuickExit(event: KeyboardEvent): void {
-      if (event.key === 'Escape' && !event.repeat) {
-        event.preventDefault();
-        setQuickExitTriggered(true);
-      }
-    }
-
-    window.addEventListener('keydown', handleQuickExit, true);
-    return () => window.removeEventListener('keydown', handleQuickExit, true);
-  }, [quickExitTriggered]);
-
-  useEffect(() => {
     if (askingForHelp) surveyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [askingForHelp]);
-
-  if (quickExitTriggered) {
-    return <DeliveryCover onReturn={() => setQuickExitTriggered(false)} />;
-  }
 
   const active = COMMUNITIES.find((c) => c.id === selectedCommunity) ?? COMMUNITIES[0];
   const isStaff = coordinatorKey !== null && STAFF_TABS.has(activeTab);
@@ -200,16 +173,6 @@ export default function App(): ReactElement {
             </>
           )}
         </nav>
-        <div className="dtools">
-          <button
-            type="button"
-            className="esc"
-            aria-keyshortcuts="Escape"
-            onClick={() => setQuickExitTriggered(true)}
-          >
-            <kbd>esc</kbd>Quick exit
-          </button>
-        </div>
       </header>
 
       <main className="dpage">

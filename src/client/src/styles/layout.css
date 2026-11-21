@@ -23,9 +23,6 @@
 .dnav nav button[aria-current="page"] { color: var(--ink); font-weight: 700; }
 .dnav nav button[aria-current="page"] span { background: linear-gradient(transparent 58%, var(--hivis) 58% 94%, transparent 94%); }
 .dnav nav .switch { margin-left: auto; color: var(--green); font-weight: 700; }
-.dtools { display: flex; align-items: center; gap: 12px; }
-.esc { display: inline-flex; align-items: center; gap: 10px; height: 40px; padding: 0 14px 0 8px; border: 0; border-radius: 10px; background: var(--red); color: #fff; font-weight: 700; font-size: 15px; cursor: pointer; white-space: nowrap; }
-.esc kbd { font-family: var(--f); font-size: 12px; font-weight: 700; background: #fff; color: var(--red-deep); border-radius: 5px; padding: 3px 6px; }
 
 /* coordinator workspace: a dark header so staff always know which mode they're in */
 .dnav.staff { background-color: var(--ink); background-image: var(--fence-dark); color: #fff; border-color: var(--ink); }
@@ -132,7 +129,6 @@
   .dnav { flex-wrap: wrap; height: auto; padding: 10px 16px; row-gap: 4px; }
   .app::before { top: 100px; }
   .dnav nav { order: 3; width: 100%; flex: none; gap: 20px; }
-  .dtools { margin-left: auto; }
   .greet h1 { font-size: 34px; }
   .hubs { grid-template-columns: 1fr; }
   .hubs button { min-height: 0; }

@@ -122,11 +122,6 @@ interface MockTicket {
 
 const mockTickets = new Map<string, MockTicket>();
 
-/** Called by Quick Exit so no request text survives in memory. */
-export function clearSampleTickets(): void {
-  mockTickets.clear();
-}
-
 /** Same shape as the server's tokens: `cf-` plus 6 characters from an alphabet without look-alikes. */
 function newToken(): string {
   const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
