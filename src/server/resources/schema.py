@@ -22,6 +22,8 @@ class CommunityResource(BaseModel):
     hours_description: str = Field(min_length=1, max_length=240)
     is_staffed: bool
     no_id_required: bool
+    verified: bool = True
+    provenance: str = "verified"
 
     def to_feature(self) -> dict[str, Any]:
         return {

@@ -10,12 +10,23 @@ import CoordinatorSignIn from './components/coordinator/CoordinatorSignIn';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
 import InventoryHub from './components/inventory/InventoryHub';
 import InventoryReview from './components/inventory/review/InventoryReview';
+import HubForum from './components/forums/HubForum';
+import ForumReview from './components/forums/ForumReview';
 import { COMFORCE_HOTLINE } from './components/shell/EmergencyBar';
 import { Icon, LogoMark } from './components/ui/Icon';
 import type { IconName } from './components/ui/Icon';
 
 type HubId = 'domestic-safety' | 'missing-persons' | 'food-pantry';
-type Tab = 'home' | 'map' | 'inventory' | 'coordinator' | 'coordinator-ops' | 'inventory-review' | 'staff-sign-in';
+type Tab =
+  | 'home'
+  | 'map'
+  | 'inventory'
+  | 'coordinator'
+  | 'coordinator-ops'
+  | 'inventory-review'
+  | 'forum-review'
+  | 'staff-sign-in';
+type HubView = 'threads' | 'tool';
 
 interface Community {
   id: HubId;
@@ -26,6 +37,8 @@ interface Community {
   openTickets: number;
   icon: IconName;
   swatch: '' | 'red' | 'amber';
+  /** Label for the hub's own tool, shown as a tab next to Threads. */
+  tool: string;
 }
 
 const COMMUNITIES: Community[] = [
@@ -38,6 +51,7 @@ const COMMUNITIES: Community[] = [
     openTickets: 4,
     icon: 'shield',
     swatch: '',
+    tool: 'Safe route',
   },
   {
     id: 'missing-persons',
@@ -48,6 +62,7 @@ const COMMUNITIES: Community[] = [
     openTickets: 1,
     icon: 'search',
     swatch: 'red',
+    tool: 'Search grid',
   },
   {
     id: 'food-pantry',
@@ -58,6 +73,7 @@ const COMMUNITIES: Community[] = [
     openTickets: 6,
     icon: 'food',
     swatch: 'amber',
+    tool: 'Pantry stocking',
   },
 ];
 
@@ -67,7 +83,12 @@ const DISTRICTS: { name: string; calls: number; short: boolean }[] = [
   { name: 'Historic Third Ward', calls: 3, short: false },
 ];
 
-const STAFF_TABS: ReadonlySet<Tab> = new Set(['coordinator', 'coordinator-ops', 'inventory-review']);
+const STAFF_TABS: ReadonlySet<Tab> = new Set([
+  'coordinator',
+  'coordinator-ops',
+  'inventory-review',
+  'forum-review',
+]);
 
 function partOfDay(date: Date): string {
   const hour = date.getHours();
@@ -80,8 +101,12 @@ export default function App(): ReactElement {
   const [selectedCommunity, setSelectedCommunity] = useState<HubId>('domestic-safety');
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [askingForHelp, setAskingForHelp] = useState<boolean>(false);
+  const [inventoryAction, setInventoryAction] = useState<'request' | 'give' | 'remove' | null>(null);
   // Held in memory only: a reload signs staff out.
   const [coordinatorKey, setCoordinatorKey] = useState<string | null>(null);
+  // Forum pseudonym for this session. Memory only, so a reload drops it.
+  const [forumHandle, setForumHandle] = useState<string | null>(null);
+  const [hubView, setHubView] = useState<HubView>('threads');
   const surveyRef = useRef<HTMLElement>(null);
   const hubRef = useRef<HTMLElement>(null);
 
@@ -99,8 +124,9 @@ export default function App(): ReactElement {
     window.scrollTo({ top: 0 });
   }
 
-  function openHub(id: HubId): void {
+  function openHub(id: HubId, view: HubView = 'threads'): void {
     setSelectedCommunity(id);
+    setHubView(view);
     setActiveTab('home');
     requestAnimationFrame(() => hubRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
   }
@@ -127,6 +153,7 @@ export default function App(): ReactElement {
               {navButton('coordinator', 'Tonight')}
               {navButton('coordinator-ops', 'Ops map')}
               {navButton('inventory-review', 'Inventory')}
+              {navButton('forum-review', 'Held posts')}
               <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
               <button type="button" className="switch" onClick={() => go('home')}>Resident view</button>
             </>
@@ -149,17 +176,21 @@ export default function App(): ReactElement {
       </header>
 
       <main className="dpage">
-        {!isStaff && <UrgentAlertBanner onJoinSearch={() => openHub('missing-persons')} />}
+        {!isStaff && <UrgentAlertBanner onJoinSearch={() => openHub('missing-persons', 'tool')} />}
 
         {activeTab === 'map' && <CommunityMap />}
 
-        {activeTab === 'inventory' && <InventoryHub />}
+        {activeTab === 'inventory' && (
+          <InventoryHub initialAction={inventoryAction} onActionHandled={() => setInventoryAction(null)} />
+        )}
 
         {(activeTab === 'staff-sign-in' || (STAFF_TABS.has(activeTab) && !coordinatorKey)) && (
           <CoordinatorSignIn onSignIn={(key) => { setCoordinatorKey(key); go(activeTab === 'staff-sign-in' ? 'coordinator' : activeTab); }} />
         )}
 
         {activeTab === 'inventory-review' && coordinatorKey && <InventoryReview initialKey={coordinatorKey} />}
+
+        {activeTab === 'forum-review' && coordinatorKey && <ForumReview accessKey={coordinatorKey} />}
 
         {activeTab === 'coordinator' && coordinatorKey && (
           <CoordinatorDashboard accessKey={coordinatorKey} />
@@ -204,7 +235,10 @@ export default function App(): ReactElement {
                     key={c.id}
                     type="button"
                     aria-pressed={c.id === selectedCommunity}
-                    onClick={() => setSelectedCommunity(c.id)}
+                    onClick={() => {
+                      setSelectedCommunity(c.id);
+                      setHubView('threads');
+                    }}
                   >
                     <span className={`sw ${c.swatch}`}><Icon name={c.icon} /></span>
                     <b>{c.name}</b>
@@ -214,7 +248,42 @@ export default function App(): ReactElement {
               </div>
               <p className="hub-desc">{active.description}</p>
 
-              {active.id === 'domestic-safety' && (
+              <div className="hubtabs" role="tablist" aria-label={`${active.name} sections`}>
+                <button
+                  type="button"
+                  role="tab"
+                  id="hubtab-threads"
+                  aria-controls="hubpanel"
+                  aria-selected={hubView === 'threads'}
+                  onClick={() => setHubView('threads')}
+                >
+                  <Icon name="users" />Threads
+                </button>
+                <button
+                  type="button"
+                  role="tab"
+                  id="hubtab-tool"
+                  aria-controls="hubpanel"
+                  aria-selected={hubView === 'tool'}
+                  onClick={() => setHubView('tool')}
+                >
+                  <Icon name={active.icon} />{active.tool} <span className="own">This hub</span>
+                </button>
+              </div>
+
+              <div id="hubpanel" role="tabpanel" aria-labelledby={hubView === 'threads' ? 'hubtab-threads' : 'hubtab-tool'}>
+              {hubView === 'threads' && (
+                <HubForum
+                  key={active.id}
+                  hubId={active.id}
+                  members={active.members}
+                  handle={forumHandle}
+                  onHandle={setForumHandle}
+                  coordinatorKey={coordinatorKey}
+                />
+              )}
+
+              {hubView === 'tool' && active.id === 'domestic-safety' && (
                 <div className="hubtool">
                   <h3>Safe route planner</h3>
                   <p>
@@ -227,24 +296,32 @@ export default function App(): ReactElement {
                 </div>
               )}
 
-              {active.id === 'missing-persons' && (
+              {hubView === 'tool' && active.id === 'missing-persons' && (
                 <div className="hub-body">
                   <SearchGridMap />
                 </div>
               )}
 
-              {active.id === 'food-pantry' && (
+              {hubView === 'tool' && active.id === 'food-pantry' && (
                 <div className="hubtool">
                   <h3>Pantry stocking &amp; relief</h3>
                   <p className="why" style={{ fontSize: 15 }}>
                     <Icon name="spark" />
                     Juneautown pantries report shortages of high-protein canned foods, baby formula, and warm socks.
                   </p>
-                  <button type="button" className="btn primary sm">
+                  <button
+                    type="button"
+                    className="btn primary sm"
+                    onClick={() => {
+                      setInventoryAction('give');
+                      go('inventory');
+                    }}
+                  >
                     <Icon name="plus" />Post available supplies
                   </button>
                 </div>
               )}
+              </div>
             </section>
 
             <section className="mod c5" aria-labelledby="needs-title">
@@ -267,7 +344,7 @@ export default function App(): ReactElement {
                   <span><b>Find food tonight</b><small>Pantries and mutual aid near you</small></span>
                   <Icon name="chev" className="ic chev" />
                 </button>
-                <button type="button" onClick={() => openHub('missing-persons')}>
+                <button type="button" onClick={() => openHub('missing-persons', 'tool')}>
                   <span className="sq"><Icon name="search" /></span>
                   <span><b>Join a search</b><small>Help cover a sector with other neighbors</small></span>
                   <Icon name="chev" className="ic chev" />

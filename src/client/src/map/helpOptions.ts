@@ -23,6 +23,8 @@ export interface HelpOption {
   openNow?: boolean;
   noIdRequired: boolean;
   staffed: boolean;
+  verified?: boolean;
+  provenance?: string;
 }
 
 export interface HelpOptionsResult {
@@ -76,6 +78,8 @@ async function pantryOptions(signal?: AbortSignal): Promise<{ list: HelpOption[]
     openNow: p.open_now,
     noIdRequired: p.no_id_required,
     staffed: p.is_staffed,
+    verified: p.verified ?? (!sample),
+    provenance: p.provenance ?? (sample ? 'sample' : 'verified'),
   }));
   return { list, sample };
 }
@@ -102,6 +106,8 @@ async function safePlaceOptions(signal?: AbortSignal): Promise<{ list: HelpOptio
     longitude: p.longitude,
     noIdRequired: p.no_id_required,
     staffed: p.is_staffed,
+    verified: p.verified ?? (!sample),
+    provenance: p.provenance ?? (sample ? 'sample' : 'verified'),
   }));
   return { list, sample, categories };
 }
