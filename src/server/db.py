@@ -16,6 +16,7 @@ from sqlalchemy import (
     DateTime,
     Float,
     Integer,
+    JSON,
     String,
     Text,
     create_engine,
@@ -110,6 +111,63 @@ class VolunteerAction(Base):
     )
 
 
+class InventoryItem(Base):
+    """Catalog item shared by all inventory API replicas."""
+
+    __tablename__ = "inventory_items"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+
+
+class InventoryAlias(Base):
+    """Coordinator-reviewed wording for a catalog item."""
+
+    __tablename__ = "inventory_aliases"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    text: Mapped[str] = mapped_column(String(200), nullable=False)
+    item_id: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    source: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class InventoryEntry(Base):
+    """Persistent stock, need, or offer entry."""
+
+    __tablename__ = "inventory_entries"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    location_id: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    label: Mapped[str] = mapped_column(String(500), nullable=False)
+    item_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    alias_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    via: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    closed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    candidates: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+    none_fit: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
+class InventoryHandoff(Base):
+    """Persistent audit record of stock passed to another place or need."""
+
+    __tablename__ = "inventory_handoffs"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    item_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    from_location_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    to_location_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    remaining: Mapped[int] = mapped_column(Integer, nullable=False)
+    need_remaining: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 _engine: Any = None
 _SessionLocal: sessionmaker[Session] | None = None
 
@@ -134,6 +192,12 @@ def init_db(url: str | None = None) -> None:
     _SessionLocal = sessionmaker(bind=_engine, autocommit=False, autoflush=False)
 
     Base.metadata.create_all(bind=_engine)
+    try:
+        from src.server.inventory import store as inventory_store
+
+        inventory_store.reload_from_db()
+    except ModuleNotFoundError:
+        pass
     logger.info("Database initialized successfully with URL pattern: %s", db_url.split("@")[-1])
 
 
@@ -147,6 +211,13 @@ def get_db() -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
+
+
+def create_db_session() -> Session | None:
+    """Create a session when database persistence is initialized."""
+    if _SessionLocal is None:
+        return None
+    return _SessionLocal()
 
 
 def check_db() -> tuple[bool, str | None]:
