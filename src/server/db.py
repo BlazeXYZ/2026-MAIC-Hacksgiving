@@ -12,11 +12,11 @@ from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     DateTime,
     Float,
     Integer,
-    JSON,
     String,
     Text,
     create_engine,

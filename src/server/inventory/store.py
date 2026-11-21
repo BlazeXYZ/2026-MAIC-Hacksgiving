@@ -76,6 +76,11 @@ def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _as_utc(value: datetime) -> datetime:
+    """Normalize SQLAlchemy SQLite timestamps to the timezone-aware runtime format."""
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
+
+
 def _singular(word: str) -> str:
     if len(word) <= 3 or word.endswith("ss"):
         return word
@@ -202,7 +207,12 @@ def reload_from_db() -> None:
             return
         needs_seed = False
         try:
-            from src.server.db import InventoryAlias, InventoryEntry, InventoryHandoff, InventoryItem
+            from src.server.db import (
+                InventoryAlias,
+                InventoryEntry,
+                InventoryHandoff,
+                InventoryItem,
+            )
 
             _items.clear()
             _aliases.clear()
@@ -212,7 +222,14 @@ def reload_from_db() -> None:
                 _items[row.id] = Item(row.id, row.name)
             needs_seed = not _items
             for row in session.query(InventoryAlias).all():
-                _aliases[row.id] = Alias(row.id, row.text, row.item_id, row.status, row.source, row.created_at)
+                _aliases[row.id] = Alias(
+                    row.id,
+                    row.text,
+                    row.item_id,
+                    row.status,
+                    row.source,
+                    _as_utc(row.created_at),
+                )
             for row in session.query(InventoryEntry).all():
                 candidates = tuple(
                     Candidate(candidate["item_id"], candidate.get("probability"))
@@ -227,8 +244,8 @@ def reload_from_db() -> None:
                     row.item_id,
                     row.alias_id,
                     row.via,
-                    row.created_at,
-                    row.expires_at,
+                    _as_utc(row.created_at),
+                    _as_utc(row.expires_at),
                     row.closed,
                     candidates,
                     row.none_fit,
@@ -243,7 +260,7 @@ def reload_from_db() -> None:
                         row.to_location_id,
                         row.remaining,
                         row.need_remaining,
-                        row.at,
+                        _as_utc(row.at),
                     )
                 )
             _handoffs.sort(key=lambda record: record.at)
@@ -286,7 +303,12 @@ def reset() -> None:
         session = _db_session()
         if session is not None:
             try:
-                from src.server.db import InventoryAlias, InventoryEntry, InventoryHandoff, InventoryItem
+                from src.server.db import (
+                    InventoryAlias,
+                    InventoryEntry,
+                    InventoryHandoff,
+                    InventoryItem,
+                )
 
                 session.query(InventoryHandoff).delete()
                 session.query(InventoryEntry).delete()
@@ -621,6 +643,8 @@ def add_entry(
                 raise
             finally:
                 session.close()
+        if alias_id is not None:
+            rematch_unresolved()
         return entry
 
 
@@ -731,11 +755,16 @@ def resolve_entry(entry_id: str, item_id: str, *, alias_text: str | None = None)
                 alias_text, item_id, "approved", "coordinator", now_utc()
             ).id
         key = normalize(entry.label)
-        twins = [e for e in unresolved_entries() + guess_entries() if e.id != entry.id and normalize(e.label) == key]
+        twins = [
+            e
+            for e in _entries.values()
+            if e.id != entry.id
+            and _open(e, now_utc())
+            and (e.item_id is None or e.via in GUESS_VIA)
+            and normalize(e.label) == key
+        ]
         for target in [entry, *twins]:
             target.item_id, target.alias_id, target.via = item_id, alias_id, "coordinator"
-        if alias_id is not None:
-            rematch_unresolved()
         session = _db_session()
         if session is not None:
             try:
