@@ -120,7 +120,7 @@ export default function SearchGridMap() {
     setSectors((prev) =>
       prev.map((s) =>
         s.id === sectorId
-          ? { ...s, status: newStatus, updatedAt: 'Just now' }
+          ? { ...s, status: newStatus, updatedAt: 'Just now (Simulated)' }
           : s
       )
     );
@@ -138,7 +138,7 @@ export default function SearchGridMap() {
           ...s,
           volunteers: updatedVolunteers,
           status: updatedStatus,
-          updatedAt: 'Just now',
+          updatedAt: 'Just now (Simulated)',
         };
       })
     );
@@ -148,8 +148,13 @@ export default function SearchGridMap() {
     <section className="search-grid-wrapper" aria-labelledby="search-grid-heading">
       <div className="search-grid-header">
         <div>
-          <h4 id="search-grid-heading">Missing Person Search Party Grid (27th &amp; Wisconsin)</h4>
-          <p>Real-time sector coordination over Milwaukee neighborhood blocks. Tap a sector to update status or join.</p>
+          <h4 id="search-grid-heading">
+            Missing Person Search Party Grid (27th &amp; Wisconsin)
+            <span style={{ marginLeft: 8, fontSize: '0.75rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'var(--amber-wash, #fef3c7)', color: 'var(--amber-ink, #92400e)' }}>
+              Simulated Grid (Demo Mode)
+            </span>
+          </h4>
+          <p>Real-time sector coordination over Milwaukee neighborhood blocks (simulated demonstration data). Tap a sector to update status or join.</p>
         </div>
         <div className="search-grid-stats">
           <span className="search-grid-stat-pill" style={{ background: 'var(--green-wash)', color: 'var(--green-ink)' }}>

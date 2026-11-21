@@ -14,6 +14,7 @@ export interface MissingPersonAlert {
   active: boolean;
   sectorsSearched?: number;
   sectorsTotal?: number;
+  simulated?: boolean;
 }
 
 export const ACTIVE_MISSING_PERSON_ALERT: MissingPersonAlert = {
@@ -26,10 +27,11 @@ export const ACTIVE_MISSING_PERSON_ALERT: MissingPersonAlert = {
   active: true,
   sectorsSearched: 3,
   sectorsTotal: 8,
+  simulated: true,
 };
 
 interface UrgentAlertBannerProps {
-  alert?: MissingPersonAlert;
+  alert?: MissingPersonAlert | null;
   onJoinSearch: () => void;
 }
 
@@ -43,14 +45,14 @@ function initials(name: string): string {
 }
 
 export default function UrgentAlertBanner({
-  alert = ACTIVE_MISSING_PERSON_ALERT,
+  alert,
   onJoinSearch,
 }: UrgentAlertBannerProps): ReactElement | null {
   const [isMinimized, setIsMinimized] = useState<boolean>(false);
   const [isDismissed, setIsDismissed] = useState<boolean>(false);
 
   // If no active search is flagged or user explicitly dismissed this session, don't render
-  if (!alert.active || isDismissed) {
+  if (!alert || !alert.active || isDismissed) {
     return null;
   }
 
@@ -92,6 +94,11 @@ export default function UrgentAlertBanner({
       <div className="alert-strip">
         <span className="live" aria-hidden="true" />
         <span>Missing person · last seen {alert.lastSeenTimeAgo}</span>
+        {alert.simulated && (
+          <span style={{ marginLeft: 8, fontSize: '0.75rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'var(--amber-wash, #fef3c7)', color: 'var(--amber-ink, #92400e)' }}>
+            Simulated Alert (Demo Mode)
+          </span>
+        )}
         <span className="alert-strip-actions">
           <button
             type="button"
@@ -122,7 +129,10 @@ export default function UrgentAlertBanner({
         <div className="d-alert-info">
           <h2>{alert.name}, {alert.age}</h2>
           <p>Last seen near <b>{alert.lastSeenLocation}</b>. {alert.description}</p>
-          <span className="verified"><Icon name="check" />Verified by ComForce</span>
+          <span className="verified">
+            <Icon name="check" />
+            {alert.simulated ? 'Simulated Demonstration Alert' : 'Verified by ComForce'}
+          </span>
         </div>
 
         {total > 0 && (

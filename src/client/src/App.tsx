@@ -4,7 +4,7 @@ import CommunityMap from './components/CommunityMap';
 import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
 import SearchGridMap from './components/search/SearchGridMap';
-import UrgentAlertBanner from './components/alerts/UrgentAlertBanner';
+import UrgentAlertBanner, { type MissingPersonAlert } from './components/alerts/UrgentAlertBanner';
 import CoordinatorMap from './components/coordinator/CoordinatorMap';
 import CoordinatorSignIn from './components/coordinator/CoordinatorSignIn';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
@@ -107,8 +107,33 @@ export default function App(): ReactElement {
   // Forum pseudonym for this session. Memory only, so a reload drops it.
   const [forumHandle, setForumHandle] = useState<string | null>(null);
   const [hubView, setHubView] = useState<HubView>('threads');
+  const [priorityAlert, setPriorityAlert] = useState<MissingPersonAlert | null>(null);
   const surveyRef = useRef<HTMLElement>(null);
   const hubRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch('/api/alerts/priority', { signal: ctrl.signal })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data && data.active) {
+          setPriorityAlert({
+            id: 'priority-alert',
+            name: data.title,
+            age: 19,
+            lastSeenLocation: data.location,
+            lastSeenTimeAgo: 'Recent',
+            description: data.description,
+            active: data.active,
+            simulated: data.simulated ?? false,
+          });
+        } else {
+          setPriorityAlert(null);
+        }
+      })
+      .catch(() => setPriorityAlert(null));
+    return () => ctrl.abort();
+  }, []);
 
   useEffect(() => {
     if (askingForHelp) surveyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -176,7 +201,12 @@ export default function App(): ReactElement {
       </header>
 
       <main className="dpage">
-        {!isStaff && <UrgentAlertBanner onJoinSearch={() => openHub('missing-persons', 'tool')} />}
+        {!isStaff && priorityAlert && (
+          <UrgentAlertBanner
+            alert={priorityAlert}
+            onJoinSearch={() => openHub('missing-persons', 'tool')}
+          />
+        )}
 
         {activeTab === 'map' && <CommunityMap />}
 
