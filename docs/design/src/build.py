@@ -3,13 +3,22 @@
 Each version template may use: %%STAGE_CSS%% %%DEFS%% %%DECOY%% %%HUBJS%% %%SOJ_MIN%% %%SOJ_MI%% %%LIB_MIN%% %%LIB_MI%%
 Map data comes from common/map.json (built from OpenStreetMap by common/build_map.py).
 """
-import json, os, sys
+import json
+import os
+import sys
 
 here = os.path.dirname(os.path.abspath(__file__))
 common = os.path.join(here, 'common')
 ver, out = sys.argv[1], sys.argv[2]
-read = lambda *p: open(os.path.join(*p), encoding='utf8').read()
-d = json.load(open(os.path.join(common, 'map.json')))
+
+
+def read(*p: str) -> str:
+    with open(os.path.join(*p), encoding='utf8') as f:
+        return f.read()
+
+
+with open(os.path.join(common, 'map.json'), encoding='utf8') as f:
+    d = json.load(f)
 r = d['roads']
 base = (f'<g id="basemap"><rect x="-400" y="-400" width="{d["W"]+800}" height="{d["H"]+800}" fill="var(--map-land)"/>'
         f'<path class="bm-park" d="{d["parks"]}"/><path class="bm-water" d="{d["lake"]}"/><path class="bm-water" d="{d["water"]}"/>'
@@ -23,7 +32,11 @@ soj, lib = d['routes']['westside_to_sojourner']['meters'], d['routes']['library_
 js = 'const MAP = ' + json.dumps(data, separators=(',', ':')) + ';\n' + read(common, 'hub.js')
 t = read(here, ver, 'template.html')
 links_path = os.path.join(here, 'links.json')
-links = json.load(open(links_path)) if os.path.exists(links_path) else {}
+if os.path.exists(links_path):
+    with open(links_path, encoding='utf8') as f:
+        links = json.load(f)
+else:
+    links = {}
 NAMES = {'v4': 'v4 Map-first', 'v5': 'v5 Channels', 'v6': 'v6 Wayfinding', 'v7': 'v7 Porch Light', 'v8': 'v8 Sampler', 'v9': 'v9 Refined'}
 for v, name in NAMES.items():
     url = links.get(v)
@@ -36,5 +49,6 @@ for k, v in {
 }.items():
     t = t.replace(k, v)
 assert '%%' not in t, t[t.index('%%') - 80:t.index('%%') + 80]
-open(out, 'w', encoding='utf8').write(t)
+with open(out, 'w', encoding='utf8') as f:
+    f.write(t)
 print(ver, '->', out, len(t), 'bytes')

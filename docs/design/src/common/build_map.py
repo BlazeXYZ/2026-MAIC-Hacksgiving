@@ -2,7 +2,13 @@
 
 Usage: python -I build_map.py <osm_dir> <out_dir>
 """
-import json, math, sys, heapq, random, os
+import heapq
+import itertools
+import json
+import math
+import os
+import random
+import sys
 
 OSM, OUT = sys.argv[1], sys.argv[2]
 LON0, LON1, LAT0, LAT1 = -87.958, -87.884, 43.022, 43.062   # view: west, east, south, north
@@ -18,7 +24,8 @@ def P(lat, lon):
 
 
 def load(name):
-    return json.load(open(os.path.join(OSM, name), encoding='utf8'))['elements']
+    with open(os.path.join(OSM, name), encoding='utf8') as f:
+        return json.load(f)['elements']
 
 
 def dp(pts, tol):
@@ -108,7 +115,7 @@ for e in raw:
     if n:
         named.setdefault(n, []).append(ll)
     if c in COST and t.get('access') not in ('private', 'no'):
-        for a, b in zip(ll, ll[1:]):
+        for a, b in itertools.pairwise(ll):
             pa, pb = P(*a), P(*b)
             w = math.dist(pa, pb) * M_PER_UNIT
             graph.setdefault(a, []).append((b, w * COST[c], w))
@@ -140,7 +147,7 @@ for e in raw:
             water.append(d_of(dp(pts, 0.6), True))
 
 # Lake Michigan: stitch the clipped shoreline runs into one chain, then close it along the east edge.
-lake = [e for e in load('water.json') if e['tags'].get('name') == 'Lake Michigan'][0]
+lake = next(e for e in load('water.json') if e['tags'].get('name') == 'Lake Michigan')
 runs = []
 for m in lake['members']:
     if m.get('role') != 'outer' or not m.get('geometry'):
@@ -281,7 +288,8 @@ out = {
     'samples': samples,
 }
 os.makedirs(OUT, exist_ok=True)
-json.dump(out, open(os.path.join(OUT, 'map.json'), 'w'))
+with open(os.path.join(OUT, 'map.json'), 'w', encoding='utf8') as f:
+    json.dump(out, f)
 print('W,H', W, H, 'roads', {k: len(v) for k, v in roads.items()}, 'parks', len(parks), 'water', len(water))
 print('labels', [l['t'] for l in labels])
 print('grid', grid)
