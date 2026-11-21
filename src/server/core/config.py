@@ -66,6 +66,7 @@ class Settings:
         "http://localhost:3000",
         "http://127.0.0.1:3000",
         "capacitor://localhost",
+        "https://localhost",
         "http://localhost",
     )
     CORS_METHODS: tuple[str, ...] = (
@@ -76,7 +77,9 @@ class Settings:
         "DELETE",
         "OPTIONS",
     )
-    CORS_HEADERS: tuple[str, ...] = ("Accept", "Content-Type", "Authorization")
+    CORS_HEADERS: tuple[str, ...] = (
+        "Accept", "Content-Type", "Authorization", "X-Coordinator-Key"
+    )
     CORS_EXPOSE_HEADERS: tuple[str, ...] = (
         "X-Total-Count",
         "X-Urgent-Count",

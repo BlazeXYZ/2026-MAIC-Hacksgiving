@@ -7,7 +7,7 @@ Cross-platform React and TypeScript client built with Vite, Tailwind CSS, OpenSt
 Install packages and start the Vite development server:
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -21,14 +21,24 @@ The mobile client is packaged using **Capacitor 6** to produce native Android an
 
 ### 1. Build and Sync
 
-Compile the React frontend bundle and copy the distribution assets to native platforms:
+Run `npm ci` in `src/client`. The lockfile includes both native platforms. Create
+`src/client/.env.local` with the public HTTPS origin the device can reach.
+
+```dotenv
+VITE_API_ORIGIN=https://api.example.org
+```
+
+Use the deployed ComForce origin that serves `/api`, with a trusted TLS
+certificate. The bundled WebView uses this origin for API requests. Its built-in
+origins are `https://localhost` on Android and `capacitor://localhost` on iOS.
+
+Build the frontend, then add or sync the relevant platform as described below.
 
 ```bash
 npm run build
-npx cap sync
 ```
 
-This ensures `src/client/dist` is populated and synchronized with native platform assets.
+Rebuild and run `npx cap sync android` or `npx cap sync ios` after changing the API origin.
 
 ### 2. Browser Mobile Emulation & Testing
 
@@ -45,7 +55,7 @@ For fast local testing of touch interactions, mobile safe areas, and responsive 
 ### 3. Native Platform Export
 
 #### Android
-Ensure Android Studio and Android SDK 33+ are installed:
+Install Android Studio and the Android SDK specified by the generated Gradle project.
 ```bash
 # Add Android platform (first-time setup)
 npx cap add android
@@ -71,3 +81,13 @@ npm run cap:ios
 In Xcode:
 - Select a simulator (e.g., iPhone 15 Pro).
 - Click **Play / Run** (`Cmd+R`).
+
+### 4. Device smoke test
+
+Run the app on an emulator or device against a test API deployment. Use sample
+details to verify these paths.
+
+1. Open **Map** and confirm the resource list loads from the configured API.
+2. Open **Ask for help**, submit a sample request, and confirm the API returns a request code.
+3. Open **Staff sign in** with a test coordinator key. Confirm the queue loads with the key and rejects an invalid key.
+4. Check the WebView network log for requests to the configured HTTPS origin.

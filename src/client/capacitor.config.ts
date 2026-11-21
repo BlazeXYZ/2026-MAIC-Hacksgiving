@@ -5,8 +5,7 @@ const config: CapacitorConfig = {
   appName: 'ComForce MKE',
   webDir: 'dist',
   server: {
-    androidScheme: 'https',
-    cleartext: true
+    androidScheme: 'https'
   },
   plugins: {
     Haptics: {},

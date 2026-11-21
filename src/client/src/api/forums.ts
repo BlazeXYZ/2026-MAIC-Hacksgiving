@@ -1,3 +1,4 @@
+import { apiFetch } from './transport';
 import { COORDINATOR_KEY_HEADER } from '../coordinator/access';
 import type {
   ForumHubId,
@@ -43,7 +44,7 @@ async function call<T>(path: string, { method = 'GET', body, key }: CallOptions 
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (key) headers[COORDINATOR_KEY_HEADER] = key;
-    const res = await fetch(`${BASE}${path}`, {
+    const res = await apiFetch(`${BASE}${path}`, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),
