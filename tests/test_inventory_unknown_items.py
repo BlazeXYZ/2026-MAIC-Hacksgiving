@@ -109,7 +109,7 @@ def test_a_new_item_cannot_reuse_an_existing_wording() -> None:
 
 def test_a_new_item_whose_id_is_taken_gets_a_distinct_id() -> None:
     assert store.get_item("first-aid").name == "First-aid supplies"
-    created = store.add_item("First aid")  # different wording, same slug as the seed item
+    created = store.add_item("First aid", confirm_new=True)  # same slug as the seed item
     assert created.id != "first-aid" and created.id.startswith("first-aid")
 
 

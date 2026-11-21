@@ -6,6 +6,7 @@ database issue can replace this module without touching the API.
 
 from __future__ import annotations
 
+import difflib
 import re
 import threading
 from dataclasses import dataclass
@@ -49,6 +50,14 @@ class EntryNotFound(InventoryError):
 
 class AliasConflict(InventoryError):
     """The alias text already points somewhere else."""
+
+
+class SimilarItems(InventoryError):
+    """The new item looks like one that already exists. Carries the closest matches."""
+
+    def __init__(self, matches: list[Similar]) -> None:
+        super().__init__(", ".join(m.item.id for m in matches))
+        self.matches = matches
 
 
 def now_utc() -> datetime:
@@ -108,6 +117,19 @@ class Entry:
     closed: bool = False
 
 
+@dataclass(frozen=True)
+class Similar:
+    item: Item
+    wording: str  # the existing wording that looked closest
+    score: float  # 0 to 1
+
+
+#: Shown as a hint on a held entry.
+HINT_SCORE = 0.6
+#: At or above this, creating a "new" item needs an explicit confirmation.
+WARN_SCORE = 0.72
+_STOPWORDS = frozenset({"and", "of", "the", "a", "an", "for", "with"})
+
 _items: dict[str, Item] = {}
 _aliases: dict[str, Alias] = {}
 _entries: dict[str, Entry] = {}
@@ -164,13 +186,44 @@ def rename_item(item_id: str, name: str) -> Item:
         return item
 
 
+def _similarity(a: str, b: str) -> float:
+    """How alike two normalized wordings are. A short wording fully inside a longer one counts as close."""
+    ratio = difflib.SequenceMatcher(None, a, b).ratio()
+    ta = {w for w in a.split() if w not in _STOPWORDS}
+    tb = {w for w in b.split() if w not in _STOPWORDS}
+    if not ta or not tb:
+        return ratio
+    shared = len(ta & tb)
+    smaller = min(len(ta), len(tb))
+    overlap = 0.9 if shared == smaller else 0.6 * shared / smaller
+    return max(ratio, overlap)
+
+
+def similar_items(text: str, *, min_score: float = HINT_SCORE, limit: int = 3) -> list[Similar]:
+    """Existing items whose wordings look like `text`, closest first, one entry per item."""
+    key = normalize(text)
+    if not key:
+        return []
+    with _lock:
+        best: dict[str, Similar] = {}
+        for alias in _aliases.values():
+            if alias.status == "rejected" or alias.item_id not in _items:
+                continue
+            score = _similarity(key, alias.key)
+            if score >= min_score and (alias.item_id not in best or score > best[alias.item_id].score):
+                best[alias.item_id] = Similar(_items[alias.item_id], alias.text, round(score, 2))
+        return sorted(best.values(), key=lambda m: -m.score)[:limit]
+
+
 def _slug(name: str) -> str:
     return "-".join(re.sub(r"[^a-z0-9]+", " ", name.casefold()).split())[:60] or "item"
 
 
-def add_item(name: str, extra_aliases: tuple[str, ...] = ()) -> Item:
+def add_item(name: str, extra_aliases: tuple[str, ...] = (), *, confirm_new: bool = False) -> Item:
     """A coordinator adds a catalog item the seed list does not have, with the wordings that mean it.
 
+    If the name looks like an existing item, raises `SimilarItems` unless `confirm_new` is set, so
+    "another name for something we already have" is not created as a duplicate by accident.
     Held entries that use any of these wordings are matched to the new item right away.
     """
     with _lock:
@@ -180,6 +233,14 @@ def add_item(name: str, extra_aliases: tuple[str, ...] = ()) -> Item:
         for text in wordings:
             if normalize(text) in index:
                 raise AliasConflict(index[normalize(text)].id)
+        if not confirm_new:
+            close: dict[str, Similar] = {}
+            for text in wordings:
+                for found in similar_items(text, min_score=WARN_SCORE):
+                    if found.item.id not in close or found.score > close[found.item.id].score:
+                        close[found.item.id] = found
+            if close:
+                raise SimilarItems(sorted(close.values(), key=lambda m: -m.score))
         base = _slug(clean)
         item_id, n = base, 2
         while item_id in _items:
@@ -361,11 +422,11 @@ def resolve_entry(entry_id: str, item_id: str, *, remember: bool) -> Entry:
         return entry
 
 
-def promote_entry(entry_id: str, name: str | None = None) -> Entry:
+def promote_entry(entry_id: str, name: str | None = None, *, confirm_new: bool = False) -> Entry:
     """Create a new catalog item from a held entry's wording and resolve it (and its twins) to it."""
     with _lock:
         entry = get_entry(entry_id)
-        item = add_item(name.strip() if name and name.strip() else entry.label.title())
+        item = add_item(name.strip() if name and name.strip() else entry.label.title(), confirm_new=confirm_new)
         return resolve_entry(entry.id, item.id, remember=True)
 
 

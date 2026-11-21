@@ -147,10 +147,18 @@ class ItemUpdate(BaseModel):
 
 class ItemCreate(ItemUpdate):
     aliases: list[str] = Field(default_factory=list, max_length=20, description="Other wordings that mean the same thing.")
+    confirm_new: bool = Field(default=False, description="Set after reviewing the similar items a 409 listed.")
 
 
 class PromoteBody(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=80, description="Defaults to the wording typed.")
+    confirm_new: bool = Field(default=False, description="Set after reviewing the similar items a 409 listed.")
+
+
+class SimilarOut(BaseModel):
+    item: ItemOut
+    wording: str = Field(description="The existing wording that looked closest.")
+    score: float
 
 
 class UnresolvedOut(BaseModel):
@@ -160,6 +168,7 @@ class UnresolvedOut(BaseModel):
     quantity: int
     label: str
     same_wording: int = Field(description="Held entries with this wording, needs and donations together.")
+    similar: list[SimilarOut] = Field(description="Existing items this might be another name for, closest first.")
     created_at: str
 
 
@@ -229,7 +238,20 @@ def _alias_out(alias: store.Alias) -> AliasOut:
     )
 
 
+def _similar_out(found: store.Similar) -> SimilarOut:
+    return SimilarOut(item=_item_out(found.item), wording=found.wording, score=found.score)
+
+
 def _raise(err: store.InventoryError) -> NoReturn:
+    if isinstance(err, store.SimilarItems):
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "message": "This looks like an item we already have. If it is another name for one of them, "
+                "resolve or add an alias instead. If it really is new, send confirm_new: true.",
+                "similar": [_similar_out(m).model_dump() for m in err.matches],
+            },
+        ) from err
     if isinstance(err, store.AliasConflict):
         raise HTTPException(status_code=409, detail=f"That wording already belongs to alias {err}.") from err
     names = {store.ItemNotFound: "Item", store.AliasNotFound: "Alias", store.EntryNotFound: "Entry"}
@@ -398,7 +420,7 @@ def rename_item(item_id: str, body: ItemUpdate) -> ItemOut:
 def create_item(body: ItemCreate) -> ItemOut:
     """Add a catalog item the seed list lacks. Held entries that use its wordings link up right away."""
     try:
-        return _item_out(store.add_item(body.name, tuple(body.aliases)))
+        return _item_out(store.add_item(body.name, tuple(body.aliases), confirm_new=body.confirm_new))
     except store.InventoryError as err:
         _raise(err)
 
@@ -415,6 +437,7 @@ def unresolved() -> list[UnresolvedOut]:
             quantity=e.quantity,
             label=e.label,
             same_wording=sum(1 for h in held if store.normalize(h.label) == store.normalize(e.label)),
+            similar=[_similar_out(m) for m in store.similar_items(e.label)],
             created_at=e.created_at.isoformat(),
         )
         for e in held
@@ -431,9 +454,12 @@ def resolve_entry(entry_id: str, body: ResolveBody) -> EntryOut:
 
 @admin.post("/entries/{entry_id}/promote", response_model=EntryOut)
 def promote_entry(entry_id: str, body: PromoteBody) -> EntryOut:
-    """Make a held entry's wording a brand-new catalog item. Every held need and donation with that wording joins it."""
+    """Make a held entry's wording a brand-new catalog item. Every held need and donation with that wording joins it.
+
+    Answers 409 with the closest existing items if this looks like another name for one of them.
+    """
     try:
-        return _entry_out(store.promote_entry(entry_id, body.name))
+        return _entry_out(store.promote_entry(entry_id, body.name, confirm_new=body.confirm_new))
     except store.InventoryError as err:
         _raise(err)
 
