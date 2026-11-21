@@ -22,6 +22,29 @@ class Settings:
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///dev.db")
 
+    _demo_mode_override: bool | None = None
+
+    @property
+    def DEMO_MODE(self) -> bool:
+        """Whether mock/sample demo data should be seeded and served.
+        Defaults to False in production, and True in other environments,
+        unless explicitly configured via DEMO_MODE environment variable.
+        """
+        if self._demo_mode_override is not None:
+            return self._demo_mode_override
+        val = os.getenv("DEMO_MODE")
+        if val is not None:
+            return val.lower() in ("true", "1", "yes")
+        return self.APP_ENV != "production"
+
+    @DEMO_MODE.setter
+    def DEMO_MODE(self, value: bool | None) -> None:
+        self._demo_mode_override = value
+
+    @DEMO_MODE.deleter
+    def DEMO_MODE(self) -> None:
+        self._demo_mode_override = None
+
     # API Keys
     GEMINI_API_KEY: str | None = os.getenv("GEMINI_API_KEY")
     OPENAI_API_KEY: str | None = os.getenv("OPENAI_API_KEY")

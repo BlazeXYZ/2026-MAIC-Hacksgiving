@@ -7,7 +7,7 @@ import type {
 import { coordinatorHeaders } from '../coordinator/access';
 import './CoordinatorDashboard.css';
 
-const SAMPLE_COORDINATOR_TICKETS: CoordinatorTicket[] = [
+export const SAMPLE_COORDINATOR_TICKETS: CoordinatorTicket[] = [
   {
     ticket_id: 't-101',
     token: 'tok-juneau-01',
@@ -90,7 +90,9 @@ const CATEGORY_LABELS: Record<ServiceCategory, string> = {
 };
 
 export default function CoordinatorDashboard({ accessKey }: { accessKey: string }) {
-  const [tickets, setTickets] = useState<CoordinatorTicket[]>(SAMPLE_COORDINATOR_TICKETS);
+  const [tickets, setTickets] = useState<CoordinatorTicket[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [districtFilter, setDistrictFilter] = useState<string>('all');
   const [urgencyFilter, setUrgencyFilter] = useState<string>('all');
@@ -98,7 +100,7 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 20;
-  const [totalMatching, setTotalMatching] = useState<number>(SAMPLE_COORDINATOR_TICKETS.length);
+  const [totalMatching, setTotalMatching] = useState<number>(0);
   const [serverCounts, setServerCounts] = useState<{
     total_urgent: number;
     total_pending: number;
@@ -122,8 +124,16 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
   const updateStatus = (s: string) => { setStatusFilter(s); setCurrentPage(1); };
   const updateSearch = (q: string) => { setSearchTerm(q); setCurrentPage(1); };
 
+  const isDemoQueue = useMemo(
+    () => tickets.some((t) => t.ticket_id.startsWith('cf-DEM')),
+    [tickets]
+  );
+
   useEffect(() => {
     const controller = new AbortController();
+    setIsLoading(true);
+    setLoadError(null);
+
     const params = new URLSearchParams();
     params.set('limit', String(pageSize));
     params.set('offset', String((currentPage - 1) * pageSize));
@@ -139,14 +149,20 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
       headers: coordinatorHeaders(accessKey),
     })
       .then((res) => {
-        if (!res.ok) return;
+        if (!res.ok) {
+          throw new Error(`Server responded with ${res.status}`);
+        }
         const total = res.headers.get('X-Total-Count');
         if (total !== null) setTotalMatching(parseInt(total, 10) || 0);
         return res.json();
       })
       .then((data) => {
+        setIsLoading(false);
+        setLoadError(null);
         if (data?.tickets && Array.isArray(data.tickets)) {
           setTickets(data.tickets);
+        } else {
+          setTickets([]);
         }
         if (data?.counts) {
           setServerCounts(data.counts);
@@ -155,7 +171,13 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
           }
         }
       })
-      .catch(() => undefined);
+      .catch((err) => {
+        if (controller.signal.aborted) return;
+        setIsLoading(false);
+        setLoadError(err?.message || 'Failed to load queue');
+        setTickets([]);
+        setTotalMatching(0);
+      });
 
     return () => controller.abort();
   }, [accessKey, currentPage, pageSize, districtFilter, urgencyFilter, statusFilter, searchTerm, sortField, sortOrder]);
@@ -300,7 +322,14 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
       <div className="pagehead">
         <div>
           <h1 id="coordinator-title">Tonight, across the district</h1>
-          <p>Live triage and volunteer dispatch for Milwaukee requests. AI sorts by urgency, you decide.</p>
+          <p>
+            Live triage and volunteer dispatch for Milwaukee requests. AI sorts by urgency, you decide.
+            {isDemoQueue && (
+              <span style={{ marginLeft: 8, fontSize: '0.75rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'var(--amber-wash, #fef3c7)', color: 'var(--amber-ink, #92400e)' }}>
+                Demo Fixtures (Sample Data)
+              </span>
+            )}
+          </p>
         </div>
       </div>
 
@@ -457,10 +486,22 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
             </tr>
           </thead>
           <tbody>
-            {displayedTickets.length === 0 ? (
+            {isLoading ? (
               <tr>
                 <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--ink-3)' }}>
-                  No requests match the current filters.
+                  Loading queue tickets…
+                </td>
+              </tr>
+            ) : loadError ? (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--red, #ef4444)' }}>
+                  {loadError}. Queue is currently unavailable.
+                </td>
+              </tr>
+            ) : displayedTickets.length === 0 ? (
+              <tr>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--ink-3)' }}>
+                  No requests match the current filters. Live queue is empty.
                 </td>
               </tr>
             ) : (
