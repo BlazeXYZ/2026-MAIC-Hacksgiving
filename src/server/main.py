@@ -64,7 +64,10 @@ except ModuleNotFoundError:
 async def lifespan(app: FastAPI):
     try:
         init_db()
-        seed_demo_tickets()
+        if getattr(settings, "DEMO_MODE", False):
+            seed_demo_tickets()
+        else:
+            logger.info("Demo mode disabled; skipping demo ticket seeding.")
     except Exception as exc:
         if settings.APP_ENV == "production":
             logger.error("Database initialization failed at startup in production: %s", exc)
@@ -135,6 +138,7 @@ class PriorityAlert(BaseModel):
     location: str
     description: str
     severity: str
+    simulated: bool = False
 
 class DistrictStat(BaseModel):
     district_name: str
@@ -246,12 +250,23 @@ def list_communities():
 @app.get("/api/alerts/priority", response_model=PriorityAlert)
 def get_priority_alert():
     """Get high-priority emergency alerts that override normal community views."""
+    if not getattr(settings, "DEMO_MODE", False):
+        return PriorityAlert(
+            active=False,
+            title="No Active Alerts",
+            location="Milwaukee Area",
+            description="There are currently no active emergency alerts.",
+            severity="low",
+            simulated=False,
+        )
+
     return PriorityAlert(
         active=True,
         title="Active Missing Person Search: Near West Side",
         location="Near 27th St & Wisconsin Ave, Milwaukee, WI",
         description="Search parties organizing at Community Center. Volunteers needed for Sector B.",
         severity="high",
+        simulated=True,
     )
 
 @app.get("/api/districts/stats", response_model=list[DistrictStat])
