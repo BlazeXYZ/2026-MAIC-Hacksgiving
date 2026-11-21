@@ -6,7 +6,11 @@ Source: data.milwaukee.gov, "NIBRS Crime Data (Current)" (dataset id "wibr"), up
 Only counts per 200 m grid cell are kept, split into person / property / other offenses.
 Case numbers, addresses and weapons are never written out.
 """
-import csv, json, math, os, sys
+import csv
+import json
+import math
+import os
+import sys
 from collections import Counter
 from datetime import datetime, timedelta
 
@@ -49,7 +53,8 @@ for t, lat, lon, codes in valid:
     c[kind] += 1; kinds[kind] += 1; total += 1
 
 path = os.path.join(here, 'map.json')
-d = json.load(open(path))
+with open(path, encoding='utf8') as f:
+    d = json.load(f)
 d['police'] = {
     'cell': CELL,
     'from': start.strftime('%Y-%m-%d'), 'to': end.strftime('%Y-%m-%d'), 'days': days,
@@ -58,5 +63,6 @@ d['police'] = {
     # [cell centre x, cell centre y, person, property, other]
     'cells': [[(i + .5) * CELL, (j + .5) * CELL, *c] for (i, j), c in sorted(cells.items())],
 }
-json.dump(d, open(path, 'w'), separators=(',', ':'))
+with open(path, 'w', encoding='utf8') as f:
+    json.dump(d, f, separators=(',', ':'))
 print(f'{total} reports {start:%Y-%m-%d}..{end:%Y-%m-%d} in view, {len(cells)} cells, person {kinds[0]} property {kinds[1]} other {kinds[2]}')
