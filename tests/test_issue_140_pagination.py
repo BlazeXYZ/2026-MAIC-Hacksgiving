@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -31,7 +31,7 @@ def _clean() -> None:
 
 
 def test_coordinator_pagination_beyond_20_tickets() -> None:
-    now = datetime(2026, 11, 21, 12, 0, tzinfo=timezone.utc)
+    now = datetime(2026, 11, 21, 12, 0, tzinfo=UTC)
     for i in range(25):
         add_ticket(
             urgency=UrgencyLevel.urgent if i < 5 else UrgencyLevel.today,
