@@ -15,6 +15,8 @@ export interface CommunityResource {
   hours_description: string;
   is_staffed: boolean;
   no_id_required: boolean;
+  verified?: boolean;
+  provenance?: string;
 }
 
 export interface SafePlace extends CommunityResource {
