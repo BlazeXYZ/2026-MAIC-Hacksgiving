@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent, ReactElement } from 'react';
 import { describeError, postEntry } from '../../api/inventory';
 import type { CatalogItem, EntryKind, EntryResult } from '../../contracts/inventory';
+import { searchCatalog } from './search';
 
 const KINDS: Array<{ id: EntryKind; label: string; help: string }> = [
   { id: 'need', label: 'We need', help: 'Ask the community for something.' },
@@ -32,10 +33,8 @@ export default function PostEntryForm({ placeId, catalog, onPosted }: Props): Re
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<EntryResult | null>(null);
 
-  const shown = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    return q ? catalog.filter((i) => i.name.toLowerCase().includes(q) || i.aliases.some((a) => a.toLowerCase().includes(q))) : catalog;
-  }, [catalog, search]);
+  const shown = useMemo(() => searchCatalog(catalog, search), [catalog, search]);
+  const guessing = search.trim() !== '' && shown.length > 0 && shown.every((f) => f.approximate);
 
   const qty = Number.parseInt(quantity, 10);
   const qtyOk = Number.isInteger(qty) && qty >= 1 && qty <= 10_000;
@@ -100,8 +99,9 @@ export default function PostEntryForm({ placeId, catalog, onPosted }: Props): Re
             onChange={(e) => setSearch(e.target.value)}
             placeholder="coats, formula, bus pass…"
           />
+          {guessing && <p className="meta">No exact match. Did you mean:</p>}
           <div className="inv-chips" role="group" aria-label="Items">
-            {shown.map((item) => (
+            {shown.map(({ item }) => (
               <button
                 key={item.id}
                 type="button"
@@ -114,7 +114,18 @@ export default function PostEntryForm({ placeId, catalog, onPosted }: Props): Re
             ))}
             {shown.length === 0 && (
               <p className="meta">
-                Nothing matches. Use <b>Describe it</b> and a coordinator will take a look.
+                Nothing close. You can{' '}
+                <button
+                  type="button"
+                  className="btn ghost sm"
+                  onClick={() => {
+                    setText(search.trim().slice(0, MAX_TEXT));
+                    setMode('describe');
+                  }}
+                >
+                  describe &ldquo;{search.trim()}&rdquo; in your own words
+                </button>{' '}
+                and a coordinator will check it.
               </p>
             )}
           </div>
