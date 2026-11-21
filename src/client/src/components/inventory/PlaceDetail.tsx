@@ -53,6 +53,7 @@ function Row({ entry, children }: { entry: EntryView; children: ReactElement }):
 interface Props {
   placeId: string;
   catalog: CatalogItem[];
+  initialAction?: Action | null;
   onBack: () => void;
   onChanged: () => void;
 }
@@ -61,11 +62,11 @@ interface Props {
  * One place, in two boxes: what it has asked for, and what it has. Three buttons change those lists. Who nearby
  * could help (or is asking) is one line under each row instead of separate panels.
  */
-export default function PlaceDetail({ placeId, catalog, onBack, onChanged }: Props): ReactElement {
+export default function PlaceDetail({ placeId, catalog, initialAction = null, onBack, onChanged }: Props): ReactElement {
   const place = useLoad(() => getPlace(placeId), [placeId]);
   const matches = useLoad(() => getMatches(placeId), [placeId]);
   const demand = useLoad(() => getDemand(placeId), [placeId]);
-  const [action, setAction] = useState<Action | null>(null);
+  const [action, setAction] = useState<Action | null>(initialAction);
   const [adminKey, setAdminKey] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 

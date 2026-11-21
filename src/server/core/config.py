@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 
 # Locate repository root and server root, and load .env from either location
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+load_dotenv()
 load_dotenv(REPO_ROOT / ".env")
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 

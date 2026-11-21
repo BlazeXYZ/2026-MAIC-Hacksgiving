@@ -19,6 +19,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    text,
 )
 from sqlalchemy.orm import (
     DeclarativeBase,
@@ -146,6 +147,27 @@ def get_db() -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
+
+
+def check_db() -> tuple[bool, str | None]:
+    """Test database connectivity with a lightweight query.
+
+    Returns:
+        (True, None) if healthy, or (False, error_message) if degraded/down.
+    """
+    if _engine is None:
+        try:
+            init_db()
+        except Exception as exc:  # noqa: BLE001
+            return False, str(exc)
+
+    try:
+        assert _engine is not None
+        with _engine.connect() as conn:
+            conn.execute(text("SELECT 1"))
+        return True, None
+    except Exception as exc:  # noqa: BLE001
+        return False, str(exc)
 
 
 def close_db() -> None:
