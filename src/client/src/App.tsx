@@ -3,6 +3,7 @@ import CommunityMap from './components/CommunityMap';
 import DeliveryCover from './components/DeliveryCover';
 import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
+import SearchGridMap from './components/search/SearchGridMap';
 import UrgentAlertBanner from './components/alerts/UrgentAlertBanner';
 import CoordinatorMap from './components/coordinator/CoordinatorMap';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
@@ -164,20 +165,9 @@ export default function App() {
               </div>
             )}
 
+            {/* Missing Persons Search Party Grid (#46) */}
             {active.id === 'missing-persons' && (
-              <div style={{ backgroundColor: '#f1f5f9', padding: '1rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>Volunteer Search Party Grid</h4>
-                <p style={{ fontSize: '0.9rem', color: '#475569' }}>
-                  Coordinate volunteer sectors in real time. Click a sector to view volunteer status or mark as searched.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem', margin: '1rem 0' }}>
-                  {['Sector A (Active)', 'Sector B (Searching)', 'Sector C (Cleared)', 'Sector D (Pending)'].map((sec, i) => (
-                    <div key={i} style={{ padding: '0.75rem', backgroundColor: i === 2 ? '#dcfce7' : '#ffffff', border: '1px solid #cbd5e1', borderRadius: '4px', fontSize: '0.8rem', textAlign: 'center' }}>
-                      {sec}
-                    </div>
-                  ))}
-                </div>
-              </div>
+              <SearchGridMap />
             )}
 
             {active.id === 'food-pantry' && (

@@ -1,0 +1,181 @@
+.search-grid-wrapper {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.search-grid-header {
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.search-grid-header h4 {
+  margin: 0 0 0.25rem;
+  font-size: 1.05rem;
+  color: #0f172a;
+}
+
+.search-grid-header p {
+  margin: 0;
+  font-size: 0.825rem;
+  color: #64748b;
+}
+
+.search-grid-stats {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.search-grid-stat-pill {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 9999px;
+}
+
+/* Map area */
+.search-grid-map-container {
+  height: 380px;
+  width: 100%;
+  position: relative;
+  isolation: isolate;
+}
+
+.search-grid-map-canvas {
+  height: 100%;
+  width: 100%;
+}
+
+/* Sector selection list & quick switcher */
+.search-grid-selector-bar {
+  display: flex;
+  gap: 0.35rem;
+  overflow-x: auto;
+  padding: 0.75rem 1.25rem;
+  background: #ffffff;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.search-sector-chip {
+  padding: 0.35rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.15s ease;
+}
+
+.search-sector-chip:hover {
+  background: #f8fafc;
+}
+
+.search-sector-chip--selected {
+  outline: 2px solid #2563eb;
+  outline-offset: 1px;
+}
+
+.search-sector-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+}
+
+/* Sector Detail Panel / Modal */
+.search-sector-panel {
+  padding: 1rem 1.25rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+}
+
+.search-sector-panel-content {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.search-sector-status-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.search-status-btn {
+  padding: 0.3rem 0.65rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.15s ease;
+}
+
+.search-signup-btn {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 0.55rem 1rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.search-signup-btn:hover {
+  background: #15803d;
+}
+
+.search-volunteer-pill {
+  display: inline-block;
+  background: #e2e8f0;
+  color: #1e293b;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  margin-right: 0.3rem;
+}
+
+.search-grid-legend {
+  padding: 0.5rem 1.25rem;
+  background: #ffffff;
+  border-top: 1px solid #f1f5f9;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  font-size: 0.75rem;
+  color: #475569;
+  flex-wrap: wrap;
+}
+
+.search-grid-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.search-legend-swatch {
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+}
