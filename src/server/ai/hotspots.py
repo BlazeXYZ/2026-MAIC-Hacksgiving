@@ -9,12 +9,37 @@ endpoints are gated by the X-Coordinator-Key header via ``require_coordinator``.
 import math
 import os
 import secrets
+from typing import Any
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 
-DEFAULT_CELL_DEG = 0.005  # ~500 m at Milwaukee latitudes
+try:
+    from src.server.core.config import settings
+except ModuleNotFoundError:
+    from core.config import settings
 
-COORDINATOR_API_KEY = os.getenv("COORDINATOR_API_KEY", "dev-coordinator-key")
+DEFAULT_CELL_DEG = 0.005  # ~500 m at Milwaukee latitudes
+DEV_COORDINATOR_KEY = "dev-coordinator-key"
+
+
+def get_coordinator_api_key() -> str | None:
+    """Return the active coordinator API key, or None if unconfigured / invalid in production."""
+    key = getattr(settings, "COORDINATOR_API_KEY", None) or os.getenv("COORDINATOR_API_KEY")
+    if getattr(settings, "APP_ENV", "development") == "production":
+        # In production, require explicitly configured non-default credential
+        if not key or key == DEV_COORDINATOR_KEY:
+            return None
+        return key
+    return key or DEV_COORDINATOR_KEY
+
+
+COORDINATOR_API_KEY = get_coordinator_api_key() or DEV_COORDINATOR_KEY
+
+
+def __getattr__(name: str) -> Any:
+    if name == "COORDINATOR_API_KEY":
+        return get_coordinator_api_key() or DEV_COORDINATOR_KEY
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def bin_points(
@@ -130,9 +155,15 @@ def require_coordinator(
         default=None, alias="X-Coordinator-Key"
     ),
 ) -> None:
-    """Dependency rejecting non-coordinator clients with 403."""
+    """Dependency rejecting non-coordinator clients with 403 or 503 if unconfigured in production."""
+    active_key = get_coordinator_api_key()
+    if active_key is None:
+        raise HTTPException(
+            status_code=503,
+            detail="Coordinator access is unconfigured or disabled in this environment.",
+        )
     if x_coordinator_key is None or not secrets.compare_digest(
-        x_coordinator_key, COORDINATOR_API_KEY
+        x_coordinator_key, active_key
     ):
         raise HTTPException(
             status_code=403, detail="Coordinator access required."
