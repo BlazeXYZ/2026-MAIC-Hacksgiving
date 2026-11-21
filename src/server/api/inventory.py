@@ -20,7 +20,7 @@ from src.server.ai.advisor import (
 from src.server.ai.hotspots import require_coordinator
 from src.server.inventory import store
 from src.server.inventory.locations import InventoryLocation, eligible_locations
-from src.server.inventory.matching import matches_for
+from src.server.inventory.matching import Source, demand_for, matches_for
 from src.server.inventory.resolver import clean_label, resolve
 
 router = APIRouter(prefix="/api/v1/inventory", tags=["inventory"])
@@ -95,7 +95,7 @@ class EntryResult(BaseModel):
 class SourceOut(BaseModel):
     location: str
     location_id: str
-    kind: Literal["have", "offer"]
+    kind: Literal["have", "offer", "need"]
     quantity: int
     distance_miles: float
 
@@ -105,6 +105,14 @@ class MatchOut(BaseModel):
     item: ItemOut
     quantity: int
     sources: list[SourceOut]
+
+
+class DemandOut(BaseModel):
+    entry_id: str
+    kind: Literal["have", "offer"]
+    item: ItemOut
+    quantity: int
+    needed_at: list[SourceOut]
 
 
 class AliasOut(BaseModel):
@@ -137,12 +145,21 @@ class ItemUpdate(BaseModel):
     name: str = Field(min_length=1, max_length=80)
 
 
+class ItemCreate(ItemUpdate):
+    aliases: list[str] = Field(default_factory=list, max_length=20, description="Other wordings that mean the same thing.")
+
+
+class PromoteBody(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=80, description="Defaults to the wording typed.")
+
+
 class UnresolvedOut(BaseModel):
     id: str
     location_id: str
     kind: str
     quantity: int
     label: str
+    same_wording: int = Field(description="Held entries with this wording, needs and donations together.")
     created_at: str
 
 
@@ -187,6 +204,16 @@ def _entry_out(entry: store.Entry) -> EntryOut:
         quantity=entry.quantity,
         verified=store.is_verified(entry),
         expires_at=entry.expires_at.isoformat(),
+    )
+
+
+def _source_out(source: Source) -> SourceOut:
+    return SourceOut(
+        location=source.location.name,
+        location_id=source.location.id,
+        kind=source.kind,  # type: ignore[arg-type]
+        quantity=source.quantity,
+        distance_miles=round(source.distance_m / 1609.34, 2),
     )
 
 
@@ -299,18 +326,25 @@ def matches(location_id: str) -> list[MatchOut]:
             need_id=m.need.id,
             item=_item_out(m.item),
             quantity=m.need.quantity,
-            sources=[
-                SourceOut(
-                    location=s.location.name,
-                    location_id=s.location.id,
-                    kind=s.kind,  # type: ignore[arg-type]
-                    quantity=s.quantity,
-                    distance_miles=round(s.distance_m / 1609.34, 2),
-                )
-                for s in m.sources
-            ],
+            sources=[_source_out(s) for s in m.sources],
         )
         for m in matches_for(loc.id)
+    ]
+
+
+@router.get("/locations/{location_id}/demand", response_model=list[DemandOut])
+def demand(location_id: str) -> list[DemandOut]:
+    """The other direction: for what this place has or offers, the nearest open needs elsewhere."""
+    loc = _location(location_id)
+    return [
+        DemandOut(
+            entry_id=d.offer.id,
+            kind=d.offer.kind,  # type: ignore[arg-type]
+            item=_item_out(d.item),
+            quantity=d.offer.quantity,
+            needed_at=[_source_out(s) for s in d.needs],
+        )
+        for d in demand_for(loc.id)
     ]
 
 
@@ -360,9 +394,19 @@ def rename_item(item_id: str, body: ItemUpdate) -> ItemOut:
         _raise(err)
 
 
+@admin.post("/items", response_model=ItemOut, status_code=201)
+def create_item(body: ItemCreate) -> ItemOut:
+    """Add a catalog item the seed list lacks. Held entries that use its wordings link up right away."""
+    try:
+        return _item_out(store.add_item(body.name, tuple(body.aliases)))
+    except store.InventoryError as err:
+        _raise(err)
+
+
 @admin.get("/unresolved", response_model=list[UnresolvedOut])
 def unresolved() -> list[UnresolvedOut]:
-    """Entries the system could not match. Teach it the wording with `resolve`."""
+    """Entries the system could not match. Use `resolve` to point one at an item, or `promote` to make a new item."""
+    held = store.unresolved_entries()
     return [
         UnresolvedOut(
             id=e.id,
@@ -370,9 +414,10 @@ def unresolved() -> list[UnresolvedOut]:
             kind=e.kind,
             quantity=e.quantity,
             label=e.label,
+            same_wording=sum(1 for h in held if store.normalize(h.label) == store.normalize(e.label)),
             created_at=e.created_at.isoformat(),
         )
-        for e in store.unresolved_entries()
+        for e in held
     ]
 
 
@@ -380,6 +425,15 @@ def unresolved() -> list[UnresolvedOut]:
 def resolve_entry(entry_id: str, body: ResolveBody) -> EntryOut:
     try:
         return _entry_out(store.resolve_entry(entry_id, body.item_id, remember=body.remember))
+    except store.InventoryError as err:
+        _raise(err)
+
+
+@admin.post("/entries/{entry_id}/promote", response_model=EntryOut)
+def promote_entry(entry_id: str, body: PromoteBody) -> EntryOut:
+    """Make a held entry's wording a brand-new catalog item. Every held need and donation with that wording joins it."""
+    try:
+        return _entry_out(store.promote_entry(entry_id, body.name))
     except store.InventoryError as err:
         _raise(err)
 

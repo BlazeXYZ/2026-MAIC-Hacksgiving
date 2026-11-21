@@ -164,6 +164,50 @@ def rename_item(item_id: str, name: str) -> Item:
         return item
 
 
+def _slug(name: str) -> str:
+    return "-".join(re.sub(r"[^a-z0-9]+", " ", name.casefold()).split())[:60] or "item"
+
+
+def add_item(name: str, extra_aliases: tuple[str, ...] = ()) -> Item:
+    """A coordinator adds a catalog item the seed list does not have, with the wordings that mean it.
+
+    Held entries that use any of these wordings are matched to the new item right away.
+    """
+    with _lock:
+        clean = name.strip()
+        wordings = [clean, *(a.strip() for a in extra_aliases if a.strip())]
+        index = alias_index()
+        for text in wordings:
+            if normalize(text) in index:
+                raise AliasConflict(index[normalize(text)].id)
+        base = _slug(clean)
+        item_id, n = base, 2
+        while item_id in _items:
+            item_id, n = f"{base}-{n}", n + 1
+        item = _items[item_id] = Item(item_id, clean)
+        seen: set[str] = set()
+        for text in wordings:
+            key = normalize(text)
+            if key and key not in seen:
+                seen.add(key)
+                _add_alias_locked(text, item.id, "approved", "coordinator", now_utc())
+        rematch_unresolved()
+        return item
+
+
+def rematch_unresolved() -> int:
+    """Link held entries whose wording now has an alias. Needs and donations are handled alike."""
+    with _lock:
+        index = alias_index()
+        linked = 0
+        for entry in unresolved_entries():
+            alias = index.get(normalize(entry.label))
+            if alias is not None:
+                entry.item_id, entry.alias_id, entry.via = alias.item_id, alias.id, "alias"
+                linked += 1
+        return linked
+
+
 # ---------- aliases ----------
 
 
@@ -200,7 +244,10 @@ def add_alias(
         clash = alias_index().get(normalize(text))
         if clash is not None:
             raise AliasConflict(clash.id)
-        return _add_alias_locked(text, item_id, status, source, at or now_utc())
+        alias = _add_alias_locked(text, item_id, status, source, at or now_utc())
+        if source == "coordinator":
+            rematch_unresolved()
+        return alias
 
 
 def update_alias(
@@ -293,15 +340,33 @@ def unresolved_entries(at: datetime | None = None) -> list[Entry]:
 
 
 def resolve_entry(entry_id: str, item_id: str, *, remember: bool) -> Entry:
-    """A coordinator picks the item for an entry the system could not match."""
+    """A coordinator picks the item for an entry the system could not match.
+
+    Every other held entry with the same wording is resolved too, whether it is
+    a need or a donation, so both sides of a trade line up at once.
+    """
     with _lock:
         entry = get_entry(entry_id)
         get_item(item_id)
-        entry.item_id, entry.via = item_id, "coordinator"
         key = normalize(entry.label)
-        if remember and key and key not in alias_index():
-            entry.alias_id = _add_alias_locked(entry.label, item_id, "approved", "coordinator", now_utc()).id
+        index = alias_index()
+        alias_id: str | None = None
+        if key in index and index[key].item_id == item_id:
+            alias_id = index[key].id
+        elif remember and key and key not in index:
+            alias_id = _add_alias_locked(entry.label, item_id, "approved", "coordinator", now_utc()).id
+        twins = [h for h in unresolved_entries() if h.id != entry.id and normalize(h.label) == key]
+        for target in [entry, *twins]:
+            target.item_id, target.alias_id, target.via = item_id, alias_id, "coordinator"
         return entry
+
+
+def promote_entry(entry_id: str, name: str | None = None) -> Entry:
+    """Create a new catalog item from a held entry's wording and resolve it (and its twins) to it."""
+    with _lock:
+        entry = get_entry(entry_id)
+        item = add_item(name.strip() if name and name.strip() else entry.label.title())
+        return resolve_entry(entry.id, item.id, remember=True)
 
 
 def close_entry(entry_id: str) -> Entry:
