@@ -1,58 +1,59 @@
 import { useMemo, useState } from 'react';
 import type { FormEvent, ReactElement } from 'react';
 import { describeError, postEntry } from '../../api/inventory';
-import type { CatalogItem, EntryKind, EntryResult } from '../../contracts/inventory';
+import type { CatalogItem, EntryResult } from '../../contracts/inventory';
 import { searchCatalog } from './search';
 
-const KINDS: Array<{ id: EntryKind; label: string; help: string }> = [
-  { id: 'need', label: 'We need', help: 'Ask the community for something.' },
-  { id: 'have', label: 'We have', help: 'List what is in stock here.' },
-  { id: 'offer', label: 'Someone is offering', help: 'A donation on its way to this place.' },
-];
-
 const MAX_TEXT = 120;
+const MAX_CHIPS = 12;
 
 interface Props {
   placeId: string;
   catalog: CatalogItem[];
+  /** "need" adds to Requested items. "have" adds to Current inventory. */
+  kind: 'need' | 'have';
   onPosted: () => void;
 }
 
+const COPY = {
+  need: { title: 'Request an item', help: 'Ask the community for something this place needs.', button: 'Request' },
+  have: { title: 'Give an item', help: 'Add something this place has, so others can see it is available.', button: 'Give' },
+} as const;
+
 /**
- * Post a need, stock, or offer. People either pick an item from the shared list, which always matches,
- * or describe it in their own words and let the system match it.
+ * One field for both "Request item" and "Give item". Type what it is, or tap a suggestion. A tapped suggestion
+ * always matches. Anything else is sent as typed and matched by the server, or held for a coordinator.
  */
-export default function PostEntryForm({ placeId, catalog, onPosted }: Props): ReactElement {
-  const [kind, setKind] = useState<EntryKind>('need');
-  const [mode, setMode] = useState<'pick' | 'describe'>('pick');
-  const [search, setSearch] = useState('');
-  const [itemId, setItemId] = useState<string | null>(null);
+export default function PostEntryForm({ placeId, catalog, kind, onPosted }: Props): ReactElement {
   const [text, setText] = useState('');
+  const [itemId, setItemId] = useState<string | null>(null);
   const [quantity, setQuantity] = useState('1');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<EntryResult | null>(null);
 
-  const shown = useMemo(() => searchCatalog(catalog, search), [catalog, search]);
-  const guessing = search.trim() !== '' && shown.length > 0 && shown.every((f) => f.approximate);
+  const found = useMemo(() => searchCatalog(catalog, text), [catalog, text]);
+  const shown = found.slice(0, MAX_CHIPS);
+  const guessing = text.trim() !== '' && found.length > 0 && found.every((f) => f.approximate);
 
   const qty = Number.parseInt(quantity, 10);
   const qtyOk = Number.isInteger(qty) && qty >= 1 && qty <= 10_000;
-  const named = mode === 'pick' ? itemId !== null : text.trim().length > 0;
-  const canPost = qtyOk && named && !busy;
+  const canSend = qtyOk && (itemId !== null || text.trim() !== '') && !busy;
+  const copy = COPY[kind];
+  const id = `post-${kind}-${placeId}`;
 
   async function submit(event: FormEvent): Promise<void> {
     event.preventDefault();
-    if (!canPost) return;
+    if (!canSend) return;
     setBusy(true);
     setError(null);
     setResult(null);
     try {
       const base = { location_id: placeId, kind, quantity: qty };
-      const res = await postEntry(mode === 'pick' ? { ...base, item_id: itemId as string } : { ...base, text: text.trim() });
+      const res = await postEntry(itemId !== null ? { ...base, item_id: itemId } : { ...base, text: text.trim() });
       setResult(res);
-      setItemId(null);
       setText('');
+      setItemId(null);
       setQuantity('1');
       onPosted();
     } catch (err) {
@@ -63,101 +64,57 @@ export default function PostEntryForm({ placeId, catalog, onPosted }: Props): Re
   }
 
   return (
-    <form className="inv-form" onSubmit={(e) => void submit(e)} aria-label="Post to this place">
-      <fieldset>
-        <legend>What are you posting?</legend>
-        <div className="inv-seg" role="radiogroup">
-          {KINDS.map((k) => (
-            <label key={k.id} className={kind === k.id ? 'on' : ''}>
-              <input type="radio" name={`kind-${placeId}`} checked={kind === k.id} onChange={() => setKind(k.id)} />
-              <span>{k.label}</span>
-            </label>
+    <form className="inv-form" onSubmit={(e) => void submit(e)} aria-label={copy.title}>
+      <p className="meta">{copy.help}</p>
+      <div>
+        <label className="inv-label" htmlFor={`${id}-item`}>
+          What item?
+        </label>
+        <input
+          id={`${id}-item`}
+          className="inv-input"
+          type="search"
+          value={text}
+          maxLength={MAX_TEXT}
+          autoFocus
+          autoComplete="off"
+          placeholder="for example: blankets"
+          onChange={(e) => {
+            setText(e.target.value);
+            setItemId(null); // editing the words un-picks a suggestion
+          }}
+        />
+        {guessing && <p className="meta">Did you mean:</p>}
+        <div className="inv-chips" role="group" aria-label="Suggestions">
+          {shown.map(({ item }) => (
+            <button
+              key={item.id}
+              type="button"
+              className="inv-chip"
+              aria-pressed={itemId === item.id}
+              onClick={() => {
+                setItemId(item.id);
+                setText(item.name);
+              }}
+            >
+              {item.name}
+            </button>
           ))}
         </div>
-        <p className="meta">{KINDS.find((k) => k.id === kind)?.help}</p>
-      </fieldset>
-
-      <div className="inv-tabs" role="tablist" aria-label="How to name the item">
-        <button type="button" role="tab" aria-selected={mode === 'pick'} onClick={() => setMode('pick')}>
-          Pick from the list
-        </button>
-        <button type="button" role="tab" aria-selected={mode === 'describe'} onClick={() => setMode('describe')}>
-          Describe it
-        </button>
+        {found.length > MAX_CHIPS && <p className="meta">Keep typing to narrow the list.</p>}
+        {text.trim() !== '' && found.length === 0 && (
+          <p className="meta">Not in the list. You can still send it. A coordinator will check it.</p>
+        )}
+        <p className="meta">Please don&rsquo;t include phone numbers or addresses.</p>
       </div>
-
-      {mode === 'pick' ? (
-        <div>
-          <label className="inv-label" htmlFor={`search-${placeId}`}>
-            Find an item
-          </label>
-          <input
-            id={`search-${placeId}`}
-            className="inv-input"
-            type="search"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="coats, formula, bus pass…"
-          />
-          {guessing && <p className="meta">No exact match. Did you mean:</p>}
-          <div className="inv-chips" role="group" aria-label="Items">
-            {shown.map(({ item }) => (
-              <button
-                key={item.id}
-                type="button"
-                className="inv-chip"
-                aria-pressed={itemId === item.id}
-                onClick={() => setItemId(item.id)}
-              >
-                {item.name}
-              </button>
-            ))}
-            {shown.length === 0 && (
-              <p className="meta">
-                Nothing close. You can{' '}
-                <button
-                  type="button"
-                  className="btn ghost sm"
-                  onClick={() => {
-                    setText(search.trim().slice(0, MAX_TEXT));
-                    setMode('describe');
-                  }}
-                >
-                  describe &ldquo;{search.trim()}&rdquo; in your own words
-                </button>{' '}
-                and a coordinator will check it.
-              </p>
-            )}
-          </div>
-        </div>
-      ) : (
-        <div>
-          <label className="inv-label" htmlFor={`text-${placeId}`}>
-            What is it?
-          </label>
-          <input
-            id={`text-${placeId}`}
-            className="inv-input"
-            value={text}
-            maxLength={MAX_TEXT}
-            onChange={(e) => setText(e.target.value)}
-            placeholder="for example: baby crib"
-            autoComplete="off"
-          />
-          <p className="meta">
-            Use a few words. Please don&rsquo;t include phone numbers or addresses. If we can&rsquo;t tell what it is, a
-            coordinator will check it.
-          </p>
-        </div>
-      )}
 
       <div className="inv-row">
         <div>
-          <label className="inv-label" htmlFor={`qty-${placeId}`}>
+          <label className="inv-label" htmlFor={`${id}-qty`}>
             How many?
           </label>
           <input
-            id={`qty-${placeId}`}
+            id={`${id}-qty`}
             className="inv-input inv-qty"
             type="number"
             min={1}
@@ -166,8 +123,8 @@ export default function PostEntryForm({ placeId, catalog, onPosted }: Props): Re
             onChange={(e) => setQuantity(e.target.value)}
           />
         </div>
-        <button type="submit" className="btn primary" disabled={!canPost}>
-          {busy ? 'Posting…' : 'Post'}
+        <button type="submit" className="btn primary" disabled={!canSend}>
+          {busy ? 'Sending…' : copy.button}
         </button>
       </div>
 
@@ -181,7 +138,7 @@ export default function PostEntryForm({ placeId, catalog, onPosted }: Props): Re
           <p className="inv-ok" role="status">
             {result.status === 'matched' && result.item ? (
               <>
-                Posted as <b>{result.item.name}</b>.{' '}
+                Added <b>{result.item.name}</b>.{' '}
               </>
             ) : null}
             {result.message}

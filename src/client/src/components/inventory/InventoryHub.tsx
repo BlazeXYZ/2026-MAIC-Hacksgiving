@@ -52,9 +52,8 @@ export default function InventoryHub(): ReactElement {
                   {p.district} · {p.address}
                 </span>
                 <span className="inv-counts">
-                  <span className={p.open_needs > 0 ? 'tag today' : 'tag plain'}>{p.open_needs} needs</span>
-                  <span className="tag plain">{p.have} in stock</span>
-                  <span className="tag plain">{p.offers} offered</span>
+                  <span className={p.open_needs > 0 ? 'tag today' : 'tag plain'}>{p.open_needs} requested</span>
+                  <span className="tag plain">{p.have + p.offers} in stock</span>
                 </span>
               </button>
             </li>
