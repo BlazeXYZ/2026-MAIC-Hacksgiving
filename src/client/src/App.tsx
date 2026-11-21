@@ -3,6 +3,7 @@ import CommunityMap from './components/CommunityMap';
 import DeliveryCover from './components/DeliveryCover';
 import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
+import CoordinatorDashboard from './screens/CoordinatorDashboard';
 
 interface Community {
   id: string;
@@ -43,7 +44,7 @@ const COMMUNITIES: Community[] = [
 export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
-  const [showMap, setShowMap] = useState(false);
+  const [activeTab, setActiveTab] = useState<'communities' | 'map' | 'coordinator'>('communities');
 
   useEffect(() => {
     if (quickExitTriggered) return;
@@ -73,7 +74,7 @@ export default function App() {
           <strong>URGENT ALERT:</strong> Active Missing Person Search near 27th & Wisconsin Ave. Volunteer search parties are currently forming.
         </div>
         <button
-          onClick={() => { setSelectedCommunity('missing-persons'); setShowMap(false); }}
+          onClick={() => { setSelectedCommunity('missing-persons'); setActiveTab('communities'); }}
           style={{ backgroundColor: '#ffffff', color: '#dc2626', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
         >
           View Search Grid
@@ -97,14 +98,16 @@ export default function App() {
       </header>
 
       <nav aria-label="Main navigation" className="hub-view-nav">
-        <button type="button" aria-current={!showMap ? 'page' : undefined} onClick={() => setShowMap(false)}>Communities</button>
-        <button type="button" aria-current={showMap ? 'page' : undefined} onClick={() => setShowMap(true)}>Map</button>
+        <button type="button" aria-current={activeTab === 'communities' ? 'page' : undefined} onClick={() => setActiveTab('communities')}>Communities</button>
+        <button type="button" aria-current={activeTab === 'map' ? 'page' : undefined} onClick={() => setActiveTab('map')}>Map</button>
+        <button type="button" aria-current={activeTab === 'coordinator' ? 'page' : undefined} onClick={() => setActiveTab('coordinator')}>Coordinator</button>
       </nav>
 
-      {showMap && <CommunityMap />}
+      {activeTab === 'map' && <CommunityMap />}
+      {activeTab === 'coordinator' && <CoordinatorDashboard />}
 
       {/* Main Container */}
-      <main hidden={showMap} style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem' }}>
+      <main hidden={activeTab !== 'communities'} style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem' }}>
         <details className="help-survey-entry">
           <summary>Request help</summary>
           <HelpSurvey />
