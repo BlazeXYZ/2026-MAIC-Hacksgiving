@@ -172,6 +172,12 @@ class UnresolvedOut(BaseModel):
     created_at: str
 
 
+class GuessOut(BaseModel):
+    wording: str
+    item: ItemOut
+    count: int = Field(description="Open entries matched this way.")
+
+
 class ResolveBody(BaseModel):
     item_id: str = Field(min_length=1, max_length=80)
     remember: bool = Field(default=True, description="Teach the system this phrase for next time.")
@@ -389,6 +395,16 @@ def list_aliases(
 ) -> list[AliasOut]:
     """Every wording the system knows. Filter to `suggested` for the review queue."""
     return [_alias_out(a) for a in store.list_aliases(status)]
+
+
+@admin.get("/guesses", response_model=list[GuessOut])
+def guesses() -> list[GuessOut]:
+    """Wordings matched by closeness only, most common first.
+
+    Add one as an alias (`POST /aliases`) to confirm it and make it permanent. Unconfirmed ones are
+    recomputed every time and never stored, so misspellings do not pile up in the alias table.
+    """
+    return [GuessOut(wording=g.wording, item=_item_out(g.item), count=g.count) for g in store.fuzzy_guesses()]
 
 
 @admin.post("/aliases", response_model=AliasOut, status_code=201)

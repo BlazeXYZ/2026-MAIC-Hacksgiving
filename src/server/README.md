@@ -40,7 +40,12 @@ The demo stores claims in memory. Restarting the server resets the board.
 
 Pantries and community safe places can list what they **have**, what they **need**, and what is **offered**. People pick an item from the shared catalog or describe it in their own words; free text is mapped to a catalog item through an alias table.
 
-Matching order, cheapest first: exact alias, known phrase inside the text, fuzzy match, then one small model call for phrases never seen before (skipped in mock mode). Anything the system guesses is saved as a `suggested` alias, used right away, and flagged `verified: false` until a coordinator approves it. Rejected wordings are never guessed again. Text that cannot be matched is held for a coordinator.
+Matching order, cheapest first: exact alias, known phrase inside the text, fuzzy match, then one small model call for phrases never seen before (skipped in mock mode). The alias table stays human-curated:
+
+- Phrase and fuzzy matching compare only against **trusted** aliases (seeded or approved), so a guess can never become the anchor for more guesses.
+- A fuzzy match is **not stored**. It is recomputed each time and flagged `verified: false`, so misspellings do not pile up. `GET admin/guesses` lists the most common ones; adding one as an alias confirms it for good.
+- Only a **model answer** (it costs a call) is saved, as a `suggested` alias. It works for exact repeats, stays flagged until a coordinator approves it, and is dropped after 30 days if nobody does.
+- Rejected wordings are never guessed again. Text that cannot be matched is held for a coordinator.
 
 Public routes (`/api/v1/inventory`): `catalog`, `locations`, `locations/{id}`, `locations/{id}/matches`, `locations/{id}/advice`, and `POST entries`.
 

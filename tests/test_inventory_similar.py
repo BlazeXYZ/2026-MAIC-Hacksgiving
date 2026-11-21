@@ -105,9 +105,20 @@ def test_one_shared_generic_word_is_not_enough_to_warn() -> None:
     assert res.status_code == 201  # shares "baby" with several items, but is not one of them
 
 
-def test_rejected_wordings_are_not_offered_as_candidates() -> None:
-    post(PANTRY, "need", text="infant formulla")  # guessed, then rejected by a coordinator
+def test_rejected_wordings_are_not_offered_as_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
+    from src.server.ai.client import TriageLLMClient
+    from src.server.inventory import resolver
+
+    async def complete(self: TriageLLMClient, prompt: str) -> str:
+        return "winter-coats"
+
+    monkeypatch.setattr(resolver.settings, "AI_MOCK_MODE", False)
+    monkeypatch.setattr(resolver.settings, "GEMINI_API_KEY", "test-key")
+    monkeypatch.setattr(TriageLLMClient, "complete", complete)
+    post(PANTRY, "need", text="puffy snow garment")  # guessed by the model, then rejected by a coordinator
     guess = client.get(f"{BASE}/admin/aliases?status=suggested", headers=COORD).json()[0]
     client.patch(f"{BASE}/admin/aliases/{guess['id']}", json={"status": "rejected"}, headers=COORD)
     row = held()[0]
-    assert all(s["wording"] != "infant formulla" for s in row["similar"])
+    assert all(s["wording"] != "puffy snow garment" for s in row["similar"])
+
+

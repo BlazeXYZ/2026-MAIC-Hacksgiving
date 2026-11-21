@@ -64,11 +64,13 @@ def test_known_phrase_inside_a_sentence_resolves() -> None:
     assert (result.item_id, result.via) == ("infant-formula", "phrase")
 
 
-def test_typo_resolves_by_fuzzy_match_and_is_saved_as_a_suggestion() -> None:
+def test_typo_resolves_by_fuzzy_match_without_growing_the_alias_table() -> None:
+    before = len(store.list_aliases())
     result = resolver.resolve_local("infant formulla")
     assert (result.item_id, result.via) == ("infant-formula", "fuzzy")
-    saved = store.get_alias(result.alias_id or "")
-    assert (saved.status, saved.source) == ("suggested", "fuzzy")
+    assert store.get_alias(result.alias_id or "").status == "seeded"  # points at the reviewed alias
+    assert resolver.resolve_local("infant formuula").via == "fuzzy"
+    assert len(store.list_aliases()) == before  # typos are matched each time, never stored
 
 
 def test_unknown_words_are_unmatched() -> None:
@@ -141,10 +143,11 @@ def test_free_text_match_is_verified_for_a_seed_alias() -> None:
     assert result["verified"] is True
 
 
-def test_guessed_match_is_flagged_until_a_coordinator_approves() -> None:
-    result = post(text="infant formulla")
-    assert result["verified"] is False
-    alias = next(a for a in client.get("/api/v1/inventory/admin/aliases?status=suggested", headers=COORD).json())
+def test_guessed_match_is_flagged_until_a_coordinator_approves(monkeypatch: pytest.MonkeyPatch) -> None:
+    _live_model(monkeypatch, "winter-coats")
+    result = post(text="puffy snow garment")
+    assert (result["via"], result["verified"]) == ("llm", False)
+    alias = client.get("/api/v1/inventory/admin/aliases?status=suggested", headers=COORD).json()[0]
     client.patch(f"/api/v1/inventory/admin/aliases/{alias['id']}", json={"status": "approved"}, headers=COORD)
     entry = client.get(f"/api/v1/inventory/locations/{PANTRY}").json()["need"][0]
     assert entry["verified"] is True
@@ -248,23 +251,25 @@ def test_renaming_to_a_wording_already_in_use_is_a_conflict() -> None:
     assert res.status_code == 409
 
 
-def test_remapping_an_alias_moves_the_entries_that_used_it() -> None:
-    post(text="infant formulla")
+def test_remapping_an_alias_moves_the_entries_that_used_it(monkeypatch: pytest.MonkeyPatch) -> None:
+    _live_model(monkeypatch, "winter-coats")
+    post(text="puffy snow garment")
     suggested = client.get("/api/v1/inventory/admin/aliases?status=suggested", headers=COORD).json()[0]
-    client.patch(f"/api/v1/inventory/admin/aliases/{suggested['id']}", json={"item_id": "diapers"}, headers=COORD)
+    client.patch(f"/api/v1/inventory/admin/aliases/{suggested['id']}", json={"item_id": "blankets"}, headers=COORD)
     need = client.get(f"/api/v1/inventory/locations/{PANTRY}").json()["need"][0]
-    assert need["item"]["id"] == "diapers"
+    assert need["item"]["id"] == "blankets"
 
 
-def test_rejecting_an_alias_sends_its_entries_back_for_review() -> None:
-    post(text="infant formulla")
+def test_rejecting_an_alias_sends_its_entries_back_for_review(monkeypatch: pytest.MonkeyPatch) -> None:
+    _live_model(monkeypatch, "winter-coats")
+    post(text="puffy snow garment")
     suggested = client.get("/api/v1/inventory/admin/aliases?status=suggested", headers=COORD).json()[0]
     client.patch(f"/api/v1/inventory/admin/aliases/{suggested['id']}", json={"status": "rejected"}, headers=COORD)
     assert client.get(f"/api/v1/inventory/locations/{PANTRY}").json()["need"] == []
     assert len(client.get("/api/v1/inventory/admin/unresolved", headers=COORD).json()) == 1
-    assert resolver.resolve_local("infant formulla").item_id is None  # the rejected guess is not reused
-    again = post(text="infant formulla")
-    assert again["status"] == "held"  # and it waits for a human instead of being guessed again
+    assert resolver.resolve_local("puffy snow garment").item_id is None  # the rejected guess is not reused
+    again = post(text="puffy snow garment")
+    assert again["status"] == "held"  # and it waits for a human instead of asking the model again
     assert client.get("/api/v1/inventory/admin/aliases?status=suggested", headers=COORD).json() == []
 
 
@@ -287,7 +292,10 @@ def test_coordinator_can_rename_a_catalog_item_and_close_an_entry() -> None:
     assert client.get(f"/api/v1/inventory/locations/{PANTRY}").json()["need"] == []
 
 
-def test_catalog_hides_unreviewed_guesses() -> None:
-    post(text="infant formulla")
-    wordings = next(i for i in client.get("/api/v1/inventory/catalog").json() if i["id"] == "infant-formula")["aliases"]
-    assert "infant formulla" not in wordings and "baby formula" in wordings
+def test_catalog_hides_unreviewed_guesses(monkeypatch: pytest.MonkeyPatch) -> None:
+    _live_model(monkeypatch, "winter-coats")
+    post(text="puffy snow garment")
+    wordings = next(i for i in client.get("/api/v1/inventory/catalog").json() if i["id"] == "winter-coats")["aliases"]
+    assert "puffy snow garment" not in wordings and "parka" in wordings
+
+

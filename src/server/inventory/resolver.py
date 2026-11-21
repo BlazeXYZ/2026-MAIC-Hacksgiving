@@ -3,14 +3,16 @@
 Order, cheapest first:
   1. exact alias            "diapers" -> Diapers
   2. known phrase inside    "two cases of baby formula" -> Infant formula
-  3. fuzzy match            "infnat formula" -> Infant formula (saved as a suggestion)
+  3. fuzzy match            "infnat formula" -> Infant formula (a guess, not saved)
   4. model fallback         one tiny call per phrase we have never seen (saved as a suggestion)
   5. unmatched              held for a coordinator, who can teach the system the phrase
 
-Anything the system guesses (steps 3 and 4) is stored as a `suggested` alias,
-so it is used right away but stays flagged until a coordinator approves it.
-The model is only asked about phrases the alias table does not know, and its
-answer is cached as an alias, so each new phrase costs one call, once.
+The alias table stays human-curated. Steps 2 and 3 compare only against trusted
+aliases (seeded or approved), so a guess can never become the anchor for more
+guesses. A fuzzy match is recomputed each time and flagged unverified, not stored,
+so misspellings do not pile up. Only a model answer, which costs a call, is saved,
+as a `suggested` alias: usable for exact repeats, flagged until a coordinator
+approves it, and dropped after 30 days if nobody does.
 """
 
 from __future__ import annotations
@@ -48,10 +50,10 @@ def clean_label(text: str) -> str:
 
 
 def _phrase_match(key: str) -> store.Alias | None:
-    """The longest known alias that appears as whole words inside `key`."""
+    """The longest trusted alias that appears as whole words inside `key`."""
     padded = f" {key} "
     best: store.Alias | None = None
-    for alias_key, alias in store.alias_index().items():
+    for alias_key, alias in store.trusted_index().items():
         if f" {alias_key} " in padded and (best is None or len(alias_key) > len(best.key)):
             best = alias
     return best
@@ -70,13 +72,10 @@ def resolve_local(label: str) -> Resolution:
         return Resolution(phrase.item_id, phrase.id, "phrase")
     if key in store.rejected_keys():  # a coordinator already said no; wait for a human instead
         return Resolution(None, None, "unmatched")
-    close = difflib.get_close_matches(key, list(index), n=1, cutoff=FUZZY_CUTOFF)
+    trusted = store.trusted_index()
+    close = difflib.get_close_matches(key, list(trusted), n=1, cutoff=FUZZY_CUTOFF)
     if close:
-        try:
-            alias = store.add_alias(label, index[close[0]].item_id, status="suggested", source="fuzzy")
-        except store.AliasConflict:  # same text typed twice at once; reuse the first
-            alias = store.alias_index()[key]
-        return Resolution(alias.item_id, alias.id, "fuzzy")
+        return Resolution(trusted[close[0]].item_id, trusted[close[0]].id, "fuzzy")
     return Resolution(None, None, "unmatched")
 
 

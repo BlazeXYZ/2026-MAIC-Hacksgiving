@@ -26,6 +26,9 @@ TTL: dict[str, timedelta] = {
     "have": timedelta(days=30),
 }
 
+#: Model suggestions nobody reviewed are dropped after this long, so the table cannot grow unchecked.
+SUGGESTION_TTL = timedelta(days=30)
+
 #: Alias statuses that mean a human has accepted the mapping.
 TRUSTED: frozenset[str] = frozenset({"seeded", "approved"})
 
@@ -257,16 +260,41 @@ def add_item(name: str, extra_aliases: tuple[str, ...] = (), *, confirm_new: boo
 
 
 def rematch_unresolved() -> int:
-    """Link held entries whose wording now has an alias. Needs and donations are handled alike."""
+    """Link held entries, and entries matched only by a fuzzy guess, whose wording now has an exact alias.
+
+    Needs and donations are handled alike.
+    """
     with _lock:
         index = alias_index()
         linked = 0
-        for entry in unresolved_entries():
+        pending = unresolved_entries() + [e for e in _entries.values() if e.via == "fuzzy" and not e.closed]
+        for entry in pending:
             alias = index.get(normalize(entry.label))
             if alias is not None:
                 entry.item_id, entry.alias_id, entry.via = alias.item_id, alias.id, "alias"
                 linked += 1
         return linked
+
+
+@dataclass(frozen=True)
+class Guess:
+    wording: str
+    item: Item
+    count: int
+
+
+def fuzzy_guesses() -> list[Guess]:
+    """Wordings the system matched by closeness only, grouped, most common first.
+
+    A coordinator who confirms one (by adding it as an alias) makes it permanent; the rest stay guesses.
+    """
+    with _lock:
+        groups: dict[tuple[str, str], list[Entry]] = {}
+        for entry in active_entries():
+            if entry.via == "fuzzy" and entry.item_id is not None:
+                groups.setdefault((normalize(entry.label), entry.item_id), []).append(entry)
+        found = [Guess(rows[0].label, _items[item_id], len(rows)) for (_, item_id), rows in groups.items()]
+        return sorted(found, key=lambda g: (-g.count, g.wording))
 
 
 # ---------- aliases ----------
@@ -285,10 +313,37 @@ def get_alias(alias_id: str) -> Alias:
         return _aliases[alias_id]
 
 
+def expire_suggestions(at: datetime | None = None) -> int:
+    """Drop model suggestions older than `SUGGESTION_TTL` that no coordinator reviewed.
+
+    Entries that used one go back to the held list. Approved and seeded aliases never expire.
+    """
+    moment = at or now_utc()
+    with _lock:
+        stale = [a for a in _aliases.values() if a.status == "suggested" and a.created_at + SUGGESTION_TTL <= moment]
+        for alias in stale:
+            for entry in _entries.values():
+                if entry.alias_id == alias.id:
+                    entry.item_id, entry.alias_id, entry.via = None, None, "unmatched"
+            del _aliases[alias.id]
+        return len(stale)
+
+
 def alias_index() -> dict[str, Alias]:
-    """Normalized text -> alias, for every alias that has not been rejected."""
+    """Normalized text -> alias, for every alias that has not been rejected. Used for exact lookups."""
+    expire_suggestions()
     with _lock:
         return {a.key: a for a in _aliases.values() if a.status != "rejected"}
+
+
+def trusted_index() -> dict[str, Alias]:
+    """Normalized text -> alias, for seeded and approved aliases only.
+
+    Fuzzy and phrase matching compare against this, never against unreviewed guesses, so a
+    mistake cannot become the anchor for more mistakes.
+    """
+    with _lock:
+        return {a.key: a for a in _aliases.values() if a.status in TRUSTED}
 
 
 def rejected_keys() -> set[str]:
@@ -440,6 +495,8 @@ def close_entry(entry_id: str) -> Entry:
 def is_verified(entry: Entry) -> bool:
     """True when a human accepted how this entry was matched."""
     with _lock:
+        if entry.via == "fuzzy":
+            return False  # matched by closeness only, even when the matching alias is trusted
         if entry.alias_id is None:
             return entry.via in ("picked", "coordinator")
         return _aliases[entry.alias_id].status in TRUSTED
