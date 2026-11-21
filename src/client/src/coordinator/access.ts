@@ -1,6 +1,6 @@
 /**
  * Coordinator access. The key is typed in by staff and held in React memory only,
- * so it never ships in the bundle and Quick Exit or a reload drops it.
+ * so it never ships in the bundle and a reload or tab close drops it.
  */
 
 export const COORDINATOR_KEY_HEADER = 'X-Coordinator-Key';
