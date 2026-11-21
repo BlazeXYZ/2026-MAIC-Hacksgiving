@@ -35,3 +35,15 @@ python main.py
 - `POST /api/tickets/{ticket_id}/unclaim` reopens a ticket when given the same 64-character hexadecimal key as the claim body.
 
 The demo stores claims in memory. Restarting the server resets the board.
+
+## Community inventory
+
+Pantries and community safe places can list what they **have**, what they **need**, and what is **offered**. People pick an item from the shared catalog or describe it in their own words; free text is mapped to a catalog item through an alias table.
+
+Matching order, cheapest first: exact alias, known phrase inside the text, fuzzy match, then one small model call for phrases never seen before (skipped in mock mode). Anything the system guesses is saved as a `suggested` alias, used right away, and flagged `verified: false` until a coordinator approves it. Rejected wordings are never guessed again. Text that cannot be matched is held for a coordinator.
+
+Public routes (`/api/v1/inventory`): `catalog`, `locations`, `locations/{id}`, `locations/{id}/matches`, `locations/{id}/advice`, and `POST entries`.
+
+Coordinator routes (`/api/v1/inventory/admin`, need `X-Coordinator-Key`): list, create, rename, remap, approve or reject aliases; rename catalog items; list and resolve held entries; close entries.
+
+**Privacy:** shelters are excluded from inventory entirely (see `inventory/locations.py`). They are left out of every list and answer 404 like an unknown place. Entries never store who made them, and typed text is scrubbed of contact details. Needs expire after 14 days, offers after 7, stock after 30. Data is held in memory and resets on restart.
