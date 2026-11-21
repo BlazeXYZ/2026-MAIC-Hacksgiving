@@ -8,6 +8,7 @@ import UrgentAlertBanner, { type MissingPersonAlert } from './components/alerts/
 import CoordinatorMap from './components/coordinator/CoordinatorMap';
 import CoordinatorSignIn from './components/coordinator/CoordinatorSignIn';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
+import { StatusScreen } from './screens/StatusScreen';
 import InventoryHub from './components/inventory/InventoryHub';
 import InventoryReview from './components/inventory/review/InventoryReview';
 import HubForum from './components/forums/HubForum';
@@ -21,6 +22,7 @@ type Tab =
   | 'home'
   | 'map'
   | 'inventory'
+  | 'request-status'
   | 'coordinator'
   | 'coordinator-ops'
   | 'inventory-review'
@@ -101,6 +103,7 @@ export default function App(): ReactElement {
   const [selectedCommunity, setSelectedCommunity] = useState<HubId>('domestic-safety');
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [askingForHelp, setAskingForHelp] = useState<boolean>(false);
+  const [requestCode, setRequestCode] = useState<string | null>(null);
   const [inventoryAction, setInventoryAction] = useState<'request' | 'give' | 'remove' | null>(null);
   // Held in memory only: a reload signs staff out.
   const [coordinatorKey, setCoordinatorKey] = useState<string | null>(null);
@@ -136,8 +139,10 @@ export default function App(): ReactElement {
   }, []);
 
   useEffect(() => {
-    if (askingForHelp) surveyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [askingForHelp]);
+    if (askingForHelp && activeTab === 'home') {
+      surveyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [activeTab, askingForHelp]);
 
   const active = COMMUNITIES.find((c) => c.id === selectedCommunity) ?? COMMUNITIES[0];
   const isStaff = coordinatorKey !== null && STAFF_TABS.has(activeTab);
@@ -154,6 +159,12 @@ export default function App(): ReactElement {
     setHubView(view);
     setActiveTab('home');
     requestAnimationFrame(() => hubRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
+
+  function openRequestStatus(code: string | null = null): void {
+    setRequestCode(code);
+    if (code) setAskingForHelp(false);
+    go('request-status');
   }
 
   function navButton(tab: Tab, label: string): ReactElement {
@@ -214,6 +225,16 @@ export default function App(): ReactElement {
           <InventoryHub initialAction={inventoryAction} onActionHandled={() => setInventoryAction(null)} />
         )}
 
+        {activeTab === 'request-status' && (
+          <StatusScreen
+            initialCode={requestCode}
+            onNewRequest={() => {
+              setAskingForHelp(true);
+              go('home');
+            }}
+          />
+        )}
+
         {(activeTab === 'staff-sign-in' || (STAFF_TABS.has(activeTab) && !coordinatorKey)) && (
           <CoordinatorSignIn onSignIn={(key) => { setCoordinatorKey(key); go(activeTab === 'staff-sign-in' ? 'coordinator' : activeTab); }} />
         )}
@@ -247,7 +268,7 @@ export default function App(): ReactElement {
                 <button type="button" className="more" onClick={() => setAskingForHelp(false)}>Close</button>
               </div>
               <div className="mod-b">
-                <HelpSurvey />
+                <HelpSurvey onCheckStatus={openRequestStatus} />
               </div>
             </section>
           )}
@@ -362,6 +383,11 @@ export default function App(): ReactElement {
                 <button type="button" className="primary" onClick={() => setAskingForHelp(true)}>
                   <span className="sq"><Icon name="plus" /></span>
                   <span><b>Ask for help</b><small>Food, a ride, a check-in</small></span>
+                  <Icon name="chev" className="ic chev" />
+                </button>
+                <button type="button" onClick={() => openRequestStatus()}>
+                  <span className="sq"><Icon name="check" /></span>
+                  <span><b>Check on a request</b><small>Look it up with your request code</small></span>
                   <Icon name="chev" className="ic chev" />
                 </button>
                 <button type="button" onClick={() => go('map')}>

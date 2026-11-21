@@ -48,7 +48,7 @@ type OptionsState =
   | { kind: 'loading' }
   | { kind: 'ready'; options: HelpOption[]; sample: boolean };
 
-export default function HelpSurvey() {
+export default function HelpSurvey({ onCheckStatus }: { onCheckStatus: (code: string) => void }) {
   const [step, setStep] = useState<Step>('choose');
   const [needId, setNeedId] = useState<NeedId | null>(null);
   const [choice, setChoice] = useState<HelpOption | null>(null);
@@ -227,7 +227,10 @@ export default function HelpSurvey() {
           )}
           {choice && <PlaceLinks option={choice} />}
           {accepted.sample && <p className="help-survey-note">Sample mode: the server wasn&rsquo;t reachable, so nothing was sent to ComForce.</p>}
-          <button className="help-survey-action" type="button" onClick={startOver}>
+          <button className="help-survey-action" type="button" onClick={() => onCheckStatus(accepted.token)}>
+            Check request status
+          </button>{' '}
+          <button className="help-survey-action secondary" type="button" onClick={startOver}>
             Make another request
           </button>
         </section>
