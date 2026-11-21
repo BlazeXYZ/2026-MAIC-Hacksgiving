@@ -1,0 +1,314 @@
+.coordinator-dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+.coordinator-header {
+  margin-bottom: 1.5rem;
+}
+
+.coordinator-header h2 {
+  margin: 0 0 0.4rem;
+  font-size: 1.5rem;
+  color: #0f172a;
+}
+
+.coordinator-header p {
+  margin: 0;
+  color: #64748b;
+  font-size: 0.9rem;
+}
+
+/* District summary badges */
+.coordinator-district-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.coordinator-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.8125rem;
+  border-radius: 9999px;
+  background: #fff;
+  border: 1px solid #cbd5e1;
+  color: #334155;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.coordinator-badge-pill:hover {
+  border-color: #94a3b8;
+  background: #f8fafc;
+}
+
+.coordinator-badge-pill--active {
+  background: #1e40af;
+  border-color: #1e40af;
+  color: #fff;
+  font-weight: 600;
+}
+
+.coordinator-badge-pill--active .coordinator-badge-count {
+  background: #3b82f6;
+  color: #fff;
+}
+
+.coordinator-badge-count {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: #e2e8f0;
+  color: #1e293b;
+  border-radius: 9999px;
+}
+
+.coordinator-badge-count--urgent {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+/* Toolbar & filters */
+.coordinator-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.coordinator-search-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.coordinator-search-input,
+.coordinator-select {
+  padding: 0.4rem 0.65rem;
+  font-size: 0.85rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #fff;
+  color: #0f172a;
+}
+
+.coordinator-batch-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  padding: 0.5rem 0.85rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  color: #1e40af;
+}
+
+.coordinator-batch-btn {
+  padding: 0.3rem 0.6rem;
+  font-size: 0.8rem;
+  border: 1px solid #93c5fd;
+  background: #fff;
+  color: #1e40af;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.coordinator-batch-btn:hover {
+  background: #dbeafe;
+}
+
+/* Table */
+.coordinator-table-container {
+  overflow-x: auto;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.coordinator-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  text-align: left;
+}
+
+.coordinator-table th {
+  background: #f8fafc;
+  color: #475569;
+  font-weight: 600;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.coordinator-sortable-header {
+  cursor: pointer;
+  user-select: none;
+}
+
+.coordinator-sortable-header:hover {
+  color: #0f172a;
+}
+
+.coordinator-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #f1f5f9;
+  color: #1e293b;
+  vertical-align: middle;
+}
+
+.coordinator-table tr:hover {
+  background: #f8fafc;
+}
+
+.coordinator-table tr.coordinator-row--selected {
+  background: #eff6ff;
+}
+
+/* Status & urgency pills */
+.coordinator-urgency-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.coordinator-urgency--urgent {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.coordinator-urgency--today {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.coordinator-urgency--this_week {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.coordinator-status-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.coordinator-status--pending {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+.coordinator-status--assigned {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.coordinator-status--in_progress {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.coordinator-status--resolved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Action buttons */
+.coordinator-actions-cell {
+  display: flex;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+
+.coordinator-action-btn {
+  padding: 0.25rem 0.55rem;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  color: #334155;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.coordinator-action-btn:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.coordinator-action-btn--primary {
+  background: #2563eb;
+  border-color: #2563eb;
+  color: #fff;
+}
+
+.coordinator-action-btn--primary:hover {
+  background: #1d4ed8;
+}
+
+/* Assign Modal */
+.coordinator-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.coordinator-modal {
+  background: #fff;
+  border-radius: 8px;
+  max-width: 440px;
+  width: 100%;
+  padding: 1.5rem;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+}
+
+.coordinator-modal h4 {
+  margin: 0 0 1rem;
+  font-size: 1.15rem;
+  color: #0f172a;
+}
+
+.coordinator-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.coordinator-modal-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.85rem;
+  color: #334155;
+}
+
+.coordinator-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}

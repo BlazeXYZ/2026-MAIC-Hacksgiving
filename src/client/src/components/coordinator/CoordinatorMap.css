@@ -1,0 +1,133 @@
+.coordinator-map-wrapper {
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+}
+
+.coordinator-map-header {
+  padding: 1rem 1.25rem;
+  background: #0f172a;
+  color: #fff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.coordinator-map-header h3 {
+  margin: 0 0 0.25rem;
+  font-size: 1.15rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.coordinator-map-badge {
+  font-size: 0.7rem;
+  padding: 0.15rem 0.5rem;
+  background: #dc2626;
+  color: #fff;
+  border-radius: 9999px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.coordinator-map-header p {
+  margin: 0;
+  font-size: 0.825rem;
+  color: #94a3b8;
+}
+
+/* Toggle Switch */
+.coordinator-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #f8fafc;
+  cursor: pointer;
+  background: #1e293b;
+  padding: 0.45rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid #334155;
+  transition: all 0.15s ease;
+}
+
+.coordinator-toggle-label:hover {
+  background: #334155;
+}
+
+.coordinator-toggle-checkbox {
+  width: 18px;
+  height: 18px;
+  accent-color: #dc2626;
+  cursor: pointer;
+}
+
+.coordinator-map-container {
+  height: 480px;
+  width: 100%;
+  position: relative;
+  isolation: isolate;
+}
+
+.coordinator-map-canvas {
+  height: 100%;
+  width: 100%;
+}
+
+.coordinator-map-footer {
+  padding: 0.75rem 1.25rem;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.coordinator-density-legend {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.coordinator-density-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  color: #334155;
+  font-size: 0.8rem;
+}
+
+.coordinator-density-swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+}
+
+.coordinator-density-swatch--high {
+  background: #dc2626;
+  opacity: 0.8;
+}
+
+.coordinator-density-swatch--medium {
+  background: #ea580c;
+  opacity: 0.7;
+}
+
+.coordinator-density-swatch--low {
+  background: #eab308;
+  opacity: 0.6;
+}

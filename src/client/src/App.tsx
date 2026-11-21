@@ -4,6 +4,9 @@ import DeliveryCover from './components/DeliveryCover';
 import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
 import SearchGridMap from './components/search/SearchGridMap';
+import UrgentAlertBanner from './components/alerts/UrgentAlertBanner';
+import CoordinatorMap from './components/coordinator/CoordinatorMap';
+import CoordinatorDashboard from './screens/CoordinatorDashboard';
 
 interface Community {
   id: string;
@@ -44,7 +47,7 @@ const COMMUNITIES: Community[] = [
 export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
-  const [showMap, setShowMap] = useState(false);
+  const [activeTab, setActiveTab] = useState<'communities' | 'map' | 'coordinator' | 'coordinator-ops'>('communities');
 
   useEffect(() => {
     if (quickExitTriggered) return;
@@ -68,18 +71,13 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', color: '#0f172a' }}>
-      {/* Top Emergency Priority Banner */}
-      <div style={{ backgroundColor: '#dc2626', color: '#ffffff', padding: '0.75rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <strong>URGENT ALERT:</strong> Active Missing Person Search near 27th & Wisconsin Ave. Volunteer search parties are currently forming.
-        </div>
-        <button
-          onClick={() => { setSelectedCommunity('missing-persons'); setShowMap(false); }}
-          style={{ backgroundColor: '#ffffff', color: '#dc2626', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          View Search Grid
-        </button>
-      </div>
+      {/* Top Emergency Priority Banner (Issue #45) */}
+      <UrgentAlertBanner
+        onJoinSearch={() => {
+          setSelectedCommunity('missing-persons');
+          setActiveTab('communities');
+        }}
+      />
 
       {/* Main Header */}
       <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -98,14 +96,22 @@ export default function App() {
       </header>
 
       <nav aria-label="Main navigation" className="hub-view-nav">
-        <button type="button" aria-current={!showMap ? 'page' : undefined} onClick={() => setShowMap(false)}>Communities</button>
-        <button type="button" aria-current={showMap ? 'page' : undefined} onClick={() => setShowMap(true)}>Map</button>
+        <button type="button" aria-current={activeTab === 'communities' ? 'page' : undefined} onClick={() => setActiveTab('communities')}>Communities</button>
+        <button type="button" aria-current={activeTab === 'map' ? 'page' : undefined} onClick={() => setActiveTab('map')}>Resident Map</button>
+        <button type="button" aria-current={activeTab === 'coordinator' ? 'page' : undefined} onClick={() => setActiveTab('coordinator')}>Coordinator Queue</button>
+        <button type="button" aria-current={activeTab === 'coordinator-ops' ? 'page' : undefined} onClick={() => setActiveTab('coordinator-ops')}>Coordinator Ops</button>
       </nav>
 
-      {showMap && <CommunityMap />}
+      {activeTab === 'map' && <CommunityMap />}
+      {activeTab === 'coordinator' && <CoordinatorDashboard />}
+      {activeTab === 'coordinator-ops' && (
+        <main className="hub-page">
+          <CoordinatorMap />
+        </main>
+      )}
 
       {/* Main Container */}
-      <main hidden={showMap} style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem' }}>
+      <main hidden={activeTab !== 'communities'} style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem' }}>
         <details className="help-survey-entry">
           <summary>Request help</summary>
           <HelpSurvey />
@@ -159,6 +165,7 @@ export default function App() {
               </div>
             )}
 
+            {/* Missing Persons Search Party Grid (#46) */}
             {active.id === 'missing-persons' && (
               <SearchGridMap />
             )}
