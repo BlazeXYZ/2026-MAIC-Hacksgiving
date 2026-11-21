@@ -86,3 +86,7 @@
   .inv-table tr { padding: 10px 12px; border-bottom: 1px solid var(--line); }
   .inv-table td { border: 0; padding: 4px 0; }
 }
+
+/* recording a hand-off */
+.inv-handoff { flex: 1 1 100%; display: grid; gap: 12px; margin-top: 4px; padding: 14px 16px; border-radius: var(--r-sm); background: var(--sunk); }
+.inv-list li > .inv-rowact { flex: 0 0 auto; }

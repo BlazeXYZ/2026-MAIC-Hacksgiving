@@ -5,6 +5,7 @@ import type {
   EntryKind,
   EntryResult,
   GuessView,
+  HandoffView,
   ItemRef,
   MatchView,
   PlaceDetailData,
@@ -117,6 +118,14 @@ export const promoteEntry = (
   entryId: string,
   body: { name: string; alias_text?: string; confirm_new?: boolean },
 ): Promise<unknown> => call(`/admin/entries/${encodeURIComponent(entryId)}/promote`, { method: 'POST', key, body });
+
+export const handoffEntry = (
+  key: string,
+  entryId: string,
+  body: { quantity: number; to_need_id?: string },
+): Promise<HandoffView> => call(`/admin/entries/${encodeURIComponent(entryId)}/handoff`, { method: 'POST', key, body });
+
+export const getHandoffs = (key: string): Promise<HandoffView[]> => call('/admin/handoffs', { key });
 
 export const closeEntry = (key: string, entryId: string): Promise<void> =>
   call(`/admin/entries/${encodeURIComponent(entryId)}/close`, { method: 'POST', key });
