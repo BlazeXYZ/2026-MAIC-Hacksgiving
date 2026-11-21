@@ -11,12 +11,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from src.server.ai.hotspots import COORDINATOR_API_KEY
 from src.server.api.coordinator_assign import router
 from src.server.intake.schema import ServiceCategory, UrgencyLevel
 from src.server.intake.store import add_ticket, reset_state
 
-client = TestClient(FastAPI())
+client = TestClient(FastAPI(), headers={"X-Coordinator-Key": COORDINATOR_API_KEY})
 client.app.include_router(router)
+anonymous = TestClient(client.app)
 
 
 @pytest.fixture(autouse=True)
@@ -70,3 +72,13 @@ def test_assign_is_atomic_about_claims_and_states():
         json={"volunteer_id": "ada", "status": "assigned"},
     )
     assert missing.status_code == 404
+
+
+def test_assign_requires_coordinator_key():
+    path = "/api/v1/coordinator/tickets/any/assign"
+    body = {"volunteer_id": "ada", "status": "assigned"}
+    assert anonymous.patch(path, json=body).status_code == 403
+    wrong = anonymous.patch(
+        path, json=body, headers={"X-Coordinator-Key": "wrong-key"}
+    )
+    assert wrong.status_code == 403
