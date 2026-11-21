@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Query, Response
+from fastapi import APIRouter, Depends, Query, Response
 
+from src.server.ai.hotspots import require_coordinator
 from src.server.coordinator.queue import queue_page
 from src.server.coordinator.schema import QueuePage
 from src.server.intake.schema import TicketStatus, UrgencyLevel
 
-router = APIRouter(prefix="/api/v1/coordinator", tags=["coordinator"])
+router = APIRouter(
+    prefix="/api/v1/coordinator",
+    tags=["coordinator"],
+    dependencies=[Depends(require_coordinator)],
+)
 
 
 @router.get("/queue", response_model=QueuePage)
