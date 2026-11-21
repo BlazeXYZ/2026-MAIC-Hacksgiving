@@ -65,6 +65,14 @@ async def lifespan(app: FastAPI):
     try:
         init_db()
         seed_demo_tickets()
+        if settings.APP_ENV == "production":
+            from src.server.ai.hotspots import get_coordinator_api_key
+
+            if get_coordinator_api_key() is None:
+                logger.error(
+                    "COORDINATOR_API_KEY is not configured or is set to development default in production. "
+                    "Protected coordinator and admin routes will be disabled."
+                )
     except Exception as exc:
         if settings.APP_ENV == "production":
             logger.error("Database initialization failed at startup in production: %s", exc)
