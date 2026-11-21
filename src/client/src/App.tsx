@@ -3,6 +3,7 @@ import CommunityMap from './components/CommunityMap';
 import DeliveryCover from './components/DeliveryCover';
 import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
+import UrgentAlertBanner from './components/alerts/UrgentAlertBanner';
 
 interface Community {
   id: string;
@@ -67,18 +68,13 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', color: '#0f172a' }}>
-      {/* Top Emergency Priority Banner */}
-      <div style={{ backgroundColor: '#dc2626', color: '#ffffff', padding: '0.75rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div>
-          <strong>URGENT ALERT:</strong> Active Missing Person Search near 27th & Wisconsin Ave. Volunteer search parties are currently forming.
-        </div>
-        <button
-          onClick={() => { setSelectedCommunity('missing-persons'); setShowMap(false); }}
-          style={{ backgroundColor: '#ffffff', color: '#dc2626', border: 'none', padding: '0.25rem 0.75rem', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          View Search Grid
-        </button>
-      </div>
+      {/* Top Emergency Priority Banner (Issue #45) */}
+      <UrgentAlertBanner
+        onJoinSearch={() => {
+          setSelectedCommunity('missing-persons');
+          setShowMap(false);
+        }}
+      />
 
       {/* Main Header */}
       <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
