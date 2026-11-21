@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
-import type { FormEvent, ReactElement } from 'react';
-import { describeError, getAliases, getCatalog, getGuesses, getHeld, getPlaces } from '../../../api/inventory';
+import type { ReactElement } from 'react';
+import { describeError, getCatalog, getGuesses, getHeld, getPlaces } from '../../../api/inventory';
+import KeyPrompt from '../KeyPrompt';
 import { useLoad } from '../util';
 import '../inventory.css';
 import AliasesPanel from './AliasesPanel';
@@ -16,26 +17,6 @@ type Tab = 'held' | 'guesses' | 'aliases' | 'items' | 'posts';
  */
 export default function InventoryReview(): ReactElement {
   const [adminKey, setAdminKey] = useState<string | null>(null);
-  const [draft, setDraft] = useState('');
-  const [checking, setChecking] = useState(false);
-  const [gateError, setGateError] = useState<string | null>(null);
-
-  async function unlock(event: FormEvent): Promise<void> {
-    event.preventDefault();
-    if (!draft.trim() || checking) return;
-    setChecking(true);
-    setGateError(null);
-    try {
-      await getAliases(draft.trim(), 'seeded'); // any coordinator-only call proves the key
-      setAdminKey(draft.trim());
-      setDraft('');
-    } catch (err) {
-      setGateError(describeError(err));
-    } finally {
-      setChecking(false);
-    }
-  }
-
   return (
     <section className="inv" aria-labelledby="invr-title">
       <div className="pagehead">
@@ -51,29 +32,9 @@ export default function InventoryReview(): ReactElement {
       </div>
 
       {adminKey === null ? (
-        <form className="card inv-gate" onSubmit={(e) => void unlock(e)}>
-          <label className="inv-label" htmlFor="coordinator-key">
-            Coordinator key
-          </label>
-          <input
-            id="coordinator-key"
-            className="inv-input"
-            type="password"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            autoComplete="off"
-            spellCheck={false}
-          />
-          <p className="meta">The key stays in this tab&rsquo;s memory only. Closing the tab or using Quick Exit clears it.</p>
-          {gateError && (
-            <p className="inv-error" role="alert">
-              {gateError}
-            </p>
-          )}
-          <button type="submit" className="btn primary" disabled={!draft.trim() || checking}>
-            {checking ? 'Checking…' : 'Unlock'}
-          </button>
-        </form>
+        <div className="card inv-gate">
+          <KeyPrompt reason="Reviewing the inventory needs the coordinator key." onUnlock={setAdminKey} />
+        </div>
       ) : (
         <Workspace adminKey={adminKey} />
       )}

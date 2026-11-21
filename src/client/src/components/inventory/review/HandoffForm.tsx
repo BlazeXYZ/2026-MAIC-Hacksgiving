@@ -11,10 +11,11 @@ interface Props {
   needs: SourceView[];
   onDone: (result: HandoffView) => void;
   onCancel: () => void;
+  submitLabel?: string;
 }
 
 /** Record that some of a stock or offer was passed over, and optionally which need it went to. */
-export default function HandoffForm({ adminKey, entry, needs, onDone, onCancel }: Props): ReactElement {
+export default function HandoffForm({ adminKey, entry, needs, onDone, onCancel, submitLabel = 'Record hand-off' }: Props): ReactElement {
   const [quantity, setQuantity] = useState(String(entry.quantity));
   const [needId, setNeedId] = useState('');
   const [busy, setBusy] = useState(false);
@@ -76,7 +77,7 @@ export default function HandoffForm({ adminKey, entry, needs, onDone, onCancel }
       )}
       <div className="inv-actions">
         <button type="submit" className="btn primary sm" disabled={!valid || busy}>
-          {busy ? 'Saving…' : 'Record hand-off'}
+          {busy ? 'Saving…' : submitLabel}
         </button>
         <button type="button" className="btn sm" disabled={busy} onClick={onCancel}>
           Cancel

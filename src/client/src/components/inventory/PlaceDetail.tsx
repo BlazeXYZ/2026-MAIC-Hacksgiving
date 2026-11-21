@@ -1,62 +1,52 @@
+import { useState } from 'react';
 import type { ReactElement } from 'react';
 import { describeError, getDemand, getMatches, getPlace } from '../../api/inventory';
-import type { CatalogItem, DemandView, EntryView, MatchView, SourceView } from '../../contracts/inventory';
+import type { CatalogItem, EntryView, HandoffView, SourceView } from '../../contracts/inventory';
 import PostEntryForm from './PostEntryForm';
-import { expiresIn, kindOfPlace, useLoad } from './util';
+import RemoveInventoryPanel from './RemoveInventoryPanel';
+import { kindOfPlace, useLoad } from './util';
 
-function EntryList({ title, entries, empty }: { title: string; entries: EntryView[]; empty: string }): ReactElement {
+type Action = 'request' | 'give' | 'remove';
+
+const ACTIONS: Array<{ id: Action; label: string }> = [
+  { id: 'request', label: 'Request item' },
+  { id: 'give', label: 'Give item' },
+  { id: 'remove', label: 'Remove inventory' },
+];
+
+/** How many nearby places to name under a row before saying "and N more". */
+const HINTS_SHOWN = 2;
+
+function miles(m: number): string {
+  return m < 0.1 ? 'under 0.1 mi' : `${m.toFixed(1)} mi`;
+}
+
+/** One short line under a row: who nearby could fill it, or who nearby is asking for it. */
+function Hints({ sources, verb, none }: { sources: SourceView[]; verb: (s: SourceView) => string; none: string }): ReactElement {
+  if (sources.length === 0) return <span className="inv-hint none">{none}</span>;
+  const shown = sources.slice(0, HINTS_SHOWN);
+  const more = sources.length - shown.length;
   return (
-    <section className="card inv-group" aria-label={title}>
-      <h3>
-        {title} <span className="count">{entries.length}</span>
-      </h3>
-      {entries.length === 0 ? (
-        <p className="meta">{empty}</p>
-      ) : (
-        <ul className="inv-list">
-          {entries.map((e) => (
-            <li key={e.id}>
-              <span>
-                <b>{e.item.name}</b> × {e.quantity}
-              </span>
-              {!e.verified && (
-                <span className="tag held" title="The system guessed this match. A coordinator will confirm it.">
-                  Unconfirmed
-                </span>
-              )}
-              <span className="meta">{expiresIn(e.expires_at)}</span>
-            </li>
-          ))}
-        </ul>
-      )}
-    </section>
+    <span className="inv-hint">
+      {shown.map((s) => `${s.location} ${verb(s)} (${miles(s.distance_miles)})`).join(' · ')}
+      {more > 0 ? ` · and ${more} more` : ''}
+    </span>
   );
 }
 
-/** Two posts for the same item would list the same places twice, so combine them and add up the quantities. */
-function mergeByItem<T extends { item: { id: string }; quantity: number }>(rows: T[], extraKey: (row: T) => string = () => ''): T[] {
-  const merged = new Map<string, T>();
-  for (const row of rows) {
-    const key = `${row.item.id}|${extraKey(row)}`;
-    const prior = merged.get(key);
-    merged.set(key, prior ? { ...prior, quantity: prior.quantity + row.quantity } : row);
-  }
-  return [...merged.values()];
-}
-
-function Sources({ sources, none }: { sources: SourceView[]; none: string }): ReactElement {
-  if (sources.length === 0) return <p className="meta">{none}</p>;
+function Row({ entry, children }: { entry: EntryView; children: ReactElement }): ReactElement {
   return (
-    <ul className="inv-list">
-      {sources.map((s) => (
-        <li key={`${s.location_id}-${s.kind}`}>
-          <span>
-            <b>{s.location}</b> · {s.quantity} {s.kind === 'offer' ? 'offered' : s.kind === 'need' ? 'needed' : 'in stock'}
+    <li>
+      <span className="inv-rowmain">
+        <b>{entry.item.name}</b> × {entry.quantity}
+        {!entry.verified && (
+          <span className="tag held" title="The system guessed this match. A coordinator will confirm it.">
+            Unconfirmed
           </span>
-          <span className="meta">{s.distance_miles < 0.1 ? 'under 0.1 mi' : `${s.distance_miles.toFixed(1)} mi`}</span>
-        </li>
-      ))}
-    </ul>
+        )}
+      </span>
+      {children}
+    </li>
   );
 }
 
@@ -67,11 +57,17 @@ interface Props {
   onChanged: () => void;
 }
 
-/** One place: what it needs, has, and is offered, a form to add to that, and who could help in either direction. */
+/**
+ * One place, in two boxes: what it has asked for, and what it has. Three buttons change those lists. Who nearby
+ * could help (or is asking) is one line under each row instead of separate panels.
+ */
 export default function PlaceDetail({ placeId, catalog, onBack, onChanged }: Props): ReactElement {
   const place = useLoad(() => getPlace(placeId), [placeId]);
   const matches = useLoad(() => getMatches(placeId), [placeId]);
   const demand = useLoad(() => getDemand(placeId), [placeId]);
+  const [action, setAction] = useState<Action | null>(null);
+  const [adminKey, setAdminKey] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   function refresh(): void {
     place.reload();
@@ -80,7 +76,20 @@ export default function PlaceDetail({ placeId, catalog, onBack, onChanged }: Pro
     onChanged();
   }
 
+  function removed(h: HandoffView): void {
+    const left = h.remaining === 0 ? 'None left, so it is gone from the list.' : `${h.remaining} left.`;
+    const need = h.need_remaining === 0 ? ` ${h.to_location} no longer needs it.` : '';
+    setNotice(`Removed ${h.quantity} ${h.item.name}. ${left}${need}`);
+    refresh();
+  }
+
   const data = place.data;
+  const requested = data?.need ?? [];
+  const inventory: EntryView[] = data ? [...data.have, ...data.offer] : [];
+  const sourcesForNeed = (id: string): SourceView[] => matches.data?.find((m) => m.need_id === id)?.sources ?? [];
+  const needersFor = (id: string): SourceView[] => demand.data?.find((d) => d.entry_id === id)?.needed_at ?? [];
+  const isOffer = (id: string): boolean => data?.offer.some((e) => e.id === id) ?? false;
+
   return (
     <div className="inv-detail">
       <button type="button" className="btn ghost" onClick={onBack}>
@@ -106,52 +115,94 @@ export default function PlaceDetail({ placeId, catalog, onBack, onChanged }: Pro
             </p>
           </header>
 
-          <div className="inv-cols">
-            <EntryList title="Needs" entries={data.need} empty="Nothing needed right now." />
-            <EntryList title="In stock" entries={data.have} empty="Nothing listed yet." />
-            <EntryList title="Offered" entries={data.offer} empty="No offers right now." />
+          <div className="inv-actionbar" role="group" aria-label="Actions">
+            {ACTIONS.map((a) => (
+              <button
+                key={a.id}
+                type="button"
+                className="btn inv-act"
+                aria-expanded={action === a.id}
+                aria-controls="inv-panel"
+                onClick={() => {
+                  setAction(action === a.id ? null : a.id);
+                  setNotice(null);
+                }}
+              >
+                {a.label}
+              </button>
+            ))}
           </div>
 
-          <div className="inv-cols two">
-            <section className="card inv-group" aria-label="Who can help">
-              <h3>Who can help</h3>
-              <p className="meta">Nearby places that have, or are being offered, what this place needs.</p>
-              {matches.data && matches.data.length > 0 ? (
-                mergeByItem<MatchView>(matches.data).map((m) => (
-                  <div key={m.need_id} className="inv-match">
-                    <h4>
-                      {m.item.name} × {m.quantity}
-                    </h4>
-                    <Sources sources={m.sources} none="Nobody has listed this yet." />
-                  </div>
-                ))
+          {action && (
+            <section id="inv-panel" className="card inv-panel" aria-label={ACTIONS.find((a) => a.id === action)?.label}>
+              <div className="inv-panel-head">
+                <h3>{ACTIONS.find((a) => a.id === action)?.label}</h3>
+                <button type="button" className="btn ghost sm" onClick={() => setAction(null)}>
+                  Close
+                </button>
+              </div>
+              {action === 'request' && <PostEntryForm placeId={placeId} catalog={catalog} kind="need" onPosted={refresh} />}
+              {action === 'give' && <PostEntryForm placeId={placeId} catalog={catalog} kind="have" onPosted={refresh} />}
+              {action === 'remove' && (
+                <RemoveInventoryPanel
+                  inventory={inventory}
+                  demand={demand.data ?? []}
+                  adminKey={adminKey}
+                  onUnlock={setAdminKey}
+                  onRemoved={removed}
+                />
+              )}
+              {notice && (
+                <p className="inv-ok" role="status">
+                  {notice}
+                </p>
+              )}
+            </section>
+          )}
+
+          <div className="inv-boxes">
+            <section className="card inv-group" aria-label="Requested items">
+              <h3>
+                Requested items <span className="count">{requested.length}</span>
+              </h3>
+              {requested.length === 0 ? (
+                <p className="meta">Nothing requested.</p>
               ) : (
-                <p className="meta">{matches.loading ? 'Looking…' : 'No open needs to match.'}</p>
+                <ul className="inv-list">
+                  {requested.map((e) => (
+                    <Row key={e.id} entry={e}>
+                      <Hints
+                        sources={sourcesForNeed(e.id)}
+                        verb={(s) => (s.kind === 'offer' ? `is offering ${s.quantity}` : `has ${s.quantity}`)}
+                        none="No one nearby has this yet."
+                      />
+                    </Row>
+                  ))}
+                </ul>
               )}
             </section>
 
-            <section className="card inv-group" aria-label="Who could use this">
-              <h3>Who could use this</h3>
-              <p className="meta">Open needs elsewhere that this place&rsquo;s stock or offers could fill.</p>
-              {demand.data && demand.data.length > 0 ? (
-                mergeByItem<DemandView>(demand.data, (d) => d.kind).map((d) => (
-                  <div key={d.entry_id} className="inv-match">
-                    <h4>
-                      {d.item.name} × {d.quantity} <span className="meta">({d.kind === 'offer' ? 'offered' : 'in stock'})</span>
-                    </h4>
-                    <Sources sources={d.needed_at} none="No open needs for this elsewhere." />
-                  </div>
-                ))
+            <section className="card inv-group" aria-label="Current inventory">
+              <h3>
+                Current inventory <span className="count">{inventory.length}</span>
+              </h3>
+              {inventory.length === 0 ? (
+                <p className="meta">Nothing in the inventory.</p>
               ) : (
-                <p className="meta">{demand.loading ? 'Looking…' : 'Nothing in stock or offered yet.'}</p>
+                <ul className="inv-list">
+                  {inventory.map((e) => (
+                    <Row key={e.id} entry={e}>
+                      <Hints
+                        sources={needersFor(e.id)}
+                        verb={(s) => `needs ${s.quantity}`}
+                        none={isOffer(e.id) ? 'Offered. No one nearby is asking for it.' : 'No one nearby is asking for this.'}
+                      />
+                    </Row>
+                  ))}
+                </ul>
               )}
             </section>
           </div>
-
-          <section className="card inv-group" aria-label="Add to this place">
-            <h3>Add to this place</h3>
-            <PostEntryForm placeId={placeId} catalog={catalog} onPosted={refresh} />
-          </section>
         </>
       )}
     </div>

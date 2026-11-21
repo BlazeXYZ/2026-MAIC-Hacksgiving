@@ -21,32 +21,20 @@
 .inv-detail > .btn.ghost { justify-self: start; padding-left: 0; }
 .inv .pagehead > .btn { margin-left: auto; }
 .inv-head h2 { font-size: 28px; font-weight: 800; letter-spacing: -.01em; }
-.inv-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
-.inv-cols.two { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .inv-group { padding: 18px 20px; display: grid; gap: 10px; }
 .inv-group h3 { font-size: 16px; font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
 .inv-group h3 .count { color: var(--ink-3); font-weight: 600; font-size: 14px; }
-.inv-group h4 { font-size: 15px; font-weight: 700; }
-.inv-match { display: grid; gap: 6px; padding-top: 10px; border-top: 1px solid var(--line); }
-.inv-match:first-of-type { border-top: 0; padding-top: 0; }
 .inv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
 .inv-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; justify-content: space-between; }
 .inv-list li > span:first-child { flex: 1 1 auto; min-width: 0; }
 
 /* forms */
 .inv-form { display: grid; gap: 14px; }
-.inv-form fieldset { border: 0; margin: 0; padding: 0; display: grid; gap: 8px; }
-.inv-form legend { font-weight: 700; margin-bottom: 8px; padding: 0; }
 .inv-label { display: block; font-weight: 600; font-size: 14px; margin-bottom: 4px; }
 .inv-input { box-sizing: border-box; width: 100%; min-height: 44px; padding: 8px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); color: var(--ink); font: inherit; }
-.inv-input:focus-visible, .inv-chip:focus-visible, .inv-tabs button:focus-visible, .inv-seg input:focus-visible + span { outline: 3px solid var(--green); outline-offset: 2px; }
+.inv-input:focus-visible, .inv-chip:focus-visible, .inv-tabs button:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
 .inv-qty { width: 110px; }
 .inv-row { display: flex; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
-.inv-seg { display: flex; flex-wrap: wrap; gap: 8px; }
-.inv-seg label { cursor: pointer; }
-.inv-seg input { position: absolute; opacity: 0; }
-.inv-seg span { display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border: 1px solid var(--line-2); border-radius: 10px; font-weight: 700; background: var(--card); }
-.inv-seg label.on span { background: var(--green); border-color: var(--green); color: #fff; }
 .inv-tabs { display: flex; flex-wrap: wrap; gap: 6px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
 .inv-tabs button { border: 0; background: none; padding: 10px 14px; font: inherit; font-weight: 600; color: var(--ink-2); cursor: pointer; border-bottom: 3px solid transparent; }
 .inv-tabs button[aria-selected="true"] { color: var(--ink); font-weight: 700; border-bottom-color: var(--green); }
@@ -80,7 +68,7 @@
 .inv-rowact { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
 
 @media (max-width: 800px) {
-  .inv-cols, .inv-cols.two { grid-template-columns: minmax(0, 1fr); }
+  .inv-boxes, .inv-actionbar { grid-template-columns: minmax(0, 1fr); }
   .inv-table, .inv-table thead, .inv-table tbody, .inv-table tr, .inv-table td { display: block; }
   .inv-table thead { position: absolute; left: -9999px; }
   .inv-table tr { padding: 10px 12px; border-bottom: 1px solid var(--line); }
@@ -90,3 +78,25 @@
 /* recording a hand-off */
 .inv-handoff { flex: 1 1 100%; display: grid; gap: 12px; margin-top: 4px; padding: 14px 16px; border-radius: var(--r-sm); background: var(--sunk); }
 .inv-list li > .inv-rowact { flex: 0 0 auto; }
+
+/* the place page: three actions, two boxes */
+.inv-actionbar { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.inv-act { height: 56px; font-size: 16px; }
+.inv-act[aria-expanded="true"] { background: var(--green); border-color: var(--green); color: #fff; }
+.inv-act:focus-visible { outline: 3px solid var(--green); outline-offset: 2px; }
+.inv-panel { padding: 18px 20px; display: grid; gap: 12px; }
+.inv-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.inv-panel-head h3 { margin: 0; font-size: 18px; font-weight: 800; }
+.inv-keyprompt { display: grid; gap: 10px; max-width: 420px; }
+.inv-keyprompt p { margin: 0; }
+.inv-boxes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; align-items: start; }
+.inv-list li { align-items: baseline; }
+.inv-rowmain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; flex: 1 1 100%; }
+.inv-hint { flex: 1 1 100%; font-size: 13px; color: var(--ink-2); }
+.inv-hint.none { color: var(--ink-3); }
+.inv-boxes .inv-list { gap: 14px; }
+
+/* phones: these come last so they beat the two-column and three-column rules above */
+@media (max-width: 800px) {
+  .inv-boxes, .inv-actionbar { grid-template-columns: minmax(0, 1fr); }
+}
