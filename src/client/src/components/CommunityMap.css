@@ -135,6 +135,38 @@
   background: #6d28d9;
 }
 
+/* Corridor route pins (#14) */
+.community-map-pin--route-start {
+  border: 3px solid #f59e0b;
+}
+
+.community-map-pin--route-start::after {
+  background: #f59e0b;
+}
+
+.community-map-pin--route-destination {
+  background: #0284c7;
+  border: 3px solid #0369a1;
+}
+
+.community-map-pin--route-destination::after {
+  background: #fff;
+}
+
+.community-map-pin--route-start[aria-pressed='true'] {
+  background: #f59e0b;
+  box-shadow: 0 0 0 4px rgb(245 158 11 / 35%), 0 2px 6px rgb(15 23 42 / 25%);
+}
+
+.community-map-pin--route-start[aria-pressed='true']::after {
+  background: #fff;
+}
+
+.community-map-pin--route-destination[aria-pressed='true'] {
+  background: #0369a1;
+  box-shadow: 0 0 0 4px rgb(2 132 199 / 40%), 0 2px 6px rgb(15 23 42 / 25%);
+}
+
 /* Food pantry pins (#13): green border & dot */
 .community-map-pin--pantry {
   background: #fff;
@@ -166,6 +198,36 @@
 
 .community-map-pin--pantry[aria-pressed='true']::after {
   background: #fff;
+}
+
+.community-map-toolbar {
+  margin-bottom: 0.75rem;
+}
+
+.community-map-route-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #0369a1;
+  background: #f0f9ff;
+  border: 1px solid #7dd3fc;
+  border-radius: 9999px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.community-map-route-toggle:hover {
+  background: #e0f2fe;
+}
+
+.community-map-route-toggle--active {
+  color: #fff;
+  background: #0284c7;
+  border-color: #0284c7;
 }
 
 .community-map-locations .community-map-legend {
@@ -202,6 +264,24 @@
 .community-map-swatch--pantry {
   background: #fff;
   border: 3px solid #16a34a;
+}
+
+.community-map-swatch--corridor {
+  width: 22px;
+  height: 5px;
+  border-radius: 3px;
+  background: #0284c7;
+  box-shadow: 0 0 6px #38bdf8;
+}
+
+.community-map-swatch--start {
+  background: #fff;
+  border: 3px solid #f59e0b;
+}
+
+.community-map-swatch--dest {
+  background: #0284c7;
+  border: 2px solid #0369a1;
 }
 
 .community-map-filter-bar {
@@ -253,50 +333,6 @@
   color: #fff;
 }
 
-.community-map-badge-group {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  margin: 0.35rem 0;
-}
-
-.community-map-badge--pantry {
-  color: #15803d;
-  background: #dcfce7;
-}
-
-.community-map-badge--open {
-  color: #166534;
-  background: #bbf7d0;
-}
-
-.community-map-badge--closed {
-  color: #475569;
-  background: #f1f5f9;
-}
-
-.community-map-badge--noid {
-  color: #0369a1;
-  background: #e0f2fe;
-}
-
-.community-map-badge-mini {
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 0.1rem 0.4rem;
-  border-radius: 9999px;
-}
-
-.community-map-badge-mini--open {
-  color: #166534;
-  background: #dcfce7;
-}
-
-.community-map-badge-mini--closed {
-  color: #475569;
-  background: #f1f5f9;
-}
-
 .community-map-popup {
   font: 0.875rem/1.45 system-ui, sans-serif;
   color: #0f172a;
@@ -341,6 +377,81 @@
 .community-map-badge--verified {
   color: #5b21b6;
   background: #ede9fe;
+}
+
+.community-map-badge--corridor {
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
+.community-map-badge-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin: 0.35rem 0;
+}
+
+.community-map-badge--pantry {
+  color: #15803d;
+  background: #dcfce7;
+}
+
+.community-map-badge--open {
+  color: #166534;
+  background: #bbf7d0;
+}
+
+.community-map-badge--closed {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.community-map-badge--noid {
+  color: #0369a1;
+  background: #e0f2fe;
+}
+
+.community-map-badge-mini {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.1rem 0.4rem;
+  border-radius: 9999px;
+}
+
+.community-map-badge-mini--open {
+  color: #166534;
+  background: #dcfce7;
+}
+
+.community-map-badge-mini--closed {
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.community-map-corridor-card {
+  padding: 0.75rem;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.community-map-corridor-card strong {
+  display: block;
+  color: #0369a1;
+  margin-bottom: 0.25rem;
+}
+
+.community-map-corridor-card p {
+  margin: 0;
+  color: #334155;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.community-map-corridor-card button {
+  font-size: 0.75rem;
+  padding: 0.35rem 0.6rem;
 }
 
 .community-map-popup-actions {
@@ -413,7 +524,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Tall enough on phones for a full safe place popup, including its action buttons. */
   .community-map-canvas {
     height: clamp(380px, 60vh, 460px);
   }
