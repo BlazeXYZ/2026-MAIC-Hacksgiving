@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState, useMemo } from 'react';
 import {
+  circle,
+  circleMarker,
+  latLng,
   latLngBounds,
   layerGroup,
   map as createMap,
@@ -8,6 +11,7 @@ import {
   type Map as MapInstance,
   type Polygon,
 } from 'leaflet';
+import type { LatLngTuple } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import {
   generateInitialSectors,
@@ -16,6 +20,20 @@ import {
   type SectorStatus,
 } from './searchGrid';
 import './SearchGridMap.css';
+import {
+  DEFAULT_ISRID_CATEGORY_ID,
+  DEFAULT_ISRID_ENVIRONMENT,
+  RING_COLORS,
+  RING_PERCENTILES,
+  distanceKm,
+  getIsridCategory,
+  ringForDistance,
+  type IsridEnvironment,
+} from './isrid';
+import IsridRingsPanel from './IsridRingsPanel';
+
+// Demo search case: last-known point (27th & Wisconsin Ave, Milwaukee).
+const LAST_KNOWN_POINT: LatLngTuple = [43.0389, -87.948];
 
 const ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 
@@ -27,6 +45,11 @@ export default function SearchGridMap() {
 
   const [sectors, setSectors] = useState<SearchSector[]>(() => generateInitialSectors());
   const [selectedId, setSelectedId] = useState<string>('B3');
+  const ringGroupRef = useRef<ReturnType<typeof layerGroup> | null>(null);
+  const [isridCategoryId, setIsridCategoryId] = useState<string>(DEFAULT_ISRID_CATEGORY_ID);
+  const [isridEnvironment, setIsridEnvironment] = useState<IsridEnvironment>(DEFAULT_ISRID_ENVIRONMENT);
+  const isridCategory = getIsridCategory(isridCategoryId);
+  const isridDistances = isridCategory.environments[isridEnvironment];
 
   // Stats calculation
   const stats = useMemo(() => {
@@ -65,6 +88,7 @@ export default function SearchGridMap() {
 
     const group = layerGroup().addTo(map);
     groupRef.current = group;
+    ringGroupRef.current = layerGroup().addTo(map);
 
     const observer = new ResizeObserver(() => map.invalidateSize());
     observer.observe(container);
@@ -114,6 +138,43 @@ export default function SearchGridMap() {
       mapRef.current.fitBounds(latLngBounds(allPoints), { padding: [20, 20], maxZoom: 15 });
     }
   }, [sectors, selectedId]);
+
+  // ISRID distance rings around the last-known point (non-interactive so sector clicks pass through)
+  useEffect(() => {
+    const ringGroup = ringGroupRef.current;
+    if (!ringGroup) return;
+    ringGroup.clearLayers();
+    for (const p of [...RING_PERCENTILES].reverse()) {
+      circle(LAST_KNOWN_POINT, {
+        radius: isridDistances.km[p] * 1000,
+        color: RING_COLORS[p],
+        weight: 2,
+        dashArray: p === 95 ? '6 6' : undefined,
+        fill: false,
+        interactive: false,
+      }).addTo(ringGroup);
+    }
+    circleMarker(LAST_KNOWN_POINT, {
+      radius: 6,
+      color: '#16201B', // --ink
+      weight: 2,
+      fillColor: '#E4F23A', // --hivis
+      fillOpacity: 1,
+    })
+      .bindTooltip('Last-known point')
+      .addTo(ringGroup);
+  }, [isridDistances]);
+
+  const handleZoomToRings = () => {
+    const map = mapRef.current;
+    if (!map) return;
+    // toBounds takes the box size (diameter) in meters.
+    map.fitBounds(latLng(LAST_KNOWN_POINT).toBounds(isridDistances.km[95] * 2000), { padding: [10, 10] });
+  };
+
+  const selectedRing = selectedSector
+    ? ringForDistance(distanceKm(LAST_KNOWN_POINT, selectedSector.center), isridDistances)
+    : null;
 
   // Reactive status update handler
   const handleUpdateStatus = (sectorId: string, newStatus: SectorStatus) => {
@@ -182,6 +243,14 @@ export default function SearchGridMap() {
         />
       </div>
 
+      <IsridRingsPanel
+        category={isridCategory}
+        environment={isridEnvironment}
+        onCategoryChange={setIsridCategoryId}
+        onEnvironmentChange={setIsridEnvironment}
+        onZoomToRings={handleZoomToRings}
+      />
+
       {/* Quick Sector Selector Bar */}
       <div className="search-grid-selector-bar" role="tablist" aria-label="Select search sector">
         {sectors.map((s) => {
@@ -232,6 +301,11 @@ export default function SearchGridMap() {
                   Updated {selectedSector.updatedAt}
                 </span>
               </div>
+
+              <p style={{ margin: '0.35rem 0 0', fontSize: '0.75rem', color: 'var(--ink-3)' }}>
+                ISRID ring ({isridCategory.label}{isridCategory.placeholder ? ', placeholder' : ''}):{' '}
+                {selectedRing === null ? 'beyond the 95% ring' : `inside the ${selectedRing}% ring`}
+              </p>
 
               {selectedSector.notes && (
                 <p style={{ margin: '0.35rem 0', fontSize: '0.825rem', color: 'var(--ink-2)' }}>
