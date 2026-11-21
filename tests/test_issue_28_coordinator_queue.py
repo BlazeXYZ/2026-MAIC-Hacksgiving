@@ -12,12 +12,14 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
+from src.server.ai.hotspots import COORDINATOR_API_KEY
 from src.server.api.coordinator_queue import router
 from src.server.intake.schema import ServiceCategory, UrgencyLevel
 from src.server.intake.store import add_ticket, reset_state
 
-client = TestClient(FastAPI())
+client = TestClient(FastAPI(), headers={"X-Coordinator-Key": COORDINATOR_API_KEY})
 client.app.include_router(router)
+anonymous = TestClient(client.app)
 
 
 @pytest.fixture(autouse=True)
@@ -66,3 +68,11 @@ def test_queue_orders_filters_scrubs_and_reports_counts():
     juneau = client.get("/api/v1/coordinator/queue", params={"district": "juneautown"})
     assert [row["token"] for row in juneau.json()["tickets"]] == [urgent.token]
     assert juneau.headers["x-total-count"] == "1"
+
+
+def test_queue_requires_coordinator_key():
+    assert anonymous.get("/api/v1/coordinator/queue").status_code == 403
+    wrong = anonymous.get(
+        "/api/v1/coordinator/queue", headers={"X-Coordinator-Key": "wrong-key"}
+    )
+    assert wrong.status_code == 403
