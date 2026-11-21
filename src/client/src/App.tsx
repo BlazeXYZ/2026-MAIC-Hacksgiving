@@ -9,12 +9,14 @@ import UrgentAlertBanner from './components/alerts/UrgentAlertBanner';
 import CoordinatorMap from './components/coordinator/CoordinatorMap';
 import CoordinatorSignIn from './components/coordinator/CoordinatorSignIn';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
+import InventoryHub from './components/inventory/InventoryHub';
+import InventoryReview from './components/inventory/review/InventoryReview';
 import { COMFORCE_HOTLINE } from './components/shell/EmergencyBar';
 import { Icon, LogoMark } from './components/ui/Icon';
 import type { IconName } from './components/ui/Icon';
 
 type HubId = 'domestic-safety' | 'missing-persons' | 'food-pantry';
-type Tab = 'home' | 'map' | 'coordinator' | 'coordinator-ops' | 'staff-sign-in';
+type Tab = 'home' | 'map' | 'inventory' | 'coordinator' | 'coordinator-ops' | 'inventory-review' | 'staff-sign-in';
 
 interface Community {
   id: HubId;
@@ -66,7 +68,7 @@ const DISTRICTS: { name: string; calls: number; short: boolean }[] = [
   { name: 'Historic Third Ward', calls: 3, short: false },
 ];
 
-const STAFF_TABS: ReadonlySet<Tab> = new Set(['coordinator', 'coordinator-ops']);
+const STAFF_TABS: ReadonlySet<Tab> = new Set(['coordinator', 'coordinator-ops', 'inventory-review']);
 
 function partOfDay(date: Date): string {
   const hour = date.getHours();
@@ -150,6 +152,7 @@ export default function App(): ReactElement {
             <>
               {navButton('coordinator', 'Tonight')}
               {navButton('coordinator-ops', 'Ops map')}
+              {navButton('inventory-review', 'Inventory')}
               <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
               <button type="button" className="switch" onClick={() => go('home')}>Resident view</button>
             </>
@@ -157,6 +160,7 @@ export default function App(): ReactElement {
             <>
               {navButton('home', 'Home')}
               {navButton('map', 'Map')}
+              {navButton('inventory', 'Inventory')}
               {coordinatorKey ? (
                 <>
                   <button type="button" className="switch" onClick={() => go('coordinator')}>Coordinator</button>
@@ -185,9 +189,13 @@ export default function App(): ReactElement {
 
         {activeTab === 'map' && <CommunityMap />}
 
+        {activeTab === 'inventory' && <InventoryHub />}
+
         {(activeTab === 'staff-sign-in' || (STAFF_TABS.has(activeTab) && !coordinatorKey)) && (
-          <CoordinatorSignIn onSignIn={(key) => { setCoordinatorKey(key); go('coordinator'); }} />
+          <CoordinatorSignIn onSignIn={(key) => { setCoordinatorKey(key); go(activeTab === 'staff-sign-in' ? 'coordinator' : activeTab); }} />
         )}
+
+        {activeTab === 'inventory-review' && coordinatorKey && <InventoryReview initialKey={coordinatorKey} />}
 
         {activeTab === 'coordinator' && coordinatorKey && (
           <CoordinatorDashboard accessKey={coordinatorKey} />
