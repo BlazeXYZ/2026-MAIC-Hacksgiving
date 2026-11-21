@@ -30,6 +30,8 @@ const DISTRICTS = Object.values(SAMPLE_TICKET_DETAILS)
   .flatMap((details) => details ? [details.district] : [])
   .sort();
 
+const RELAY_PHONE = '414-395-0552';
+
 export default function VolunteerTickets() {
   const [tickets, setTickets] = useState<Ticket[] | null>(null);
   const [loadError, setLoadError] = useState(false);
@@ -40,6 +42,10 @@ export default function VolunteerTickets() {
   const [query, setQuery] = useState('');
   const [urgency, setUrgency] = useState('');
   const [district, setDistrict] = useState('');
+
+  // Issue #18: Modal and claim confirmation state
+  const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
+  const [confirmUnclaimId, setConfirmUnclaimId] = useState<number | null>(null);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -79,6 +85,13 @@ export default function VolunteerTickets() {
     setPendingId(ticket.id);
     setFeedback('');
 
+    // Optimistic UI update: immediately reflect new state
+    const previousStatus = ticket.status;
+    const optimisticStatus: 'open' | 'claimed' = undoing ? 'open' : 'claimed';
+    setTickets((current) => current?.map((item) => (
+      item.id === ticket.id ? { ...item, status: optimisticStatus } : item
+    )) ?? null);
+
     try {
       const response = await fetch(`/api/tickets/${ticket.id}/${action}`, {
         method: 'POST',
@@ -111,11 +124,16 @@ export default function VolunteerTickets() {
       setTickets((current) => current?.map((item) => (
         item.id === updatedTicket.id ? updatedTicket : item
       )) ?? null);
-      setFeedback(undoing ? `${ticket.title} is open again.` : `You claimed ${ticket.title}.`);
+      setFeedback(undoing ? `${ticket.title} is open again.` : `You claimed ${ticket.title}. Contact relay unlocked.`);
     } catch {
+      // Revert optimistic update on failure
+      setTickets((current) => current?.map((item) => (
+        item.id === ticket.id ? { ...item, status: previousStatus } : item
+      )) ?? null);
       setFeedback(undoing ? 'Could not undo this claim. Try again.' : 'Could not claim this ticket. Try again.');
     } finally {
       setPendingId(null);
+      setConfirmUnclaimId(null);
     }
   }
 
@@ -137,11 +155,14 @@ export default function VolunteerTickets() {
     return matchesUrgency && matchesDistrict && text.includes(searchTerm);
   });
 
+  const selectedTicket = tickets?.find((t) => t.id === selectedTicketId) ?? null;
+  const selectedDetails = selectedTicket ? SAMPLE_TICKET_DETAILS[selectedTicket.id] : undefined;
+
   return (
-    <section aria-labelledby="volunteer-tickets-heading" style={{ backgroundColor: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+    <section aria-labelledby="volunteer-tickets-heading" className="volunteer-tickets-section">
       <h3 id="volunteer-tickets-heading" style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Volunteer Support Tickets</h3>
       <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.75rem' }}>
-        Sample tasks for Food Pantry &amp; Mutual Aid.
+        Sample tasks for Food Pantry &amp; Mutual Aid. Click any ticket for full details and relay contact.
       </p>
       <div role="status" style={{ fontSize: '0.85rem', color: '#334155', marginBottom: statusMessage ? '0.75rem' : 0 }}>
         {statusMessage}
@@ -188,55 +209,197 @@ export default function VolunteerTickets() {
         <ul style={{ display: 'grid', gap: '0.5rem', listStyle: 'none', margin: 0, padding: 0 }}>
           {filteredTickets.map((ticket) => {
             const details = SAMPLE_TICKET_DETAILS[ticket.id];
+            const isClaimedByMe = ticket.status === 'claimed' && claimKeys.current.has(ticket.id);
             return (
               <li key={ticket.id} className="volunteer-ticket-card">
-                <strong>{ticket.title}</strong>
-                {details && (
-                  <div className="volunteer-ticket-tags">
-                    <span data-urgency={details.urgency}>{URGENCY_LABELS[details.urgency]}</span>
-                    <span>{details.category}</span>
-                    <span>{details.district}</span>
+                <div
+                  className="volunteer-ticket-card-header"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setSelectedTicketId(ticket.id)}
+                  onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') setSelectedTicketId(ticket.id); }}
+                  aria-label={`Open details for ${ticket.title}`}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                    <strong>{ticket.title}</strong>
+                    <span className="volunteer-ticket-view-link">View Details &rarr;</span>
                   </div>
-                )}
-                <p style={{ color: '#475569', margin: '0.25rem 0 0.5rem' }}>{ticket.description}</p>
-                {ticket.status === 'claimed' ? (
-                  <div className="volunteer-ticket-claimed">
-                    <strong>Claimed</strong>
-                    {claimKeys.current.has(ticket.id) && (
-                      <button
-                        type="button"
-                        className="volunteer-ticket-undo"
-                        aria-label={`Undo claim: ${ticket.title}`}
-                        onClick={() => void changeClaim(ticket, 'unclaim')}
-                        disabled={pendingId !== null}
-                      >
-                        {pendingId === ticket.id ? 'Undoing…' : 'Undo claim'}
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    aria-label={pendingId === ticket.id ? `Claiming ${ticket.title}` : `Claim Ticket: ${ticket.title}`}
-                    onClick={() => void changeClaim(ticket, 'claim')}
-                    disabled={pendingId !== null}
-                    style={{
-                      backgroundColor: pendingId === null ? '#1d4ed8' : '#475569',
-                      color: '#ffffff',
-                      border: 'none',
-                      padding: '0.45rem 0.75rem',
-                      borderRadius: '4px',
-                      cursor: pendingId === null ? 'pointer' : 'default',
-                      fontSize: '0.85rem',
-                    }}
-                  >
-                    {pendingId === ticket.id ? 'Claiming…' : 'Claim Ticket'}
-                  </button>
-                )}
+                  {details && (
+                    <div className="volunteer-ticket-tags">
+                      <span data-urgency={details.urgency}>{URGENCY_LABELS[details.urgency]}</span>
+                      <span>{details.category}</span>
+                      <span>{details.district}</span>
+                    </div>
+                  )}
+                  <p style={{ color: '#475569', margin: '0.25rem 0 0.5rem' }}>{ticket.description}</p>
+                </div>
+
+                <div className="volunteer-ticket-card-actions">
+                  {ticket.status === 'claimed' ? (
+                    <div className="volunteer-ticket-claimed">
+                      <strong>✓ Claimed</strong>
+                      {isClaimedByMe && (
+                        <>
+                          <a
+                            className="volunteer-relay-btn"
+                            href={`tel:${RELAY_PHONE.replace(/[^\d+]/g, '')}`}
+                            aria-label={`Call Comforce relay for ${ticket.title}`}
+                          >
+                            📞 Comforce Relay
+                          </a>
+                          <button
+                            type="button"
+                            className="volunteer-ticket-undo"
+                            aria-label={`Undo claim: ${ticket.title}`}
+                            onClick={() => void changeClaim(ticket, 'unclaim')}
+                            disabled={pendingId !== null}
+                          >
+                            {pendingId === ticket.id ? 'Undoing…' : 'Undo claim'}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label={pendingId === ticket.id ? `Claiming ${ticket.title}` : `Claim Ticket: ${ticket.title}`}
+                      onClick={() => void changeClaim(ticket, 'claim')}
+                      disabled={pendingId !== null}
+                      className="volunteer-claim-btn"
+                    >
+                      {pendingId === ticket.id ? 'Claiming…' : 'Claim Request'}
+                    </button>
+                  )}
+                </div>
               </li>
             );
           })}
         </ul>
+      )}
+
+      {/* Ticket Detail Modal (Issue #18) */}
+      {selectedTicket && (
+        <div
+          className="volunteer-modal-backdrop"
+          role="presentation"
+          onClick={() => setSelectedTicketId(null)}
+        >
+          <div
+            className="volunteer-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ticket-modal-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="volunteer-modal-header">
+              <h4 id="ticket-modal-title">{selectedTicket.title}</h4>
+              <button
+                type="button"
+                className="volunteer-modal-close"
+                onClick={() => setSelectedTicketId(null)}
+                aria-label="Close ticket details"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="volunteer-modal-body">
+              {selectedDetails && (
+                <div className="volunteer-ticket-tags" style={{ marginBottom: '0.75rem' }}>
+                  <span data-urgency={selectedDetails.urgency}>{URGENCY_LABELS[selectedDetails.urgency]}</span>
+                  <span>Category: {selectedDetails.category}</span>
+                  <span>Neighborhood: {selectedDetails.district}</span>
+                </div>
+              )}
+
+              <div className="volunteer-modal-field">
+                <strong>Request Description</strong>
+                <p>{selectedTicket.description}</p>
+              </div>
+
+              <div className="volunteer-modal-field">
+                <strong>Location &amp; Area</strong>
+                <p>Approximate neighborhood: {selectedDetails?.district ?? 'Milwaukee Area'}. Strict PII privacy is preserved.</p>
+              </div>
+
+              <div className="volunteer-modal-field">
+                <strong>Current Status</strong>
+                <p>
+                  Status: <span className={`volunteer-status-pill ${selectedTicket.status === 'claimed' ? 'volunteer-status-pill--claimed' : 'volunteer-status-pill--open'}`}>
+                    {selectedTicket.status === 'claimed' ? 'Claimed by Volunteer' : 'Open for Help'}
+                  </span>
+                </p>
+              </div>
+
+              {selectedTicket.status === 'claimed' && (
+                <div className="volunteer-relay-unlocked-box">
+                  <div style={{ fontWeight: 600, color: '#166534', marginBottom: '0.25rem' }}>
+                    🎉 Request Claimed &amp; Relay Unlocked
+                  </div>
+                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#14532d' }}>
+                    Resident privacy is protected. Contact the Comforce dispatch relay to coordinate delivery or support.
+                  </p>
+                  <a
+                    className="volunteer-relay-action-btn"
+                    href={`tel:${RELAY_PHONE.replace(/[^\d+]/g, '')}`}
+                  >
+                    📞 Call Comforce Relay ({RELAY_PHONE})
+                  </a>
+                </div>
+              )}
+            </div>
+
+            <div className="volunteer-modal-footer">
+              {selectedTicket.status === 'open' ? (
+                <button
+                  type="button"
+                  className="volunteer-claim-btn"
+                  disabled={pendingId !== null}
+                  onClick={() => void changeClaim(selectedTicket, 'claim')}
+                >
+                  {pendingId === selectedTicket.id ? 'Claiming…' : 'Claim Request Now'}
+                </button>
+              ) : (
+                confirmUnclaimId === selectedTicket.id ? (
+                  <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.8rem', color: '#b91c1c' }}>Confirm release?</span>
+                    <button
+                      type="button"
+                      className="volunteer-ticket-undo"
+                      onClick={() => void changeClaim(selectedTicket, 'unclaim')}
+                      disabled={pendingId !== null}
+                    >
+                      Yes, Release
+                    </button>
+                    <button
+                      type="button"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: '#64748b' }}
+                      onClick={() => setConfirmUnclaimId(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    className="volunteer-ticket-undo"
+                    onClick={() => setConfirmUnclaimId(selectedTicket.id)}
+                    disabled={pendingId !== null}
+                  >
+                    Release Claim
+                  </button>
+                )
+              )}
+              <button
+                type="button"
+                className="volunteer-modal-dismiss-btn"
+                onClick={() => setSelectedTicketId(null)}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </section>
   );
