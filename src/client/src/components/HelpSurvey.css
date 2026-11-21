@@ -119,3 +119,5 @@
   .help-option { grid-template-columns: 1fr; }
   .help-option-actions { flex-direction: row; flex-wrap: wrap; }
 }
+.help-survey-copy { display: inline-flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; min-height: 44px; }
+.help-survey-sr { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Car, Coffee, LocateFixed, MessageCircle, MoreHorizontal, Shield, Utensils } from 'lucide-react';
+import { Car, Check, Coffee, Copy, LocateFixed, MessageCircle, MoreHorizontal, Shield, Utensils } from 'lucide-react';
 import type { SurveyAccepted, SurveyRequest, TriageResult } from '../contracts/intake';
 import { previewTriage, submitSurvey, type Sampled } from '../api/intake';
 import {
@@ -61,6 +61,7 @@ export default function HelpSurvey() {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [accepted, setAccepted] = useState<Sampled<SurveyAccepted> | null>(null);
+  const [copied, setCopied] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const need = NEEDS.find((n) => n.id === needId);
 
@@ -157,8 +158,19 @@ export default function HelpSurvey() {
     }
   }
 
+  async function copyCode(code: string) {
+    try {
+      await navigator.clipboard.writeText(code);
+    } catch {
+      window.prompt('Copy your request code:', code); // browsers without clipboard access
+    }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   function startOver() {
     setStep('choose');
+    setCopied(false);
     setNeedId(null);
     setChoice(null);
     setNote('');
@@ -190,6 +202,12 @@ export default function HelpSurvey() {
           <p>
             Your request code is <strong className="help-survey-code">{accepted.token}</strong>. Save it. You can use it to check on your request.
           </p>
+          <button className="btn sm help-survey-copy" type="button" onClick={() => void copyCode(accepted.token)}>
+            {copied ? <Check size={16} aria-hidden="true" /> : <Copy size={16} aria-hidden="true" />} {copied ? 'Copied' : 'Copy code'}
+          </button>
+          <span className="help-survey-sr" role="status">
+            {copied ? 'Request code copied to clipboard' : ''}
+          </span>
           {choice && (
             <p>
               <strong>{choice.name}</strong>
