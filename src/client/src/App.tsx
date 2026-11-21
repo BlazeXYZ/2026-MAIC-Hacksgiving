@@ -3,6 +3,7 @@ import CommunityMap from './components/CommunityMap';
 import DeliveryCover from './components/DeliveryCover';
 import HelpSurvey from './components/HelpSurvey';
 import VolunteerTickets from './components/VolunteerTickets';
+import CoordinatorMap from './components/coordinator/CoordinatorMap';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
 
 interface Community {
@@ -44,7 +45,7 @@ const COMMUNITIES: Community[] = [
 export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'communities' | 'map' | 'coordinator'>('communities');
+  const [activeTab, setActiveTab] = useState<'communities' | 'map' | 'coordinator' | 'coordinator-ops'>('communities');
 
   useEffect(() => {
     if (quickExitTriggered) return;
@@ -99,12 +100,18 @@ export default function App() {
 
       <nav aria-label="Main navigation" className="hub-view-nav">
         <button type="button" aria-current={activeTab === 'communities' ? 'page' : undefined} onClick={() => setActiveTab('communities')}>Communities</button>
-        <button type="button" aria-current={activeTab === 'map' ? 'page' : undefined} onClick={() => setActiveTab('map')}>Map</button>
-        <button type="button" aria-current={activeTab === 'coordinator' ? 'page' : undefined} onClick={() => setActiveTab('coordinator')}>Coordinator</button>
+        <button type="button" aria-current={activeTab === 'map' ? 'page' : undefined} onClick={() => setActiveTab('map')}>Resident Map</button>
+        <button type="button" aria-current={activeTab === 'coordinator' ? 'page' : undefined} onClick={() => setActiveTab('coordinator')}>Coordinator Queue</button>
+        <button type="button" aria-current={activeTab === 'coordinator-ops' ? 'page' : undefined} onClick={() => setActiveTab('coordinator-ops')}>Coordinator Ops</button>
       </nav>
 
       {activeTab === 'map' && <CommunityMap />}
       {activeTab === 'coordinator' && <CoordinatorDashboard />}
+      {activeTab === 'coordinator-ops' && (
+        <main className="hub-page">
+          <CoordinatorMap />
+        </main>
+      )}
 
       {/* Main Container */}
       <main hidden={activeTab !== 'communities'} style={{ maxWidth: '1100px', margin: '0 auto', padding: '1.5rem' }}>
