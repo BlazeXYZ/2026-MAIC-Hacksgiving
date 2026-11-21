@@ -3,13 +3,13 @@
   width: 100%;
   position: relative;
   z-index: 50;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
+  box-shadow: 0 4px 12px rgba(216, 50, 43, 0.2);
 }
 
 .urgent-alert-banner {
-  background: #ffffff;
-  border-bottom: 3px solid #dc2626;
-  border-top: 1px solid #fecaca;
+  background: var(--card);
+  border-bottom: 3px solid var(--red);
+  border-top: 1px solid var(--red-wash);
 }
 
 .urgent-alert-strip {
@@ -17,8 +17,8 @@
   align-items: center;
   justify-content: space-between;
   padding: 0.5rem 1.5rem;
-  background: #dc2626;
-  color: #ffffff;
+  background: var(--red);
+  color: #fff;
   font-size: 0.8125rem;
 }
 
@@ -35,23 +35,23 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #fef08a;
-  box-shadow: 0 0 0 0 rgba(254, 240, 138, 0.7);
+  background: var(--hivis);
+  box-shadow: 0 0 0 0 rgba(228, 242, 58, 0.7);
   animation: urgent-pulse 1.6s infinite;
 }
 
 @keyframes urgent-pulse {
   0% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(254, 240, 138, 0.7);
+    box-shadow: 0 0 0 0 rgba(228, 242, 58, 0.7);
   }
   70% {
     transform: scale(1);
-    box-shadow: 0 0 0 8px rgba(254, 240, 138, 0);
+    box-shadow: 0 0 0 8px rgba(228, 242, 58, 0);
   }
   100% {
     transform: scale(0.95);
-    box-shadow: 0 0 0 0 rgba(254, 240, 138, 0);
+    box-shadow: 0 0 0 0 rgba(228, 242, 58, 0);
   }
 }
 
@@ -95,11 +95,11 @@
   width: 64px;
   height: 64px;
   border-radius: 8px;
-  background: linear-gradient(135deg, #fee2e2, #fecaca);
-  border: 2px solid #ef4444;
+  background: linear-gradient(135deg, var(--red-wash), var(--red-wash));
+  border: 2px solid var(--red);
   display: grid;
   place-items: center;
-  color: #991b1b;
+  color: var(--red-deep);
   font-weight: 700;
   font-size: 1.25rem;
   flex-shrink: 0;
@@ -109,12 +109,12 @@
 .urgent-alert-info h3 {
   margin: 0 0 0.25rem;
   font-size: 1.1rem;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .urgent-alert-info h3 span {
   font-size: 0.9rem;
-  color: #dc2626;
+  color: var(--red);
   font-weight: 600;
   margin-left: 0.4rem;
 }
@@ -122,14 +122,14 @@
 .urgent-alert-location {
   margin: 0 0 0.25rem;
   font-size: 0.85rem;
-  color: #334155;
+  color: var(--ink-2);
   font-weight: 500;
 }
 
 .urgent-alert-desc {
   margin: 0;
   font-size: 0.8rem;
-  color: #64748b;
+  color: var(--ink-3);
   line-height: 1.4;
 }
 
@@ -140,8 +140,8 @@
 }
 
 .urgent-alert-cta {
-  background: #dc2626;
-  color: #ffffff;
+  background: var(--red);
+  color: #fff;
   border: none;
   padding: 0.6rem 1.25rem;
   border-radius: 6px;
@@ -150,17 +150,17 @@
   cursor: pointer;
   white-space: nowrap;
   transition: background 0.15s ease;
-  box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+  box-shadow: 0 2px 4px rgba(216, 50, 43, 0.3);
 }
 
 .urgent-alert-cta:hover {
-  background: #b91c1c;
+  background: var(--red-deep);
 }
 
 .urgent-alert-snooze-btn {
-  background: #f1f5f9;
-  color: #475569;
-  border: 1px solid #cbd5e1;
+  background: var(--sunk);
+  color: var(--ink-2);
+  border: 1px solid var(--line-2);
   padding: 0.35rem 0.75rem;
   border-radius: 6px;
   font-size: 0.75rem;
@@ -170,25 +170,25 @@
 }
 
 .urgent-alert-snooze-btn:hover {
-  background: #e2e8f0;
+  background: var(--line);
 }
 
 /* Minimized compact pill banner */
 .urgent-alert-minimized {
-  background: #fef2f2;
-  border-bottom: 2px solid #ef4444;
+  background: var(--red-wash);
+  border-bottom: 2px solid var(--red);
   padding: 0.4rem 1.5rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-size: 0.8rem;
-  color: #991b1b;
+  color: var(--red-deep);
 }
 
 .urgent-alert-expand-btn {
-  background: #fee2e2;
-  border: 1px solid #fca5a5;
-  color: #991b1b;
+  background: var(--red-wash);
+  border: 1px solid var(--red);
+  color: var(--red-deep);
   font-size: 0.75rem;
   font-weight: 600;
   padding: 0.2rem 0.6rem;
@@ -197,7 +197,7 @@
 }
 
 .urgent-alert-expand-btn:hover {
-  background: #fecaca;
+  background: var(--red-wash);
 }
 
 @media (max-width: 720px) {

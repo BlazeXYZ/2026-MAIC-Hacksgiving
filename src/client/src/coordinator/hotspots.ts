@@ -91,9 +91,10 @@ export const DEMO_HOTSPOT_COLLECTION: HotspotCollection = {
 };
 
 export function densityColor(density: number): string {
-  if (density >= 0.75) return '#dc2626'; // High (crimson)
-  if (density >= 0.4) return '#ea580c';  // Medium (orange)
-  return '#eab308';                      // Low (amber)
+  // Hex literals mirror global.css tokens (Leaflet SVG attributes cannot resolve var()).
+  if (density >= 0.75) return '#D8322B'; // High (--red)
+  if (density >= 0.4) return '#B7790B';  // Medium (--amber)
+  return '#E4F23A';                      // Low (--hivis)
 }
 
 export function polygonToLatLngTuples(polygonCoords: number[][][]): LatLngTuple[] {

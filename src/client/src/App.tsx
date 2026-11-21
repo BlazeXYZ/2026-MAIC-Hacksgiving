@@ -70,7 +70,7 @@ export default function App() {
   const active = COMMUNITIES.find((c) => c.id === selectedCommunity) || COMMUNITIES[0];
 
   return (
-    <div style={{ minHeight: '100vh', fontFamily: 'system-ui, sans-serif', backgroundColor: '#f8fafc', color: '#0f172a' }}>
+    <div style={{ minHeight: '100vh', fontFamily: 'var(--f)', backgroundColor: 'var(--paper)', color: 'var(--ink)' }}>
       {/* Top Emergency Priority Banner (Issue #45) */}
       <UrgentAlertBanner
         onJoinSearch={() => {
@@ -80,16 +80,16 @@ export default function App() {
       />
 
       {/* Main Header */}
-      <header style={{ backgroundColor: '#ffffff', borderBottom: '1px solid #e2e8f0', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <header style={{ backgroundColor: 'var(--card)', borderBottom: '1px solid var(--line)', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 'bold' }}>ComForce MKE Community Hub</h1>
-          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>Connected through Community Task Force MKE & MSOE</p>
+          <h1 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>ComForce MKE Community Hub</h1>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--ink-3)' }}>Connected through Community Task Force MKE &amp; MSOE</p>
         </div>
         <button
           type="button"
           aria-keyshortcuts="Escape"
+          className="btn danger sm"
           onClick={() => setQuickExitTriggered(true)}
-          style={{ backgroundColor: '#ef4444', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '6px', cursor: 'pointer', fontSize: '0.85rem' }}
         >
           Quick Exit
         </button>
@@ -118,7 +118,7 @@ export default function App() {
         </details>
         {/* Community Tabs */}
         <section style={{ marginBottom: '1.5rem' }}>
-          <h2 style={{ fontSize: '1rem', color: '#475569', marginBottom: '0.75rem' }}>Active Initiatives & Communities</h2>
+          <h2 style={{ fontSize: '1rem', color: 'var(--ink-2)', marginBottom: '0.75rem' }}>Active Initiatives &amp; Communities</h2>
           <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
             {COMMUNITIES.map((c) => {
               const isSelected = c.id === selectedCommunity;
@@ -129,15 +129,15 @@ export default function App() {
                   style={{
                     padding: '0.75rem 1.25rem',
                     borderRadius: '8px',
-                    border: isSelected ? '2px solid #2563eb' : '1px solid #cbd5e1',
-                    backgroundColor: isSelected ? '#eff6ff' : '#ffffff',
-                    color: isSelected ? '#1e40af' : '#1e293b',
+                    border: isSelected ? '2px solid var(--green)' : '1px solid var(--line-2)',
+                    backgroundColor: isSelected ? 'var(--green-wash)' : 'var(--card)',
+                    color: isSelected ? 'var(--green-ink)' : 'var(--ink)',
                     fontWeight: isSelected ? 'bold' : 'normal',
                     cursor: 'pointer',
                     textAlign: 'left',
                   }}
                 >
-                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: '#64748b' }}>{c.tag}</div>
+                  <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--ink-3)' }}>{c.tag}</div>
                   <div>{c.name}</div>
                 </button>
               );
@@ -148,18 +148,18 @@ export default function App() {
         {/* Selected Community Details */}
         <div className="volunteer-board-layout">
           {/* Main Card */}
-          <div style={{ backgroundColor: '#ffffff', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+          <div style={{ backgroundColor: 'var(--card)', padding: '1.5rem', borderRadius: '8px', border: '1px solid var(--line)' }}>
             <h3 style={{ margin: '0 0 0.5rem 0', fontSize: '1.25rem' }}>{active.name}</h3>
-            <p style={{ color: '#475569', margin: '0 0 1.25rem 0' }}>{active.description}</p>
+            <p style={{ color: 'var(--ink-2)', margin: '0 0 1.25rem 0' }}>{active.description}</p>
 
             {/* Custom initiative tool based on selection */}
             {active.id === 'domestic-safety' && (
-              <div style={{ backgroundColor: '#f1f5f9', padding: '1rem', borderRadius: '6px' }}>
+              <div style={{ backgroundColor: 'var(--sunk)', padding: '1rem', borderRadius: '6px' }}>
                 <h4 style={{ margin: '0 0 0.5rem 0' }}>Safe Route Planner</h4>
-                <p style={{ fontSize: '0.9rem', color: '#475569' }}>
+                <p style={{ fontSize: '0.9rem', color: 'var(--ink-2)' }}>
                   If on the MSOE campus, this automatically routes along well-lit paths to MSOE Public Safety at 1025 N Broadway. In the wider city, it guides you to Sojourner Family Peace Center.
                 </p>
-                <button style={{ backgroundColor: '#2563eb', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>
+                <button className="btn primary sm">
                   Calculate Safe Walk Route
                 </button>
               </div>
@@ -171,12 +171,12 @@ export default function App() {
             )}
 
             {active.id === 'food-pantry' && (
-              <div style={{ backgroundColor: '#f1f5f9', padding: '1rem', borderRadius: '6px' }}>
-                <h4 style={{ margin: '0 0 0.5rem 0' }}>Pantry Stocking & Relief Hub</h4>
-                <p style={{ fontSize: '0.9rem', color: '#475569' }}>
+              <div style={{ backgroundColor: 'var(--sunk)', padding: '1rem', borderRadius: '6px' }}>
+                <h4 style={{ margin: '0 0 0.5rem 0' }}>Pantry Stocking &amp; Relief Hub</h4>
+                <p style={{ fontSize: '0.9rem', color: 'var(--ink-2)' }}>
                   AI recommendations based on neighborhood need: Juneautown pantries report shortages of high-protein canned foods, baby formula, and warm socks.
                 </p>
-                <button style={{ backgroundColor: '#16a34a', color: '#ffffff', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer' }}>
+                <button className="btn primary sm">
                   Post Available Pantry Supplies
                 </button>
               </div>
@@ -188,9 +188,9 @@ export default function App() {
             <VolunteerTickets />
 
             {/* District Stats */}
-            <div style={{ backgroundColor: '#ffffff', padding: '1.25rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+            <div style={{ backgroundColor: 'var(--card)', padding: '1.25rem', borderRadius: '8px', border: '1px solid var(--line)' }}>
               <h4 style={{ margin: '0 0 0.5rem 0' }}>District Overview</h4>
-              <div style={{ fontSize: '0.85rem', color: '#475569', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              <div style={{ fontSize: '0.85rem', color: 'var(--ink-2)', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                   <span>Juneautown / Campus:</span>
                   <strong>5 active calls</strong>

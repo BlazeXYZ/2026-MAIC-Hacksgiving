@@ -1,15 +1,15 @@
 .coordinator-map-wrapper {
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--card);
+  border: 1px solid var(--line);
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--sh);
   margin-bottom: 1.5rem;
 }
 
 .coordinator-map-header {
   padding: 1rem 1.25rem;
-  background: #0f172a;
+  background: var(--ink);
   color: #fff;
   display: flex;
   justify-content: space-between;
@@ -29,7 +29,7 @@
 .coordinator-map-badge {
   font-size: 0.7rem;
   padding: 0.15rem 0.5rem;
-  background: #dc2626;
+  background: var(--red);
   color: #fff;
   border-radius: 9999px;
   font-weight: 700;
@@ -40,7 +40,7 @@
 .coordinator-map-header p {
   margin: 0;
   font-size: 0.825rem;
-  color: #94a3b8;
+  color: var(--line-2);
 }
 
 /* Toggle Switch */
@@ -50,23 +50,23 @@
   gap: 0.6rem;
   font-size: 0.85rem;
   font-weight: 600;
-  color: #f8fafc;
+  color: var(--paper);
   cursor: pointer;
-  background: #1e293b;
+  background: rgba(238, 243, 236, .12);
   padding: 0.45rem 0.85rem;
   border-radius: 8px;
-  border: 1px solid #334155;
+  border: 1px solid rgba(238, 243, 236, .25);
   transition: all 0.15s ease;
 }
 
 .coordinator-toggle-label:hover {
-  background: #334155;
+  background: rgba(238, 243, 236, .2);
 }
 
 .coordinator-toggle-checkbox {
   width: 18px;
   height: 18px;
-  accent-color: #dc2626;
+  accent-color: var(--hivis);
   cursor: pointer;
 }
 
@@ -84,8 +84,8 @@
 
 .coordinator-map-footer {
   padding: 0.75rem 1.25rem;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
+  background: var(--paper);
+  border-top: 1px solid var(--line);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -107,7 +107,7 @@
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  color: #334155;
+  color: var(--ink-2);
   font-size: 0.8rem;
 }
 
@@ -118,16 +118,16 @@
 }
 
 .coordinator-density-swatch--high {
-  background: #dc2626;
+  background: var(--red);
   opacity: 0.8;
 }
 
 .coordinator-density-swatch--medium {
-  background: #ea580c;
+  background: var(--amber);
   opacity: 0.7;
 }
 
 .coordinator-density-swatch--low {
-  background: #eab308;
+  background: var(--hivis);
   opacity: 0.6;
 }

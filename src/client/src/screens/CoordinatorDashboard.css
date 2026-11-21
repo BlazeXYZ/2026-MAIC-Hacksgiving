@@ -11,12 +11,12 @@
 .coordinator-header h2 {
   margin: 0 0 0.4rem;
   font-size: 1.5rem;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .coordinator-header p {
   margin: 0;
-  color: #64748b;
+  color: var(--ink-3);
   font-size: 0.9rem;
 }
 
@@ -35,27 +35,27 @@
   padding: 0.4rem 0.8rem;
   font-size: 0.8125rem;
   border-radius: 9999px;
-  background: #fff;
-  border: 1px solid #cbd5e1;
-  color: #334155;
+  background: var(--card);
+  border: 1px solid var(--line-2);
+  color: var(--ink-2);
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .coordinator-badge-pill:hover {
-  border-color: #94a3b8;
-  background: #f8fafc;
+  border-color: var(--line-2);
+  background: var(--paper);
 }
 
 .coordinator-badge-pill--active {
-  background: #1e40af;
-  border-color: #1e40af;
+  background: var(--green);
+  border-color: var(--green);
   color: #fff;
   font-weight: 600;
 }
 
 .coordinator-badge-pill--active .coordinator-badge-count {
-  background: #3b82f6;
+  background: rgba(255, 255, 255, .25);
   color: #fff;
 }
 
@@ -64,14 +64,14 @@
   padding: 0.1rem 0.45rem;
   font-size: 0.75rem;
   font-weight: 700;
-  background: #e2e8f0;
-  color: #1e293b;
+  background: var(--sunk);
+  color: var(--ink);
   border-radius: 9999px;
 }
 
 .coordinator-badge-count--urgent {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--red-wash);
+  color: var(--red-deep);
 }
 
 /* Toolbar & filters */
@@ -95,46 +95,46 @@
 .coordinator-select {
   padding: 0.4rem 0.65rem;
   font-size: 0.85rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--line-2);
   border-radius: 6px;
-  background: #fff;
-  color: #0f172a;
+  background: var(--card);
+  color: var(--ink);
 }
 
 .coordinator-batch-bar {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: #eff6ff;
-  border: 1px solid #bfdbfe;
+  background: var(--green-wash);
+  border: 1px solid var(--green-wash);
   padding: 0.5rem 0.85rem;
   border-radius: 6px;
   font-size: 0.85rem;
-  color: #1e40af;
+  color: var(--green-ink);
 }
 
 .coordinator-batch-btn {
   padding: 0.3rem 0.6rem;
   font-size: 0.8rem;
-  border: 1px solid #93c5fd;
-  background: #fff;
-  color: #1e40af;
+  border: 1px solid var(--green);
+  background: var(--card);
+  color: var(--green-ink);
   border-radius: 4px;
   cursor: pointer;
   font-weight: 500;
 }
 
 .coordinator-batch-btn:hover {
-  background: #dbeafe;
+  background: var(--green-wash);
 }
 
 /* Table */
 .coordinator-table-container {
   overflow-x: auto;
-  background: #fff;
-  border: 1px solid #e2e8f0;
+  background: var(--card);
+  border: 1px solid var(--line);
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-shadow: var(--sh);
 }
 
 .coordinator-table {
@@ -145,14 +145,14 @@
 }
 
 .coordinator-table th {
-  background: #f8fafc;
-  color: #475569;
+  background: var(--paper);
+  color: var(--ink-2);
   font-weight: 600;
   font-size: 0.75rem;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
 
@@ -162,22 +162,22 @@
 }
 
 .coordinator-sortable-header:hover {
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .coordinator-table td {
   padding: 0.75rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
-  color: #1e293b;
+  border-bottom: 1px solid var(--line);
+  color: var(--ink);
   vertical-align: middle;
 }
 
 .coordinator-table tr:hover {
-  background: #f8fafc;
+  background: var(--paper);
 }
 
 .coordinator-table tr.coordinator-row--selected {
-  background: #eff6ff;
+  background: var(--green-wash);
 }
 
 /* Status & urgency pills */
@@ -190,18 +190,18 @@
 }
 
 .coordinator-urgency--urgent {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--red-wash);
+  color: var(--red-deep);
 }
 
 .coordinator-urgency--today {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--amber-wash);
+  color: var(--amber-ink);
 }
 
 .coordinator-urgency--this_week {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--green-wash);
+  color: var(--green-ink);
 }
 
 .coordinator-status-badge {
@@ -213,23 +213,23 @@
 }
 
 .coordinator-status--pending {
-  background: #f1f5f9;
-  color: #475569;
+  background: var(--sunk);
+  color: var(--ink-2);
 }
 
 .coordinator-status--assigned {
-  background: #e0f2fe;
-  color: #0369a1;
+  background: var(--police-wash);
+  color: var(--police);
 }
 
 .coordinator-status--in_progress {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--amber-wash);
+  color: var(--amber-ink);
 }
 
 .coordinator-status--resolved {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--green-wash);
+  color: var(--green-ink);
 }
 
 /* Action buttons */
@@ -243,33 +243,33 @@
   padding: 0.25rem 0.55rem;
   font-size: 0.75rem;
   border-radius: 4px;
-  border: 1px solid #cbd5e1;
-  background: #fff;
-  color: #334155;
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  color: var(--ink-2);
   cursor: pointer;
   font-weight: 500;
 }
 
 .coordinator-action-btn:hover {
-  background: #f1f5f9;
-  border-color: #94a3b8;
+  background: var(--sunk);
+  border-color: var(--line-2);
 }
 
 .coordinator-action-btn--primary {
-  background: #2563eb;
-  border-color: #2563eb;
+  background: var(--green);
+  border-color: var(--green);
   color: #fff;
 }
 
 .coordinator-action-btn--primary:hover {
-  background: #1d4ed8;
+  background: var(--green-ink);
 }
 
 /* Assign Modal */
 .coordinator-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.5);
+  background: rgba(22, 32, 27, .45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -278,18 +278,18 @@
 }
 
 .coordinator-modal {
-  background: #fff;
+  background: var(--card);
   border-radius: 8px;
   max-width: 440px;
   width: 100%;
   padding: 1.5rem;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 20px 25px -5px rgba(22, 32, 27, .15);
 }
 
 .coordinator-modal h4 {
   margin: 0 0 1rem;
   font-size: 1.15rem;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .coordinator-modal-form {
@@ -303,7 +303,7 @@
   flex-direction: column;
   gap: 0.25rem;
   font-size: 0.85rem;
-  color: #334155;
+  color: var(--ink-2);
 }
 
 .coordinator-modal-actions {

@@ -60,7 +60,7 @@ export default function UrgentAlertBanner({
             <button
               type="button"
               className="urgent-alert-expand-btn"
-              style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', color: 'var(--ink-3)', cursor: 'pointer' }}
               onClick={() => setIsDismissed(true)}
               aria-label="Dismiss alert"
             >

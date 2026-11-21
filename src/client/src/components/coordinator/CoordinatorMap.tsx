@@ -101,13 +101,13 @@ export default function CoordinatorMap() {
       });
 
       const popupHtml = `
-        <div style="font-family: system-ui, sans-serif; font-size: 0.85rem; color: #0f172a;">
+        <div style="font-family: var(--f); font-size: 0.85rem; color: #16201B;">
           <strong style="color: ${color}; display: block; font-size: 0.95rem; margin-bottom: 0.25rem;">
             ⚠️ Incident Density Zone
           </strong>
           <div><strong>Police / Dispatch Calls:</strong> ${feature.properties.count}</div>
           <div><strong>Relative Density:</strong> ${(feature.properties.density * 100).toFixed(0)}%</div>
-          <div style="font-size: 0.75rem; color: #64748b; margin-top: 0.35rem;">
+          <div style="font-size: 0.75rem; color: #6C776F; margin-top: 0.35rem;">
             Restricted coordinator intelligence for safe volunteer pairing.
           </div>
         </div>
@@ -170,7 +170,7 @@ export default function CoordinatorMap() {
           </li>
         </ul>
 
-        <div style={{ color: '#64748b', fontSize: '0.8rem' }}>
+        <div style={{ color: 'var(--ink-3)', fontSize: '0.8rem' }}>
           {statusMessage}
         </div>
       </div>

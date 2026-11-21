@@ -161,10 +161,10 @@ export default function VolunteerTickets() {
   return (
     <section aria-labelledby="volunteer-tickets-heading" className="volunteer-tickets-section">
       <h3 id="volunteer-tickets-heading" style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Volunteer Support Tickets</h3>
-      <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 0.75rem' }}>
+      <p style={{ fontSize: '0.85rem', color: 'var(--ink-2)', margin: '0 0 0.75rem' }}>
         Sample tasks for Food Pantry &amp; Mutual Aid. Click any ticket for full details and relay contact.
       </p>
-      <div role="status" style={{ fontSize: '0.85rem', color: '#334155', marginBottom: statusMessage ? '0.75rem' : 0 }}>
+      <div role="status" style={{ fontSize: '0.85rem', color: 'var(--ink-2)', marginBottom: statusMessage ? '0.75rem' : 0 }}>
         {statusMessage}
       </div>
       {loadError && (
@@ -231,7 +231,7 @@ export default function VolunteerTickets() {
                       <span>{details.district}</span>
                     </div>
                   )}
-                  <p style={{ color: '#475569', margin: '0.25rem 0 0.5rem' }}>{ticket.description}</p>
+                  <p style={{ color: 'var(--ink-2)', margin: '0.25rem 0 0.5rem' }}>{ticket.description}</p>
                 </div>
 
                 <div className="volunteer-ticket-card-actions">
@@ -333,10 +333,10 @@ export default function VolunteerTickets() {
 
               {selectedTicket.status === 'claimed' && (
                 <div className="volunteer-relay-unlocked-box">
-                  <div style={{ fontWeight: 600, color: '#166534', marginBottom: '0.25rem' }}>
+                  <div style={{ fontWeight: 600, color: 'var(--green-ink)', marginBottom: '0.25rem' }}>
                     🎉 Request Claimed &amp; Relay Unlocked
                   </div>
-                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: '#14532d' }}>
+                  <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem', color: 'var(--green-ink)' }}>
                     Resident privacy is protected. Contact the Comforce dispatch relay to coordinate delivery or support.
                   </p>
                   <a
@@ -362,7 +362,7 @@ export default function VolunteerTickets() {
               ) : (
                 confirmUnclaimId === selectedTicket.id ? (
                   <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.8rem', color: '#b91c1c' }}>Confirm release?</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--red-deep)' }}>Confirm release?</span>
                     <button
                       type="button"
                       className="volunteer-ticket-undo"
@@ -373,7 +373,7 @@ export default function VolunteerTickets() {
                     </button>
                     <button
                       type="button"
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: '#64748b' }}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--ink-3)' }}
                       onClick={() => setConfirmUnclaimId(null)}
                     >
                       Cancel

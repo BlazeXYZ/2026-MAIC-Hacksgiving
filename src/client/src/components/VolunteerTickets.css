@@ -19,7 +19,7 @@
 .volunteer-ticket-filters label {
   display: grid;
   gap: 0.2rem;
-  color: #334155;
+  color: var(--ink-2);
   font-size: 0.875rem;
 }
 
@@ -29,10 +29,10 @@
   width: 100%;
   min-height: 2.25rem;
   padding: 0.35rem 0.5rem;
-  border: 1px solid #94a3b8;
+  border: 1px solid var(--line-2);
   border-radius: 6px;
-  background: #fff;
-  color: #0f172a;
+  background: var(--card);
+  color: var(--ink);
   font: inherit;
 }
 
@@ -45,8 +45,8 @@
 
 .volunteer-ticket-card {
   padding: 0.75rem;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--paper);
+  border: 1px solid var(--line);
   border-radius: 6px;
   font-size: 0.85rem;
 }
@@ -54,29 +54,29 @@
 .volunteer-ticket-tags span {
   padding: 0.15rem 0.4rem;
   border-radius: 0.25rem;
-  background: #e2e8f0;
-  color: #334155;
+  background: var(--sunk);
+  color: var(--ink-2);
   font-size: 0.75rem;
 }
 
 .volunteer-ticket-tags [data-urgency='urgent'] {
-  background: #fee2e2;
-  color: #991b1b;
+  background: var(--red-wash);
+  color: var(--red-deep);
 }
 
 .volunteer-ticket-tags [data-urgency='today'] {
-  background: #fef3c7;
-  color: #92400e;
+  background: var(--amber-wash);
+  color: var(--amber-ink);
 }
 
 .volunteer-ticket-tags [data-urgency='this-week'] {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--green-wash);
+  color: var(--green-ink);
 }
 
 .volunteer-ticket-no-results {
   margin: 0;
-  color: #475569;
+  color: var(--ink-2);
   font-size: 0.875rem;
 }
 
@@ -85,16 +85,16 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 0.25rem 0.75rem;
-  color: #166534;
+  color: var(--green-ink);
 }
 
 .volunteer-ticket-undo {
   min-height: 44px;
   padding: 0.25rem 0.5rem;
-  border: 1px solid #166534;
+  border: 1px solid var(--green-ink);
   border-radius: 4px;
-  background: #fff;
-  color: #166534;
+  background: var(--card);
+  color: var(--green-ink);
   font: inherit;
   cursor: pointer;
 }
@@ -105,10 +105,10 @@
 }
 
 .volunteer-tickets-section {
-  background-color: #ffffff;
+  background-color: var(--card);
   padding: 1.25rem;
   border-radius: 8px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--line);
 }
 
 .volunteer-ticket-card-header {
@@ -119,17 +119,17 @@
 }
 
 .volunteer-ticket-card-header:hover {
-  background: #f1f5f9;
+  background: var(--sunk);
 }
 
 .volunteer-ticket-card-header:focus-visible {
-  outline: 2px solid #2563eb;
+  outline: 2px solid var(--green);
   outline-offset: 2px;
 }
 
 .volunteer-ticket-view-link {
   font-size: 0.75rem;
-  color: #2563eb;
+  color: var(--green);
   font-weight: 500;
 }
 
@@ -141,8 +141,8 @@
 }
 
 .volunteer-claim-btn {
-  background-color: #1d4ed8;
-  color: #ffffff;
+  background-color: var(--green);
+  color: var(--card);
   border: none;
   padding: 0.45rem 0.75rem;
   border-radius: 4px;
@@ -153,11 +153,11 @@
 }
 
 .volunteer-claim-btn:hover:not(:disabled) {
-  background-color: #1e40af;
+  background-color: var(--green-ink);
 }
 
 .volunteer-claim-btn:disabled {
-  background-color: #64748b;
+  background-color: var(--ink-3);
   cursor: not-allowed;
   opacity: 0.7;
 }
@@ -166,8 +166,8 @@
   display: inline-flex;
   align-items: center;
   padding: 0.25rem 0.5rem;
-  background-color: #166534;
-  color: #ffffff;
+  background-color: var(--green-ink);
+  color: var(--card);
   border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
@@ -176,14 +176,14 @@
 }
 
 .volunteer-relay-btn:hover {
-  background-color: #14532d;
+  background-color: var(--green-ink);
 }
 
 /* Modal styles (#18) */
 .volunteer-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.6);
+  background: rgba(22, 32, 27, .45);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -192,7 +192,7 @@
 }
 
 .volunteer-modal {
-  background: #ffffff;
+  background: var(--card);
   border-radius: 8px;
   max-width: 500px;
   width: 100%;
@@ -207,13 +207,13 @@
   justify-content: space-between;
   align-items: center;
   padding: 1rem 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid var(--line);
 }
 
 .volunteer-modal-header h4 {
   margin: 0;
   font-size: 1.1rem;
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .volunteer-modal-close {
@@ -221,13 +221,13 @@
   border: none;
   font-size: 1.5rem;
   line-height: 1;
-  color: #64748b;
+  color: var(--ink-3);
   cursor: pointer;
   padding: 0.25rem;
 }
 
 .volunteer-modal-close:hover {
-  color: #0f172a;
+  color: var(--ink);
 }
 
 .volunteer-modal-body {
@@ -240,7 +240,7 @@
 .volunteer-modal-field strong {
   display: block;
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--ink-3);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -248,7 +248,7 @@
 .volunteer-modal-field p {
   margin: 0.2rem 0 0;
   font-size: 0.9rem;
-  color: #1e293b;
+  color: var(--ink);
   line-height: 1.45;
 }
 
@@ -261,18 +261,18 @@
 }
 
 .volunteer-status-pill--open {
-  background: #dbeafe;
-  color: #1e40af;
+  background: var(--green-wash);
+  color: var(--green-ink);
 }
 
 .volunteer-status-pill--claimed {
-  background: #dcfce7;
-  color: #166534;
+  background: var(--green-wash);
+  color: var(--green-ink);
 }
 
 .volunteer-relay-unlocked-box {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
+  background: var(--green-wash);
+  border: 1px solid var(--green-wash);
   border-radius: 6px;
   padding: 0.75rem;
 }
@@ -281,8 +281,8 @@
   display: block;
   text-align: center;
   padding: 0.55rem;
-  background: #16a34a;
-  color: #ffffff;
+  background: var(--green);
+  color: var(--card);
   border-radius: 6px;
   font-weight: 600;
   text-decoration: none;
@@ -291,7 +291,7 @@
 }
 
 .volunteer-relay-action-btn:hover {
-  background: #15803d;
+  background: var(--green-ink);
 }
 
 .volunteer-modal-footer {
@@ -300,20 +300,20 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1.25rem;
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
+  border-top: 1px solid var(--line);
+  background: var(--paper);
 }
 
 .volunteer-modal-dismiss-btn {
   padding: 0.45rem 0.75rem;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
+  background: var(--card);
+  border: 1px solid var(--line-2);
   border-radius: 4px;
   font-size: 0.85rem;
   cursor: pointer;
-  color: #334155;
+  color: var(--ink-2);
 }
 
 .volunteer-modal-dismiss-btn:hover {
-  background: #f1f5f9;
+  background: var(--sunk);
 }

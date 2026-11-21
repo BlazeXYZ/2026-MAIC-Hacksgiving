@@ -404,7 +404,7 @@ export default function CoordinatorDashboard() {
           <tbody>
             {displayedTickets.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: '#64748b' }}>
+                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--ink-3)' }}>
                   No requests match the current filters.
                 </td>
               </tr>
@@ -438,9 +438,9 @@ export default function CoordinatorDashboard() {
                     </td>
                     <td>
                       {t.volunteer_alias ? (
-                        <span style={{ fontWeight: 600, color: '#0369a1' }}>{t.volunteer_alias}</span>
+                        <span style={{ fontWeight: 600, color: 'var(--police)' }}>{t.volunteer_alias}</span>
                       ) : (
-                        <span style={{ color: '#94a3b8', fontStyle: 'italic' }}>Unassigned</span>
+                        <span style={{ color: 'var(--ink-3)', fontStyle: 'italic' }}>Unassigned</span>
                       )}
                     </td>
                     <td>
@@ -492,7 +492,7 @@ export default function CoordinatorDashboard() {
             onClick={(e) => e.stopPropagation()}
           >
             <h4 id="assign-modal-title">Dispatch Action: {activeModalTicket.ticket_id}</h4>
-            <p style={{ fontSize: '0.85rem', color: '#475569', margin: '0 0 1rem' }}>
+            <p style={{ fontSize: '0.85rem', color: 'var(--ink-2)', margin: '0 0 1rem' }}>
               {activeModalTicket.summary}
             </p>
 
