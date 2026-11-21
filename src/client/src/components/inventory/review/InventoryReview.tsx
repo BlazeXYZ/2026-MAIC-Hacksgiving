@@ -14,8 +14,8 @@ type Tab = 'held' | 'guesses' | 'aliases' | 'items' | 'posts';
  * Coordinator review for the community inventory. The coordinator key is held in memory only, so it is
  * gone on reload and wiped by Quick Exit.
  */
-export default function InventoryReview(): ReactElement {
-  const [adminKey, setAdminKey] = useState<string | null>(null);
+export default function InventoryReview({ initialKey }: { initialKey?: string | null } = {}): ReactElement {
+  const [adminKey, setAdminKey] = useState<string | null>(initialKey ?? null);
   const [draft, setDraft] = useState('');
   const [checking, setChecking] = useState(false);
   const [gateError, setGateError] = useState<string | null>(null);
