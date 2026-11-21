@@ -36,6 +36,20 @@ python main.py
 
 The demo stores claims in memory. Restarting the server resets the board.
 
+## Hub forums
+
+Each hub (`domestic-safety`, `missing-persons`, `food-pantry`) has threads and replies, seeded with synthetic posts from `forums/seed.py`. There are no accounts: every post goes up under a pseudonym from `forums/store.HANDLES`, and the response returns it so the client can keep using it for the session.
+
+- **Held posts.** A post with a home address, phone number, email, or SSN (`ai/pii.py`), a line like "I live at", or wording the abuse classifier flags (`ai/moderation.py`) is held. It stays off the public list and the author gets `held_reason`. Hub listings only show `held_count`, never the text.
+- **Automatic answers.** Common questions in each hub get a canned answer, and crisis wording in any hub gets the 24/7 line.
+- **Staff posts.** A post sent with a valid `X-Coordinator-Key` is labeled `ComForce coordinator` and skips the hold.
+
+Public routes (`/api/v1/forums`): `GET hubs`, `GET hubs/{hub_id}/threads` (`sort=hot|new|top`, `q`), `POST hubs/{hub_id}/threads`, `GET threads/{id}`, `POST threads/{id}/replies` (optional `parent_id`), and `POST threads/{id}/helpful` / `POST replies/{id}/helpful` (`{"on": false}` takes a mark back).
+
+Coordinator routes (`/api/v1/forums/admin`, need `X-Coordinator-Key`): `GET held` lists held threads and replies with their reasons. `POST held/{id}/review` takes `action: publish` (contact details scrubbed, optionally with an edited `body`) or `action: remove`.
+
+Data is held in memory and resets to the seed on restart.
+
 ## Community inventory
 
 Pantries and community safe places can list what they **have**, what they **need**, and what is **offered**. People pick an item from the shared catalog or describe it in their own words; free text is mapped to a catalog item through an alias table.
