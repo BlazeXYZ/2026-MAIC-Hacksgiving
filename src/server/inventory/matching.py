@@ -16,6 +16,7 @@ class Source:
     kind: str  # "have" or "offer"
     quantity: int
     distance_m: float
+    entry_id: str  # the stock, offer, or need this row stands for
 
 
 @dataclass(frozen=True)
@@ -39,7 +40,7 @@ def matches_for(location_id: str, at: datetime | None = None) -> list[Match]:
                     continue
                 there = places[other.location_id]
                 meters = haversine_m(here.latitude, here.longitude, there.latitude, there.longitude)
-                sources.append(Source(there, kind, other.quantity, meters))
+                sources.append(Source(there, kind, other.quantity, meters, other.id))
         sources.sort(key=lambda s: s.distance_m)
         found.append(Match(need, store.get_item(need.item_id), sources))
     return found
@@ -66,7 +67,7 @@ def demand_for(location_id: str, at: datetime | None = None) -> list[Demand]:
                     continue
                 there = places[need.location_id]
                 meters = haversine_m(here.latitude, here.longitude, there.latitude, there.longitude)
-                needs.append(Source(there, "need", need.quantity, meters))
+                needs.append(Source(there, "need", need.quantity, meters, need.id))
             needs.sort(key=lambda s: s.distance_m)
             found.append(Demand(supply, store.get_item(supply.item_id), needs))
     return found

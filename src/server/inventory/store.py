@@ -60,6 +60,10 @@ class AliasConflict(InventoryError):
     """The alias text already points somewhere else."""
 
 
+class InvalidHandoff(InventoryError):
+    """The hand-off breaks a rule. The message is safe to show a coordinator."""
+
+
 class SimilarItems(InventoryError):
     """The new item looks like one that already exists. Carries the closest matches."""
 
@@ -136,6 +140,20 @@ class Entry:
 
 
 @dataclass(frozen=True)
+class Handoff:
+    """Something passed from one place to another. No names: only where, what, and how many."""
+
+    id: str
+    item_id: str
+    quantity: int
+    from_location_id: str
+    to_location_id: str | None
+    remaining: int  # how many the giving entry had left afterwards
+    need_remaining: int | None  # how many the receiving need still asked for afterwards
+    at: datetime
+
+
+@dataclass(frozen=True)
 class Similar:
     item: Item
     wording: str  # the existing wording that looked closest
@@ -151,7 +169,8 @@ _STOPWORDS = frozenset({"and", "of", "the", "a", "an", "for", "with"})
 _items: dict[str, Item] = {}
 _aliases: dict[str, Alias] = {}
 _entries: dict[str, Entry] = {}
-_counters = {"al": 0, "en": 0}
+_handoffs: list[Handoff] = []
+_counters = {"al": 0, "en": 0, "ho": 0}
 
 
 def _next(prefix: str) -> str:
@@ -171,7 +190,8 @@ def reset() -> None:
         _items.clear()
         _aliases.clear()
         _entries.clear()
-        _counters.update(al=0, en=0)
+        _handoffs.clear()
+        _counters.update(al=0, en=0, ho=0)
         taken: set[str] = set()
         for item_id, name, extras in SEED_ITEMS:
             _items[item_id] = Item(item_id, name)
@@ -510,6 +530,61 @@ def promote_entry(
         title = name.strip() if name and name.strip() else entry.label.title()
         item = add_item(title, (alias_text,) if alias_text else (), confirm_new=confirm_new)
         return resolve_entry(entry.id, item.id)
+
+
+def handoff(entry_id: str, quantity: int, to_need_id: str | None = None, *, at: datetime | None = None) -> Handoff:
+    """Record that `quantity` of a stock or offer entry was passed over.
+
+    The entry shrinks and disappears at zero, so "who can help" stops pointing at it. If `to_need_id` is
+    given, that need shrinks too (and closes when covered); handing over more than it asked for is fine.
+    """
+    moment = at or now_utc()
+    with _lock:
+        entry = get_entry(entry_id)
+        if entry.closed or entry.expires_at <= moment or entry.item_id is None:
+            raise InvalidHandoff("That entry is no longer open.")
+        if entry.kind not in ("have", "offer"):
+            raise InvalidHandoff("Only stock or an offer can be passed over, not a need.")
+        if quantity < 1 or quantity > entry.quantity:
+            raise InvalidHandoff(f"Only {entry.quantity} {'is' if entry.quantity == 1 else 'are'} available to pass over.")
+        need: Entry | None = None
+        if to_need_id is not None:
+            need = get_entry(to_need_id)
+            if need.closed or need.expires_at <= moment or need.item_id is None:
+                raise InvalidHandoff("That need is no longer open.")
+            if need.kind != "need":
+                raise InvalidHandoff("Things can only be passed over to a need.")
+            if need.item_id != entry.item_id:
+                raise InvalidHandoff("That need is for a different item.")
+            if need.location_id == entry.location_id:
+                raise InvalidHandoff("That need is at the same place.")
+        entry.quantity -= quantity
+        if entry.quantity == 0:
+            entry.closed = True
+        need_remaining: int | None = None
+        if need is not None:
+            need.quantity = max(0, need.quantity - quantity)
+            if need.quantity == 0:
+                need.closed = True
+            need_remaining = need.quantity
+        record = Handoff(
+            _next("ho"),
+            entry.item_id,
+            quantity,
+            entry.location_id,
+            need.location_id if need is not None else None,
+            entry.quantity,
+            need_remaining,
+            moment,
+        )
+        _handoffs.append(record)
+        return record
+
+
+def list_handoffs(limit: int = 50) -> list[Handoff]:
+    """Most recent first."""
+    with _lock:
+        return list(reversed(_handoffs))[:limit]
 
 
 def close_entry(entry_id: str) -> Entry:

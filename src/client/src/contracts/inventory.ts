@@ -65,6 +65,8 @@ export interface SourceView {
   kind: EntryKind;
   quantity: number;
   distance_miles: number;
+  /** The stock, offer, or need this row stands for. Use it to record a hand-off. */
+  entry_id: string;
 }
 
 export interface MatchView {
@@ -129,4 +131,18 @@ export interface AliasView {
 export interface SimilarItemsDetail {
   message: string;
   similar: SimilarView[];
+}
+
+/** Something passed from one place to another. Only where, what, and how many; never who. */
+export interface HandoffView {
+  id: string;
+  item: ItemRef;
+  quantity: number;
+  from_location: string;
+  to_location: string | null;
+  /** How many the giving entry has left. Zero means it is gone from every list. */
+  remaining: number;
+  /** How many the receiving need still asks for, if one was named. */
+  need_remaining: number | null;
+  at: string;
 }

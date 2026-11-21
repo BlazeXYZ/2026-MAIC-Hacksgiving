@@ -98,6 +98,7 @@ class SourceOut(BaseModel):
     kind: Literal["have", "offer", "need"]
     quantity: int
     distance_miles: float
+    entry_id: str = Field(description="The stock, offer, or need this row stands for. Use it to record a hand-off.")
 
 
 class MatchOut(BaseModel):
@@ -191,6 +192,24 @@ class GuessOut(BaseModel):
     candidates: list[CandidateOut]
 
 
+class HandoffBody(BaseModel):
+    quantity: int = Field(ge=1, le=10_000, description="How many were passed over.")
+    to_need_id: str | None = Field(
+        default=None, max_length=40, description="The open need it went to, if known. That need shrinks too."
+    )
+
+
+class HandoffOut(BaseModel):
+    id: str
+    item: ItemOut
+    quantity: int
+    from_location: str
+    to_location: str | None
+    remaining: int = Field(description="How many the giving entry has left. Zero means it is gone from every list.")
+    need_remaining: int | None = Field(description="How many the receiving need still asks for, if one was named.")
+    at: str
+
+
 class ResolveBody(BaseModel):
     item_id: str = Field(min_length=1, max_length=80)
     alias_text: str | None = Field(
@@ -255,6 +274,7 @@ def _source_out(source: Source) -> SourceOut:
         kind=source.kind,  # type: ignore[arg-type]
         quantity=source.quantity,
         distance_miles=round(source.distance_m / 1609.34, 2),
+        entry_id=source.entry_id,
     )
 
 
@@ -274,6 +294,24 @@ def _similar_out(found: store.Similar) -> SimilarOut:
     return SimilarOut(item=_item_out(found.item), wording=found.wording, score=found.score)
 
 
+def _handoff_out(record: store.Handoff) -> HandoffOut:
+    places = eligible_locations()
+
+    def name(location_id: str) -> str:
+        return places[location_id].name if location_id in places else "a place"
+
+    return HandoffOut(
+        id=record.id,
+        item=_item_out(store.get_item(record.item_id)),
+        quantity=record.quantity,
+        from_location=name(record.from_location_id),
+        to_location=name(record.to_location_id) if record.to_location_id else None,
+        remaining=record.remaining,
+        need_remaining=record.need_remaining,
+        at=record.at.isoformat(),
+    )
+
+
 def _raise(err: store.InventoryError) -> NoReturn:
     if isinstance(err, store.SimilarItems):
         raise HTTPException(
@@ -284,6 +322,8 @@ def _raise(err: store.InventoryError) -> NoReturn:
                 "similar": [_similar_out(m).model_dump() for m in err.matches],
             },
         ) from err
+    if isinstance(err, store.InvalidHandoff):
+        raise HTTPException(status_code=409, detail=str(err)) from err
     if isinstance(err, store.AliasConflict):
         raise HTTPException(status_code=409, detail=f"That wording already belongs to alias {err}.") from err
     names = {store.ItemNotFound: "Item", store.AliasNotFound: "Alias", store.EntryNotFound: "Entry"}
@@ -520,6 +560,25 @@ def promote_entry(entry_id: str, body: PromoteBody) -> EntryOut:
         )
     except store.InventoryError as err:
         _raise(err)
+
+
+@admin.post("/entries/{entry_id}/handoff", response_model=HandoffOut, status_code=201)
+def hand_off(entry_id: str, body: HandoffBody) -> HandoffOut:
+    """Record that some of a stock or offer entry was passed over.
+
+    The entry shrinks and disappears at zero, so it stops showing in "who can help". Name the open need it went to
+    and that need shrinks too, closing when covered.
+    """
+    try:
+        return _handoff_out(store.handoff(entry_id, body.quantity, body.to_need_id))
+    except store.InventoryError as err:
+        _raise(err)
+
+
+@admin.get("/handoffs", response_model=list[HandoffOut])
+def handoffs() -> list[HandoffOut]:
+    """Recent hand-offs, newest first. Only where, what, and how many; never who."""
+    return [_handoff_out(h) for h in store.list_handoffs()]
 
 
 @admin.post("/entries/{entry_id}/close", status_code=204)
