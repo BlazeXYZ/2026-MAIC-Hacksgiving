@@ -98,7 +98,7 @@ Postgres can sit on `ContainerCreating` for a minute while the volume comes up. 
 kubectl -n comforce-dev port-forward svc/web 8080:80
 ```
 
-Open http://localhost:8080. The API process check is `GET /` on port 8000 inside the `api` pod. It returns `"status": "healthy"` and `"environment": "development"`. The web Service serves the React app on `/` and proxies `/api` to that pod.
+Open http://localhost:8080. The API process liveness check is `GET /healthz` (or `GET /`) on port 8000 inside the `api` pod. It returns `"status": "alive"` (or `"status": "healthy"` on `/`). The dependency-aware readiness check is `GET /ready`, which tests database connectivity and returns 503 if unavailable. The web Service serves the React app on `/` and proxies `/api` to that pod.
 
 kind also adds a context named `kind-comforce-dev` to `~/.kube/config`. `export KUBECONFIG=...` keeps kubectl on the file Terraform manages.
 
@@ -253,4 +253,4 @@ kubectl -n comforce-dev describe pvc
 - **ImagePullBackOff** on AWS means the push in step 5.3 has not happened yet, or the tag does not match `terraform output -raw api_image`.
 - **ImagePullBackOff** on a laptop means the image was not built before apply. Build it, run `terraform apply` again, then `kubectl rollout restart`.
 - **Pending PVC** on AWS means the EBS addon is still starting. Wait a minute and describe the PVC again. The StorageClass name is `comforce-gp3`.
-- **CrashLoopBackOff** on `api` with a database error means Postgres is not ready yet. `kubectl logs statefulset/db` shows the database, and `kubectl logs deploy/api` shows the API. In prod, `APP_ENV=production` makes the API exit if the database is down at startup. Dev keeps the process up and reports the database as down.
+- **CrashLoopBackOff** on `api` with a database error means Postgres is not ready yet. `kubectl logs statefulset/db` shows the database, and `kubectl logs deploy/api` shows the API. In prod, `APP_ENV=production` makes the API exit if the database is down at startup. Dev keeps the process up and reports the database as down (readiness probe `GET /ready` returns 503 Service Unavailable, and `GET /` reports status `degraded`) until the database is restored.

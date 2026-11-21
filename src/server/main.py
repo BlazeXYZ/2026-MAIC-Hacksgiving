@@ -1,10 +1,17 @@
 """FastAPI application entry point for the ComforceMKE community platform."""
 
+import logging
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
 
+# Ensure repository root is on sys.path when running main.py directly from src/server
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Response, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -31,9 +38,11 @@ except ModuleNotFoundError:
     from ticket_routes import router as volunteer_ticket_router
 
 try:
-    from src.server.db import close_db, init_db
+    from src.server.db import check_db, close_db, init_db
 except ModuleNotFoundError:
-    from db import close_db, init_db
+    from db import check_db, close_db, init_db
+
+logger = logging.getLogger("comforce.server")
 
 try:
     from src.server.intake.demo import seed_demo_tickets
@@ -53,8 +62,18 @@ except ModuleNotFoundError:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    init_db()
-    seed_demo_tickets()
+    try:
+        init_db()
+        seed_demo_tickets()
+    except Exception as exc:
+        if settings.APP_ENV == "production":
+            logger.error("Database initialization failed at startup in production: %s", exc)
+            raise
+        logger.warning(
+            "Database unavailable at startup in %s environment: %s. Application continuing in degraded mode.",
+            settings.APP_ENV,
+            exc,
+        )
     async with ticket_lifespan(app):
         yield
     close_db()
@@ -91,6 +110,15 @@ class HealthResponse(BaseModel):
     status: str
     app_name: str
     environment: str
+    database: str = "connected"
+
+class ReadinessResponse(BaseModel):
+    status: str
+    database: str
+    detail: str | None = None
+
+class LivenessResponse(BaseModel):
+    status: str = "alive"
 
 class Community(BaseModel):
     id: str
@@ -126,13 +154,42 @@ class SafeRouteResponse(BaseModel):
     route_summary: str
     safe_havens_along_path: list[str]
 
+@app.get("/healthz", response_model=LivenessResponse)
+@app.get("/api/healthz", response_model=LivenessResponse)
+def liveness():
+    """Process liveness probe."""
+    return LivenessResponse(status="alive")
+
+
+@app.get("/ready", response_model=ReadinessResponse)
+@app.get("/api/ready", response_model=ReadinessResponse)
+def readiness(response: Response):
+    """Dependency-aware readiness probe checking database connectivity."""
+    is_ready, err = check_db()
+    if not is_ready:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+        return ReadinessResponse(
+            status="not_ready",
+            database="unavailable",
+            detail=err,
+        )
+    return ReadinessResponse(
+        status="ready",
+        database="connected",
+    )
+
+
 @app.get("/", response_model=HealthResponse)
 def root():
-    """Health check endpoint."""
+    """Health check endpoint. In dev, reports degraded if database is down."""
+    is_ready, _ = check_db()
+    db_status = "connected" if is_ready else "unavailable"
+    app_status = "healthy" if is_ready else "degraded"
     return HealthResponse(
-        status="healthy",
+        status=app_status,
         app_name=settings.APP_NAME,
         environment=settings.APP_ENV,
+        database=db_status,
     )
 
 @app.get("/api/communities", response_model=list[Community])
