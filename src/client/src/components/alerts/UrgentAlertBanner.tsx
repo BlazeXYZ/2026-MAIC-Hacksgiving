@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import type { ReactElement } from 'react';
+import { Icon } from '../ui/Icon';
 import './UrgentAlertBanner.css';
 
 export interface MissingPersonAlert {
@@ -10,6 +12,8 @@ export interface MissingPersonAlert {
   description: string;
   photoUrl?: string;
   active: boolean;
+  sectorsSearched?: number;
+  sectorsTotal?: number;
 }
 
 export const ACTIVE_MISSING_PERSON_ALERT: MissingPersonAlert = {
@@ -20,6 +24,8 @@ export const ACTIVE_MISSING_PERSON_ALERT: MissingPersonAlert = {
   lastSeenTimeAgo: '45 mins ago',
   description: 'Wearing navy MSOE windbreaker, gray beanie, and tan work boots. Search parties are deploying along grid sectors A–D.',
   active: true,
+  sectorsSearched: 3,
+  sectorsTotal: 8,
 };
 
 interface UrgentAlertBannerProps {
@@ -27,10 +33,19 @@ interface UrgentAlertBannerProps {
   onJoinSearch: () => void;
 }
 
+function initials(name: string): string {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
 export default function UrgentAlertBanner({
   alert = ACTIVE_MISSING_PERSON_ALERT,
   onJoinSearch,
-}: UrgentAlertBannerProps) {
+}: UrgentAlertBannerProps): ReactElement | null {
   const [isMinimized, setIsMinimized] = useState<boolean>(false);
   const [isDismissed, setIsDismissed] = useState<boolean>(false);
 
@@ -39,116 +54,104 @@ export default function UrgentAlertBanner({
     return null;
   }
 
-  // Minimized mode: discreet header bar that doesn't block domestic crisis or food seekers
+  // Minimized: one slim line that doesn't block domestic-crisis or food seekers
   if (isMinimized) {
     return (
-      <aside aria-label="Minimized Emergency Alert" className="urgent-alert-container">
-        <div className="urgent-alert-minimized">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span aria-hidden="true">⚠️</span>
-            <strong>Urgent Alert Active:</strong> Missing person search near {alert.lastSeenLocation}.
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+      <aside aria-label="Minimized Emergency Alert" className="alertcard alertcard--min">
+        <div className="alert-strip">
+          <span className="live" aria-hidden="true" />
+          <span>Missing person search near {alert.lastSeenLocation}</span>
+          <span className="alert-strip-actions">
             <button
               type="button"
-              className="urgent-alert-expand-btn"
+              className="alert-strip-btn"
               onClick={() => setIsMinimized(false)}
               aria-label="Expand emergency missing person alert"
             >
-              Expand Alert
+              Show details
             </button>
             <button
               type="button"
-              className="urgent-alert-expand-btn"
-              style={{ background: 'none', border: 'none', color: '#64748b', cursor: 'pointer' }}
+              className="alert-strip-btn"
               onClick={() => setIsDismissed(true)}
               aria-label="Dismiss alert"
             >
-              &times;
+              <Icon name="x" />
             </button>
-          </div>
+          </span>
         </div>
       </aside>
     );
   }
 
-  // Expanded prominent alert banner
+  const total = alert.sectorsTotal ?? 0;
+  const searched = Math.min(alert.sectorsSearched ?? 0, total);
+
   return (
-    <aside aria-label="Active Missing Person Alert" className="urgent-alert-container">
-      <div className="urgent-alert-banner">
-        {/* Top Warning Strip */}
-        <div className="urgent-alert-strip">
-          <div className="urgent-alert-badge">
-            <span className="urgent-alert-pulse" aria-hidden="true" />
-            <span>URGENT ALERT: MISSING PERSON</span>
-          </div>
-          <div className="urgent-alert-meta">
-            Active Volunteer Search Party · Last seen {alert.lastSeenTimeAgo}
-          </div>
-          <div className="urgent-alert-strip-actions">
-            <button
-              type="button"
-              className="urgent-alert-strip-btn"
-              onClick={() => setIsMinimized(true)}
-              title="Minimize to avoid blocking other emergency aid"
-              aria-label="Minimize alert banner"
-            >
-              _ Minimize
-            </button>
-            <button
-              type="button"
-              className="urgent-alert-strip-btn"
-              onClick={() => setIsDismissed(true)}
-              title="Dismiss alert"
-              aria-label="Dismiss alert banner"
-            >
-              &times;
-            </button>
-          </div>
+    <aside aria-label="Active Missing Person Alert" className="alertcard">
+      <div className="alert-strip">
+        <span className="live" aria-hidden="true" />
+        <span>Missing person · last seen {alert.lastSeenTimeAgo}</span>
+        <span className="alert-strip-actions">
+          <button
+            type="button"
+            className="alert-strip-btn"
+            onClick={() => setIsMinimized(true)}
+            title="Minimize to avoid blocking other emergency aid"
+            aria-label="Minimize alert banner"
+          >
+            <Icon name="minus" />Minimize
+          </button>
+          <button
+            type="button"
+            className="alert-strip-btn"
+            onClick={() => setIsDismissed(true)}
+            title="Dismiss alert"
+            aria-label="Dismiss alert banner"
+          >
+            <Icon name="x" />
+          </button>
+        </span>
+      </div>
+
+      <div className="d-alert">
+        <div className="d-alert-photo" aria-hidden="true">
+          {alert.photoUrl ? <img src={alert.photoUrl} alt="" /> : <span>{initials(alert.name)}</span>}
         </div>
 
-        {/* Main Banner Content */}
-        <div className="urgent-alert-body">
-          {/* Photo / Thumbnail Placeholder */}
-          <div className="urgent-alert-thumbnail" aria-hidden="true">
-            {alert.photoUrl ? (
-              <img src={alert.photoUrl} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : (
-              <span>JW</span>
-            )}
-          </div>
+        <div className="d-alert-info">
+          <h2>{alert.name}, {alert.age}</h2>
+          <p>Last seen near <b>{alert.lastSeenLocation}</b>. {alert.description}</p>
+          <span className="verified"><Icon name="check" />Verified by ComForce</span>
+        </div>
 
-          {/* Details */}
-          <div className="urgent-alert-info">
-            <h3>
-              {alert.name} <span>(Age {alert.age})</span>
-            </h3>
-            <div className="urgent-alert-location">
-              📍 Last seen near <strong>{alert.lastSeenLocation}</strong>
+        {total > 0 && (
+          <div className="d-alert-prog">
+            <span>{searched} of {total} sectors searched</span>
+            <div className="segs" aria-hidden="true">
+              {Array.from({ length: total }, (_, i) => (
+                <i key={i} className={i < searched ? 'done' : i === searched ? 'on' : undefined} />
+              ))}
             </div>
-            <p className="urgent-alert-desc">
-              {alert.description}
-            </p>
           </div>
+        )}
 
-          {/* Actions */}
-          <div className="urgent-alert-actions">
-            <button
-              type="button"
-              className="urgent-alert-cta"
-              onClick={onJoinSearch}
-            >
-              Join Search Party &rarr;
-            </button>
-            <button
-              type="button"
-              className="urgent-alert-snooze-btn"
-              onClick={() => setIsMinimized(true)}
-            >
-              Minimize for other aid
-            </button>
-          </div>
+        <div className="d-alert-acts">
+          <button type="button" className="btn danger" onClick={onJoinSearch}>
+            Join the search
+          </button>
+          <button type="button" className="btn" onClick={() => setIsMinimized(true)}>
+            Minimize for other aid
+          </button>
         </div>
+      </div>
+
+      <div className="d-alert-why">
+        <Icon name="alert" />
+        <span>
+          <b>Why you&rsquo;re seeing this:</b> ComForce posts verified alerts for missing neighbors nearby. You can join,
+          minimize, or dismiss it. All of those are fine.
+        </span>
       </div>
     </aside>
   );

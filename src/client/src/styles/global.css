@@ -1,0 +1,133 @@
+/* ComForce MKE Hub design system.
+   Tokens and primitives extracted from docs/design/ComForce-MKE-Hub-PROD-mockup.html.
+   Two typefaces only: Bricolage Grotesque for the interface, Newsreader for
+   people's names and headlines, and Newsreader italic only when the AI explains itself. */
+:root {
+  --paper: #E6ECE3;
+  --card: #FDFDF9;
+  --sunk: #E4EAE0;
+  --line: #D2DBCD;
+  --line-2: #B5C1B0;
+  --ink: #16201B;
+  --ink-2: #45524A;
+  --ink-3: #6C776F;
+  --green: #0F6B3A;
+  --green-2: #2E9A5C;
+  --green-wash: #E4F0E6;
+  --green-ink: #174A2C;
+  --red: #D8322B;
+  --red-deep: #A61D19;
+  --red-wash: #FCEAE7;
+  --amber: #B7790B;
+  --amber-wash: #FBF1DA;
+  --amber-ink: #6E4A06;
+  --police: #4338A8;
+  --police-wash: #ECEAFA;
+  --hivis: #E4F23A;
+  --tip: #F5F8D6;
+  --tip-ink: #3E4410;
+  --f: "Bricolage Grotesque", system-ui, sans-serif;
+  --f-voice: "Newsreader", Georgia, serif;
+  --r: 12px;
+  --r-sm: 8px;
+  --sh: 0 1px 2px rgba(22, 32, 27, .05), 0 8px 24px -16px rgba(22, 32, 27, .25);
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--f);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+button, input, textarea, select { font: inherit; color: inherit; }
+h1, h2, h3, h4, p { margin: 0; }
+a { color: inherit; }
+
+:focus-visible { outline: 3px solid var(--hivis); outline-offset: 2px; }
+
+/* ---------- shared primitives ---------- */
+.kicker {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.meta { font-size: 13px; color: var(--ink-3); }
+
+.voice { font-family: var(--f-voice); }
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid var(--line-2);
+  background: var(--card);
+  color: var(--ink);
+  font-weight: 700;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn.sm { height: 36px; padding: 0 14px; font-size: 14px; }
+.btn.primary { background: var(--green); border-color: var(--green); color: #fff; }
+.btn.danger { background: var(--red); border-color: var(--red); color: #fff; }
+.btn.ghost { background: transparent; border-color: transparent; color: var(--green); padding: 0 8px; }
+.btn.block { width: 100%; }
+.btn:disabled { cursor: default; opacity: .75; }
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.tag.urgent { background: var(--red-wash); color: var(--red-deep); }
+.tag.today { background: var(--amber-wash); color: var(--amber-ink); }
+.tag.week { background: var(--sunk); color: var(--ink-2); }
+.tag.ai { background: var(--green-wash); color: var(--green-ink); }
+.tag.ai::before, .tag.plain::before { display: none; }
+.tag.plain { background: var(--sunk); color: var(--ink-2); }
+.tag.held { background: var(--amber-wash); color: var(--amber-ink); }
+
+.tip {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: var(--tip);
+  color: var(--tip-ink);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

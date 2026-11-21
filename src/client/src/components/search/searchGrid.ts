@@ -13,30 +13,32 @@ export interface SearchSector {
   updatedAt: string;
 }
 
+// Hex literals mirror the design tokens in src/client/src/styles/global.css
+// (Leaflet sets SVG fill/stroke attributes, which cannot resolve CSS var()).
 export const STATUS_COLORS: Record<SectorStatus, { fill: string; border: string; badgeBg: string; text: string }> = {
   Unsearched: {
-    fill: '#94a3b8',
-    border: '#64748b',
-    badgeBg: '#f1f5f9',
-    text: '#475569',
+    fill: '#B5C1B0', // --line-2
+    border: '#6C776F', // --ink-3
+    badgeBg: '#E4EAE0', // --sunk
+    text: '#45524A', // --ink-2
   },
   Searching: {
-    fill: '#eab308',
-    border: '#ca8a04',
-    badgeBg: '#fef9c3',
-    text: '#854d0e',
+    fill: '#B7790B', // --amber
+    border: '#6E4A06', // --amber-ink
+    badgeBg: '#FBF1DA', // --amber-wash
+    text: '#6E4A06', // --amber-ink
   },
   Cleared: {
-    fill: '#16a34a',
-    border: '#15803d',
-    badgeBg: '#dcfce7',
-    text: '#166534',
+    fill: '#0F6B3A', // --green
+    border: '#174A2C', // --green-ink
+    badgeBg: '#E4F0E6', // --green-wash
+    text: '#174A2C', // --green-ink
   },
   'Lead Found': {
-    fill: '#2563eb',
-    border: '#1d4ed8',
-    badgeBg: '#dbeafe',
-    text: '#1e40af',
+    fill: '#4338A8', // --police
+    border: '#3730A3', // darker police
+    badgeBg: '#ECEAFA', // --police-wash
+    text: '#3730A3',
   },
 };
 

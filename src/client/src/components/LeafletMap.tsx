@@ -182,9 +182,9 @@ export default function LeafletMap({
     for (const line of polylines) {
       if (line.length === 0) continue;
       // High-visibility glowing outer stroke for safe pedestrian corridor
-      polyline(line, { color: '#38bdf8', weight: 9, opacity: 0.65, lineCap: 'round', lineJoin: 'round' }).addTo(group);
+      polyline(line, { color: '#E4F23A', weight: 9, opacity: 0.65, lineCap: 'round', lineJoin: 'round' }).addTo(group);
       // Illuminated core path
-      polyline(line, { color: '#0284c7', weight: 4, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(group);
+      polyline(line, { color: '#0F6B3A', weight: 4, opacity: 0.95, lineCap: 'round', lineJoin: 'round' }).addTo(group);
     }
     return () => { group.remove(); };
   }, [polylines]);
