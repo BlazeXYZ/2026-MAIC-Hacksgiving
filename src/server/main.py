@@ -1,7 +1,13 @@
 """FastAPI application entry point for the ComforceMKE community platform."""
 
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
+
+# Ensure repository root is on sys.path when running main.py directly from src/server
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 import uvicorn
 from fastapi import FastAPI
