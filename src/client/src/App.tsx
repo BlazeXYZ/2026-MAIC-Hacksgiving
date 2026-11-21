@@ -8,12 +8,14 @@ import SearchGridMap from './components/search/SearchGridMap';
 import UrgentAlertBanner from './components/alerts/UrgentAlertBanner';
 import CoordinatorMap from './components/coordinator/CoordinatorMap';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
+import InventoryHub from './components/inventory/InventoryHub';
+import InventoryReview from './components/inventory/review/InventoryReview';
 import { COMFORCE_HOTLINE } from './components/shell/EmergencyBar';
 import { Icon, LogoMark } from './components/ui/Icon';
 import type { IconName } from './components/ui/Icon';
 
 type HubId = 'domestic-safety' | 'missing-persons' | 'food-pantry';
-type Tab = 'home' | 'map' | 'coordinator' | 'coordinator-ops';
+type Tab = 'home' | 'map' | 'inventory' | 'coordinator' | 'coordinator-ops' | 'inventory-review';
 
 interface Community {
   id: HubId;
@@ -65,7 +67,7 @@ const DISTRICTS: { name: string; calls: number; short: boolean }[] = [
   { name: 'Historic Third Ward', calls: 3, short: false },
 ];
 
-const STAFF_TABS: ReadonlySet<Tab> = new Set(['coordinator', 'coordinator-ops']);
+const STAFF_TABS: ReadonlySet<Tab> = new Set(['coordinator', 'coordinator-ops', 'inventory-review']);
 
 function partOfDay(date: Date): string {
   const hour = date.getHours();
@@ -141,12 +143,14 @@ export default function App(): ReactElement {
             <>
               {navButton('coordinator', 'Tonight')}
               {navButton('coordinator-ops', 'Ops map')}
+              {navButton('inventory-review', 'Inventory')}
               <button type="button" className="switch" onClick={() => go('home')}>Resident view</button>
             </>
           ) : (
             <>
               {navButton('home', 'Home')}
               {navButton('map', 'Map')}
+              {navButton('inventory', 'Inventory')}
               <button type="button" className="switch" onClick={() => go('coordinator')}>Coordinator</button>
             </>
           )}
@@ -167,6 +171,10 @@ export default function App(): ReactElement {
         {!isStaff && <UrgentAlertBanner onJoinSearch={() => openHub('missing-persons')} />}
 
         {activeTab === 'map' && <CommunityMap />}
+
+        {activeTab === 'inventory' && <InventoryHub />}
+
+        {activeTab === 'inventory-review' && <InventoryReview />}
 
         {activeTab === 'coordinator' && <CoordinatorDashboard />}
 
