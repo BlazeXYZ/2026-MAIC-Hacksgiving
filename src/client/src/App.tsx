@@ -82,6 +82,7 @@ export default function App(): ReactElement {
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [askingForHelp, setAskingForHelp] = useState<boolean>(false);
+  const [inventoryAction, setInventoryAction] = useState<'request' | 'give' | 'remove' | null>(null);
   // Held in memory only: a reload or Quick Exit signs staff out.
   const [coordinatorKey, setCoordinatorKey] = useState<string | null>(null);
   const surveyRef = useRef<HTMLElement>(null);
@@ -189,7 +190,9 @@ export default function App(): ReactElement {
 
         {activeTab === 'map' && <CommunityMap />}
 
-        {activeTab === 'inventory' && <InventoryHub />}
+        {activeTab === 'inventory' && (
+          <InventoryHub initialAction={inventoryAction} onActionHandled={() => setInventoryAction(null)} />
+        )}
 
         {(activeTab === 'staff-sign-in' || (STAFF_TABS.has(activeTab) && !coordinatorKey)) && (
           <CoordinatorSignIn onSignIn={(key) => { setCoordinatorKey(key); go(activeTab === 'staff-sign-in' ? 'coordinator' : activeTab); }} />
@@ -276,7 +279,14 @@ export default function App(): ReactElement {
                     <Icon name="spark" />
                     Juneautown pantries report shortages of high-protein canned foods, baby formula, and warm socks.
                   </p>
-                  <button type="button" className="btn primary sm">
+                  <button
+                    type="button"
+                    className="btn primary sm"
+                    onClick={() => {
+                      setInventoryAction('give');
+                      go('inventory');
+                    }}
+                  >
                     <Icon name="plus" />Post available supplies
                   </button>
                 </div>
