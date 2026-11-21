@@ -160,9 +160,12 @@ export default function VolunteerTickets() {
 
   return (
     <section aria-labelledby="volunteer-tickets-heading" className="volunteer-tickets-section">
-      <h3 id="volunteer-tickets-heading" style={{ margin: '0 0 0.5rem', fontSize: '1rem' }}>Volunteer Support Tickets</h3>
-      <p style={{ fontSize: '0.85rem', color: 'var(--ink-2)', margin: '0 0 0.75rem' }}>
-        Sample tasks for Food Pantry &amp; Mutual Aid. Click any ticket for full details and relay contact.
+      <div className="volunteer-tickets-head">
+        <h3 id="volunteer-tickets-heading">Neighbors who need a hand</h3>
+        {tickets && <span className="count">{tickets.length} nearby</span>}
+      </div>
+      <p className="volunteer-tickets-sub">
+        Sample tasks for Food Pantry &amp; Mutual Aid. Open a ticket for full details and relay contact.
       </p>
       <div role="status" style={{ fontSize: '0.85rem', color: 'var(--ink-2)', marginBottom: statusMessage ? '0.75rem' : 0 }}>
         {statusMessage}

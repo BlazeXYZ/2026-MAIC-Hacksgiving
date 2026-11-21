@@ -106,10 +106,19 @@
 
 .volunteer-tickets-section {
   background-color: var(--card);
-  padding: 1.25rem;
-  border-radius: 8px;
+  padding: 20px 24px 24px;
+  border-radius: var(--r);
   border: 1px solid var(--line);
+  box-shadow: var(--sh);
 }
+
+.volunteer-tickets-head { display: flex; align-items: center; gap: 12px; }
+.volunteer-tickets-head h3 { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: -.005em; }
+.volunteer-tickets-head h3::before { content: ""; width: 8px; height: 8px; border-radius: 2px; background: var(--green); flex: none; }
+.volunteer-tickets-head .count { font-size: 14px; color: var(--ink-3); font-weight: 600; }
+.volunteer-tickets-sub { margin: 4px 0 16px; font-size: 14px; color: var(--ink-2); }
+.dpage .volunteer-ticket-filters { grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr); gap: 12px; }
+@media (max-width: 640px) { .dpage .volunteer-ticket-filters { grid-template-columns: minmax(0, 1fr); } }
 
 .volunteer-ticket-card-header {
   cursor: pointer;
