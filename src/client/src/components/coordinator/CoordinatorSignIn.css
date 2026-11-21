@@ -1,0 +1,65 @@
+.coordinator-sign-in {
+  max-width: 420px;
+  margin: 1.5rem auto;
+  padding: 1.25rem;
+  background: #fff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+}
+
+.coordinator-sign-in h2 {
+  margin: 0 0 0.35rem;
+  font-size: 1.15rem;
+}
+
+.coordinator-sign-in p {
+  margin: 0 0 1rem;
+  color: #475569;
+  font-size: 0.9rem;
+}
+
+.coordinator-sign-in form {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.coordinator-sign-in label {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.coordinator-sign-in input,
+.coordinator-sign-in button {
+  font: inherit;
+  padding: 0.55rem 0.75rem;
+  border-radius: 8px;
+}
+
+.coordinator-sign-in input {
+  border: 1px solid #cbd5e1;
+}
+
+.coordinator-sign-in button {
+  font-weight: 600;
+  color: #fff;
+  background: #0f766e;
+  border: 1px solid #0f766e;
+  cursor: pointer;
+}
+
+.coordinator-sign-in button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.coordinator-sign-in input:focus-visible,
+.coordinator-sign-in button:focus-visible {
+  outline: 3px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.coordinator-sign-in .coordinator-sign-in-error {
+  margin: 0.6rem 0 0;
+  color: #b91c1c;
+  min-height: 1.2em;
+}

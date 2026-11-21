@@ -8,6 +8,7 @@ endpoints are gated by the X-Coordinator-Key header via ``require_coordinator``.
 
 import math
 import os
+import secrets
 
 from fastapi import APIRouter, Depends, Header, HTTPException
 
@@ -115,7 +116,9 @@ def require_coordinator(
     ),
 ) -> None:
     """Dependency rejecting non-coordinator clients with 403."""
-    if x_coordinator_key != COORDINATOR_API_KEY:
+    if x_coordinator_key is None or not secrets.compare_digest(
+        x_coordinator_key, COORDINATOR_API_KEY
+    ):
         raise HTTPException(
             status_code=403, detail="Coordinator access required."
         )

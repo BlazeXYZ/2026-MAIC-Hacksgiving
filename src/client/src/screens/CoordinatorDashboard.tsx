@@ -5,6 +5,7 @@ import type {
   UrgencyLevel,
   ServiceCategory,
 } from '../contracts/coordinator';
+import { coordinatorHeaders } from '../coordinator/access';
 import './CoordinatorDashboard.css';
 
 const SAMPLE_COORDINATOR_TICKETS: CoordinatorTicket[] = [
@@ -95,7 +96,7 @@ const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   other: 'General Support',
 };
 
-export default function CoordinatorDashboard() {
+export default function CoordinatorDashboard({ accessKey }: { accessKey: string }) {
   const [tickets, setTickets] = useState<CoordinatorTicket[]>(SAMPLE_COORDINATOR_TICKETS);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [districtFilter, setDistrictFilter] = useState<string>('all');
@@ -115,7 +116,7 @@ export default function CoordinatorDashboard() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch('/api/v1/coordinator/queue', { signal: controller.signal })
+    fetch('/api/v1/coordinator/queue', { signal: controller.signal, headers: coordinatorHeaders(accessKey) })
       .then((res) => {
         if (!res.ok) return;
         return res.json();
@@ -128,7 +129,7 @@ export default function CoordinatorDashboard() {
       .catch(() => undefined);
 
     return () => controller.abort();
-  }, []);
+  }, [accessKey]);
 
   // District summary counts for badges
   const districtCounts = useMemo(() => {
@@ -242,7 +243,7 @@ export default function CoordinatorDashboard() {
     try {
       await fetch(`/api/v1/coordinator/tickets/${activeModalTicket.ticket_id}/assign`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: coordinatorHeaders(accessKey, { 'Content-Type': 'application/json' }),
         body: JSON.stringify({
           volunteer_id: assignVolunteerId,
           status: assignStatus,

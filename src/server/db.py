@@ -24,6 +24,7 @@ from sqlalchemy.orm import (
     DeclarativeBase,
     Mapped,
     Session,
+    close_all_sessions,
     mapped_column,
     sessionmaker,
 )
@@ -123,6 +124,7 @@ def resolve_database_url(url: str | None = None) -> str:
 def init_db(url: str | None = None) -> None:
     """Initialize database engine, create tables, and configure sessionmaker."""
     global _engine, _SessionLocal
+    close_db()
     db_url = resolve_database_url(url)
     is_sqlite = db_url.startswith("sqlite")
 
@@ -149,6 +151,7 @@ def get_db() -> Generator[Session, None, None]:
 def close_db() -> None:
     """Dispose of engine and reset sessions."""
     global _engine, _SessionLocal
+    close_all_sessions()
     if _engine is not None:
         _engine.dispose()
     _engine = None

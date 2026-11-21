@@ -6,6 +6,7 @@ import VolunteerTickets from './components/VolunteerTickets';
 import SearchGridMap from './components/search/SearchGridMap';
 import UrgentAlertBanner from './components/alerts/UrgentAlertBanner';
 import CoordinatorMap from './components/coordinator/CoordinatorMap';
+import CoordinatorSignIn from './components/coordinator/CoordinatorSignIn';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
 
 interface Community {
@@ -47,7 +48,15 @@ const COMMUNITIES: Community[] = [
 export default function App() {
   const [selectedCommunity, setSelectedCommunity] = useState<string>('domestic-safety');
   const [quickExitTriggered, setQuickExitTriggered] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<'communities' | 'map' | 'coordinator' | 'coordinator-ops'>('communities');
+  const [activeTab, setActiveTab] = useState<'communities' | 'map' | 'coordinator' | 'coordinator-ops' | 'staff-sign-in'>('communities');
+  // Held in memory only: a reload or Quick Exit signs staff out.
+  const [coordinatorKey, setCoordinatorKey] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!quickExitTriggered) return;
+    setCoordinatorKey(null);
+    setActiveTab('communities');
+  }, [quickExitTriggered]);
 
   useEffect(() => {
     if (quickExitTriggered) return;
@@ -98,15 +107,27 @@ export default function App() {
       <nav aria-label="Main navigation" className="hub-view-nav">
         <button type="button" aria-current={activeTab === 'communities' ? 'page' : undefined} onClick={() => setActiveTab('communities')}>Communities</button>
         <button type="button" aria-current={activeTab === 'map' ? 'page' : undefined} onClick={() => setActiveTab('map')}>Resident Map</button>
-        <button type="button" aria-current={activeTab === 'coordinator' ? 'page' : undefined} onClick={() => setActiveTab('coordinator')}>Coordinator Queue</button>
-        <button type="button" aria-current={activeTab === 'coordinator-ops' ? 'page' : undefined} onClick={() => setActiveTab('coordinator-ops')}>Coordinator Ops</button>
+        {coordinatorKey ? (
+          <>
+            <button type="button" aria-current={activeTab === 'coordinator' ? 'page' : undefined} onClick={() => setActiveTab('coordinator')}>Coordinator Queue</button>
+            <button type="button" aria-current={activeTab === 'coordinator-ops' ? 'page' : undefined} onClick={() => setActiveTab('coordinator-ops')}>Coordinator Ops</button>
+            <button type="button" onClick={() => { setCoordinatorKey(null); setActiveTab('communities'); }}>Sign out</button>
+          </>
+        ) : (
+          <button type="button" aria-current={activeTab === 'staff-sign-in' ? 'page' : undefined} onClick={() => setActiveTab('staff-sign-in')}>Staff sign in</button>
+        )}
       </nav>
 
       {activeTab === 'map' && <CommunityMap />}
-      {activeTab === 'coordinator' && <CoordinatorDashboard />}
-      {activeTab === 'coordinator-ops' && (
+      {activeTab === 'staff-sign-in' && !coordinatorKey && (
         <main className="hub-page">
-          <CoordinatorMap />
+          <CoordinatorSignIn onSignIn={(key) => { setCoordinatorKey(key); setActiveTab('coordinator'); }} />
+        </main>
+      )}
+      {activeTab === 'coordinator' && coordinatorKey && <CoordinatorDashboard accessKey={coordinatorKey} />}
+      {activeTab === 'coordinator-ops' && coordinatorKey && (
+        <main className="hub-page">
+          <CoordinatorMap accessKey={coordinatorKey} />
         </main>
       )}
 
