@@ -22,6 +22,9 @@ def read_queue(
     urgency: UrgencyLevel | None = None,
     district: str | None = Query(default=None, max_length=80),
     status: TicketStatus | None = None,
+    search: str | None = Query(default=None, max_length=120),
+    sort_by: str | None = Query(default=None, max_length=20),
+    sort_order: str = Query(default="desc", max_length=10),
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
 ) -> QueuePage:
@@ -30,6 +33,9 @@ def read_queue(
         urgency=urgency,
         district=district,
         status=status,
+        search=search,
+        sort_by=sort_by,
+        sort_order=sort_order,
         limit=limit,
         offset=offset,
     )

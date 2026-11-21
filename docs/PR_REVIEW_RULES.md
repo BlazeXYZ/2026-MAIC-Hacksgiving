@@ -84,7 +84,7 @@ Reviewers must execute automated verification against each PR's branch:
 
 ### 3.1 Data Privacy (Zero Exceptions)
 - **Privacy by Default:** Incoming resident descriptions, phone numbers, and addresses must be sanitized before logging or transmitting to external LLMs.
-  - Required utility: `src/server/privacy.py:scrub()`
+  - Required utility: `src/server/ai/pii.py:scrub_pii()` (or `src/server/privacy.py:scrub()`)
 - **Synthetic Test Data Only:**
   - Never hardcode real partner numbers or addresses in test fixtures.
   - Use `555` exchange numbers (e.g., `414-555-0199`) and synthetic street addresses.

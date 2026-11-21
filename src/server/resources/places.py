@@ -73,6 +73,8 @@ _SAFE_PLACES: tuple[SafePlace, ...] = (
         is_staffed=True,
         no_id_required=True,
         district="Juneautown",
+        verified=False,
+        provenance="sample",
     ),
     SafePlace(
         id="demo_northside_shelter",
@@ -86,6 +88,8 @@ _SAFE_PLACES: tuple[SafePlace, ...] = (
         is_staffed=True,
         no_id_required=True,
         district="Harambee",
+        verified=False,
+        provenance="sample",
     ),
     SafePlace(
         id="demo_fire_station_2",
@@ -99,6 +103,8 @@ _SAFE_PLACES: tuple[SafePlace, ...] = (
         is_staffed=True,
         no_id_required=True,
         district="Avenues West",
+        verified=False,
+        provenance="sample",
     ),
     SafePlace(
         id="demo_southside_library",
@@ -112,6 +118,8 @@ _SAFE_PLACES: tuple[SafePlace, ...] = (
         is_staffed=False,
         no_id_required=True,
         district="Near South Side",
+        verified=False,
+        provenance="sample",
     ),
     SafePlace(
         id="demo_bayview_hub",
@@ -125,14 +133,30 @@ _SAFE_PLACES: tuple[SafePlace, ...] = (
         is_staffed=True,
         no_id_required=True,
         district="Bay View",
+        verified=False,
+        provenance="sample",
     ),
 )
 
 
-def list_safe_places(district: str | None, staffed_only: bool) -> list[SafePlace]:
+def list_safe_places(
+    district: str | None = None,
+    staffed_only: bool = False,
+    include_sample: bool | None = None,
+) -> list[SafePlace]:
+    from src.server.core.config import settings
+
     wanted = district.strip().casefold() if district and district.strip() else None
+    should_include_sample = (
+        include_sample
+        if include_sample is not None
+        else (settings.APP_ENV != "production")
+    )
+
     found: list[SafePlace] = []
     for place in _SAFE_PLACES:
+        if not should_include_sample and not place.verified:
+            continue
         if wanted is not None and place.district.casefold() != wanted:
             continue
         if staffed_only and not place.is_staffed:
