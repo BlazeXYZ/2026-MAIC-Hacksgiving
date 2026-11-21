@@ -103,3 +103,217 @@
   opacity: 0.65;
   cursor: default;
 }
+
+.volunteer-tickets-section {
+  background-color: #ffffff;
+  padding: 1.25rem;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.volunteer-ticket-card-header {
+  cursor: pointer;
+  padding: 0.2rem;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.volunteer-ticket-card-header:hover {
+  background: #f1f5f9;
+}
+
+.volunteer-ticket-card-header:focus-visible {
+  outline: 2px solid #2563eb;
+  outline-offset: 2px;
+}
+
+.volunteer-ticket-view-link {
+  font-size: 0.75rem;
+  color: #2563eb;
+  font-weight: 500;
+}
+
+.volunteer-ticket-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.volunteer-claim-btn {
+  background-color: #1d4ed8;
+  color: #ffffff;
+  border: none;
+  padding: 0.45rem 0.75rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  transition: background-color 0.15s ease;
+}
+
+.volunteer-claim-btn:hover:not(:disabled) {
+  background-color: #1e40af;
+}
+
+.volunteer-claim-btn:disabled {
+  background-color: #64748b;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.volunteer-relay-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background-color: #166534;
+  color: #ffffff;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  transition: background-color 0.15s ease;
+}
+
+.volunteer-relay-btn:hover {
+  background-color: #14532d;
+}
+
+/* Modal styles (#18) */
+.volunteer-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.volunteer-modal {
+  background: #ffffff;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.volunteer-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.volunteer-modal-header h4 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #0f172a;
+}
+
+.volunteer-modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  line-height: 1;
+  color: #64748b;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.volunteer-modal-close:hover {
+  color: #0f172a;
+}
+
+.volunteer-modal-body {
+  padding: 1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.volunteer-modal-field strong {
+  display: block;
+  font-size: 0.75rem;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.volunteer-modal-field p {
+  margin: 0.2rem 0 0;
+  font-size: 0.9rem;
+  color: #1e293b;
+  line-height: 1.45;
+}
+
+.volunteer-status-pill {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.volunteer-status-pill--open {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.volunteer-status-pill--claimed {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.volunteer-relay-unlocked-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 6px;
+  padding: 0.75rem;
+}
+
+.volunteer-relay-action-btn {
+  display: block;
+  text-align: center;
+  padding: 0.55rem;
+  background: #16a34a;
+  color: #ffffff;
+  border-radius: 6px;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: background 0.15s ease;
+}
+
+.volunteer-relay-action-btn:hover {
+  background: #15803d;
+}
+
+.volunteer-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid #e2e8f0;
+  background: #f8fafc;
+}
+
+.volunteer-modal-dismiss-btn {
+  padding: 0.45rem 0.75rem;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: #334155;
+}
+
+.volunteer-modal-dismiss-btn:hover {
+  background: #f1f5f9;
+}
