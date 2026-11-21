@@ -426,30 +426,33 @@ def seed_database(db_url: str | None = None) -> dict[str, int]:
     pantries_added = 0
     tickets_added = 0
 
-    # Validate and insert Safe Places
-    for item in SAFE_PLACES:
-        _validate_milwaukee_coordinates(item["name"], item["latitude"], item["longitude"])
-        existing = session.scalar(select(Resource).where(Resource.id == item["id"]))
-        if existing is None:
-            session.add(Resource(**item))
-            safe_places_added += 1
+    try:
+        # Validate and insert Safe Places
+        for item in SAFE_PLACES:
+            _validate_milwaukee_coordinates(item["name"], item["latitude"], item["longitude"])
+            existing = session.scalar(select(Resource).where(Resource.id == item["id"]))
+            if existing is None:
+                session.add(Resource(**item))
+                safe_places_added += 1
 
-    # Validate and insert Food Pantries
-    for item in FOOD_PANTRIES:
-        _validate_milwaukee_coordinates(item["name"], item["latitude"], item["longitude"])
-        existing = session.scalar(select(Resource).where(Resource.id == item["id"]))
-        if existing is None:
-            session.add(Resource(**item))
-            pantries_added += 1
+        # Validate and insert Food Pantries
+        for item in FOOD_PANTRIES:
+            _validate_milwaukee_coordinates(item["name"], item["latitude"], item["longitude"])
+            existing = session.scalar(select(Resource).where(Resource.id == item["id"]))
+            if existing is None:
+                session.add(Resource(**item))
+                pantries_added += 1
 
-    # Insert Sample Tickets
-    for item in SAMPLE_TICKETS:
-        existing_ticket = session.scalar(select(Ticket).where(Ticket.token == item["token"]))
-        if existing_ticket is None:
-            session.add(Ticket(**item))
-            tickets_added += 1
+        # Insert Sample Tickets
+        for item in SAMPLE_TICKETS:
+            existing_ticket = session.scalar(select(Ticket).where(Ticket.token == item["token"]))
+            if existing_ticket is None:
+                session.add(Ticket(**item))
+                tickets_added += 1
 
-    session.commit()
+        session.commit()
+    finally:
+        session.close()
     logger.info(
         "Seeding complete: %d safe places, %d pantries, %d tickets added.",
         safe_places_added,

@@ -1,4 +1,5 @@
 import type { LatLngTuple } from 'leaflet';
+import { CoordinatorAccessError, coordinatorHeaders } from './access';
 
 export interface HotspotFeature {
   type: 'Feature';
@@ -103,18 +104,22 @@ export function polygonToLatLngTuples(polygonCoords: number[][][]): LatLngTuple[
   return polygonCoords[0].map(([lon, lat]) => [lat, lon] as LatLngTuple);
 }
 
+/** Throws `CoordinatorAccessError` when the key is rejected; falls back to demo cells when offline. */
 export async function fetchCoordinatorHotspots(
-  apiKey = 'dev-coordinator-key',
+  accessKey: string,
   signal?: AbortSignal,
 ): Promise<HotspotCollection> {
+  let response: Response;
   try {
-    const response = await fetch(COORDINATOR_HOTSPOTS_PATH, {
+    response = await fetch(COORDINATOR_HOTSPOTS_PATH, {
       signal,
-      headers: {
-        Accept: 'application/json',
-        'X-Coordinator-Key': apiKey,
-      },
+      headers: coordinatorHeaders(accessKey, { Accept: 'application/json' }),
     });
+  } catch {
+    return DEMO_HOTSPOT_COLLECTION;
+  }
+  if (response.status === 401 || response.status === 403) throw new CoordinatorAccessError();
+  try {
     if (!response.ok) return DEMO_HOTSPOT_COLLECTION;
     const data = await response.json();
     if (data?.features && Array.isArray(data.features)) {
