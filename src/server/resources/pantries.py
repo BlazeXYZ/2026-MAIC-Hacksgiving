@@ -112,6 +112,8 @@ def _demo_pantry(
             district=district,
             accessibility_notes=notes,
             open_now=False,
+            verified=False,
+            provenance="sample",
         ),
         windows=_weekdays(start_hour, end_hour, days),
     )
@@ -178,12 +180,23 @@ def list_pantries(
     open_now: bool | None,
     no_id_required: bool | None,
     district: str | None,
+    include_sample: bool | None = None,
     at: datetime | None = None,
 ) -> list[Pantry]:
+    from src.server.core.config import settings
+
     clock = at or datetime.now(CHICAGO)
     wanted = district.strip().casefold() if district and district.strip() else None
+    should_include_sample = (
+        include_sample
+        if include_sample is not None
+        else (settings.APP_ENV != "production")
+    )
+
     found: list[Pantry] = []
     for seed in _PANTRY_SEEDS:
+        if not should_include_sample and not seed.place.verified:
+            continue
         if wanted is not None and seed.place.district.casefold() != wanted:
             continue
         if (
