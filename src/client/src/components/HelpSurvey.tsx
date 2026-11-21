@@ -302,6 +302,15 @@ export default function HelpSurvey() {
                       <div className="help-option-main">
                         <h4>{option.name}</h4>
                         <div className="help-option-tags">
+                          {option.verified === false ? (
+                            <span className="tag plain" style={{ fontStyle: 'italic', background: '#fef3c7', color: '#b45309' }}>
+                              Sample listing
+                            </span>
+                          ) : (
+                            <span className="tag plain" style={{ background: '#d1fae5', color: '#047857' }}>
+                              Verified
+                            </span>
+                          )}
                           {option.openNow !== undefined && (
                             <span className={`tag ${option.openNow ? 'ai' : 'plain'}`}>{option.openNow ? 'Open now' : 'Closed now'}</span>
                           )}
