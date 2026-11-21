@@ -115,6 +115,11 @@ class DemandOut(BaseModel):
     needed_at: list[SourceOut]
 
 
+class CandidateOut(BaseModel):
+    item: ItemOut
+    probability: float | None = Field(description="The model's probability for this item, when it gave one.")
+
+
 class AliasOut(BaseModel):
     id: str
     text: str
@@ -151,7 +156,10 @@ class ItemCreate(ItemUpdate):
 
 
 class PromoteBody(BaseModel):
-    name: str | None = Field(default=None, min_length=1, max_length=80, description="Defaults to the wording typed.")
+    name: str | None = Field(
+        default=None, min_length=1, max_length=80, description="The new item's name. Defaults to the wording typed, so fix it if it was misspelled."
+    )
+    alias_text: str | None = Field(default=None, min_length=1, max_length=80, description="One more correct wording to remember.")
     confirm_new: bool = Field(default=False, description="Set after reviewing the similar items a 409 listed.")
 
 
@@ -168,6 +176,8 @@ class UnresolvedOut(BaseModel):
     quantity: int
     label: str
     same_wording: int = Field(description="Held entries with this wording, needs and donations together.")
+    candidates: list[CandidateOut] = Field(description="The decision model's top choices, best first. Empty if it was off or unsure.")
+    none_fit: float | None = Field(description="The model's probability that no catalog item fits.")
     similar: list[SimilarOut] = Field(description="Existing items this might be another name for, closest first.")
     created_at: str
 
@@ -176,11 +186,19 @@ class GuessOut(BaseModel):
     wording: str
     item: ItemOut
     count: int = Field(description="Open entries matched this way.")
+    via: Literal["fuzzy", "model"]
+    entry_id: str = Field(description="One entry with this wording. Use it with resolve or promote.")
+    candidates: list[CandidateOut]
 
 
 class ResolveBody(BaseModel):
     item_id: str = Field(min_length=1, max_length=80)
-    remember: bool = Field(default=True, description="Teach the system this phrase for next time.")
+    alias_text: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=80,
+        description="The correct wording to remember for next time. Typed by you, so a misspelling is never stored. Omit to learn nothing.",
+    )
 
 
 # ---------- helpers ----------
@@ -220,6 +238,14 @@ def _entry_out(entry: store.Entry) -> EntryOut:
         verified=store.is_verified(entry),
         expires_at=entry.expires_at.isoformat(),
     )
+
+
+def _candidates_out(entry_candidates: tuple[store.Candidate, ...]) -> list[CandidateOut]:
+    return [
+        CandidateOut(item=_item_out(store.get_item(c.item_id)), probability=c.probability)
+        for c in entry_candidates
+        if c.item_id in {i.id for i in store.list_items()}
+    ]
 
 
 def _source_out(source: Source) -> SourceOut:
@@ -324,6 +350,8 @@ async def create_entry(body: EntryCreate) -> EntryResult:
             item_id=match.item_id,
             alias_id=match.alias_id,
             via=match.via,
+            candidates=match.candidates,
+            none_fit=match.none_fit,
         )
     if entry.item_id is None:
         return EntryResult(
@@ -391,26 +419,36 @@ def advice(location_id: str) -> list[StockingRecommendation]:
 
 @admin.get("/aliases", response_model=list[AliasOut])
 def list_aliases(
-    status: Literal["seeded", "suggested", "approved", "rejected"] | None = Query(default=None),
+    status: Literal["seeded", "approved", "rejected"] | None = Query(default=None),
 ) -> list[AliasOut]:
-    """Every wording the system knows. Filter to `suggested` for the review queue."""
+    """Every wording the system knows. Only these are ever stored; model and fuzzy guesses live on entries."""
     return [_alias_out(a) for a in store.list_aliases(status)]
 
 
 @admin.get("/guesses", response_model=list[GuessOut])
 def guesses() -> list[GuessOut]:
-    """Wordings matched by closeness only, most common first.
+    """Wordings the system matched by itself (fuzzy or the decision model), most common first.
 
-    Add one as an alias (`POST /aliases`) to confirm it and make it permanent. Unconfirmed ones are
-    recomputed every time and never stored, so misspellings do not pile up in the alias table.
+    Nothing here is stored. Confirm one with `POST entries/{entry_id}/resolve` and type the correct
+    spelling, or make it a new item with `promote`. Until then every repeat is simply guessed again.
     """
-    return [GuessOut(wording=g.wording, item=_item_out(g.item), count=g.count) for g in store.fuzzy_guesses()]
+    return [
+        GuessOut(
+            wording=g.wording,
+            item=_item_out(g.item),
+            count=g.count,
+            via=g.via,  # type: ignore[arg-type]
+            entry_id=g.entry_id,
+            candidates=_candidates_out(g.candidates),
+        )
+        for g in store.guesses()
+    ]
 
 
 @admin.post("/aliases", response_model=AliasOut, status_code=201)
 def create_alias(body: AliasCreate) -> AliasOut:
     try:
-        return _alias_out(store.add_alias(body.text, body.item_id, status="approved", source="coordinator"))
+        return _alias_out(store.add_alias(body.text, body.item_id))
     except store.InventoryError as err:
         _raise(err)
 
@@ -453,6 +491,8 @@ def unresolved() -> list[UnresolvedOut]:
             quantity=e.quantity,
             label=e.label,
             same_wording=sum(1 for h in held if store.normalize(h.label) == store.normalize(e.label)),
+            candidates=_candidates_out(e.candidates),
+            none_fit=e.none_fit,
             similar=[_similar_out(m) for m in store.similar_items(e.label)],
             created_at=e.created_at.isoformat(),
         )
@@ -463,7 +503,7 @@ def unresolved() -> list[UnresolvedOut]:
 @admin.post("/entries/{entry_id}/resolve", response_model=EntryOut)
 def resolve_entry(entry_id: str, body: ResolveBody) -> EntryOut:
     try:
-        return _entry_out(store.resolve_entry(entry_id, body.item_id, remember=body.remember))
+        return _entry_out(store.resolve_entry(entry_id, body.item_id, alias_text=body.alias_text))
     except store.InventoryError as err:
         _raise(err)
 
@@ -475,7 +515,9 @@ def promote_entry(entry_id: str, body: PromoteBody) -> EntryOut:
     Answers 409 with the closest existing items if this looks like another name for one of them.
     """
     try:
-        return _entry_out(store.promote_entry(entry_id, body.name, confirm_new=body.confirm_new))
+        return _entry_out(
+            store.promote_entry(entry_id, body.name, alias_text=body.alias_text, confirm_new=body.confirm_new)
+        )
     except store.InventoryError as err:
         _raise(err)
 

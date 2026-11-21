@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient
 
 from src.server.ai.hotspots import COORDINATOR_API_KEY
 from src.server.api.inventory import router
-from src.server.inventory import store
+from src.server.inventory import resolver, store
 
 PANTRY = "hunger-task-force-south"
 OTHER = "house-of-peace"
@@ -29,8 +29,10 @@ BASE = "/api/v1/inventory"
 
 
 @pytest.fixture(autouse=True)
-def fresh_store() -> None:
+def fresh_store(monkeypatch: pytest.MonkeyPatch) -> None:
     store.reset()
+    for key in ("TYPESAFE_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY"):
+        monkeypatch.setattr(resolver.settings, key, None)
 
 
 def post(location: str, kind: str, **body: object) -> dict:

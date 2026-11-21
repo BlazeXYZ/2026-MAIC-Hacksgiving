@@ -2,6 +2,11 @@
 
 One lock covers every read and write, like `intake/store.py`. A later
 database issue can replace this module without touching the API.
+
+The alias table is curated by people. Only seeded and coordinator-approved
+wordings are ever stored; anything the system works out by itself (a fuzzy
+match, a model answer) is recomputed each time and kept only as a flagged
+guess on the entry, so a misspelling can never end up in the table.
 """
 
 from __future__ import annotations
@@ -16,8 +21,8 @@ from typing import Literal
 from src.server.inventory.catalog import SEED_ITEMS
 
 Kind = Literal["have", "need", "offer"]
-AliasStatus = Literal["seeded", "suggested", "approved", "rejected"]
-AliasSource = Literal["seed", "fuzzy", "llm", "coordinator"]
+AliasStatus = Literal["seeded", "approved", "rejected"]
+AliasSource = Literal["seed", "coordinator"]
 
 #: How long an entry stays visible. Old requests mislead, so everything expires.
 TTL: dict[str, timedelta] = {
@@ -26,11 +31,11 @@ TTL: dict[str, timedelta] = {
     "have": timedelta(days=30),
 }
 
-#: Model suggestions nobody reviewed are dropped after this long, so the table cannot grow unchecked.
-SUGGESTION_TTL = timedelta(days=30)
-
-#: Alias statuses that mean a human has accepted the mapping.
+#: Alias statuses that count when matching. `rejected` is kept only as a block list.
 TRUSTED: frozenset[str] = frozenset({"seeded", "approved"})
+
+#: How an entry was matched when the system, not a person, made the call. These are never "verified".
+GUESS_VIA: frozenset[str] = frozenset({"fuzzy", "model"})
 
 _lock = threading.RLock()
 
@@ -105,6 +110,14 @@ class Alias:
         return normalize(self.text)
 
 
+@dataclass(frozen=True)
+class Candidate:
+    """One item the model thought a wording might be."""
+
+    item_id: str
+    probability: float | None  # None when the model gave a single answer with no probabilities
+
+
 @dataclass
 class Entry:
     id: str
@@ -114,10 +127,12 @@ class Entry:
     label: str  # what the person typed, already scrubbed of contact details
     item_id: str | None
     alias_id: str | None
-    via: str  # how it was matched: picked, alias, phrase, fuzzy, llm, coordinator, unmatched
+    via: str  # how it was matched: picked, alias, phrase, fuzzy, model, coordinator, unmatched
     created_at: datetime
     expires_at: datetime
     closed: bool = False
+    candidates: tuple[Candidate, ...] = ()  # the model's top choices, best first
+    none_fit: float | None = None  # the model's probability that no catalog item fits
 
 
 @dataclass(frozen=True)
@@ -227,7 +242,7 @@ def add_item(name: str, extra_aliases: tuple[str, ...] = (), *, confirm_new: boo
 
     If the name looks like an existing item, raises `SimilarItems` unless `confirm_new` is set, so
     "another name for something we already have" is not created as a duplicate by accident.
-    Held entries that use any of these wordings are matched to the new item right away.
+    Held and guessed entries that use any of these wordings are matched to the new item right away.
     """
     with _lock:
         clean = name.strip()
@@ -259,44 +274,6 @@ def add_item(name: str, extra_aliases: tuple[str, ...] = (), *, confirm_new: boo
         return item
 
 
-def rematch_unresolved() -> int:
-    """Link held entries, and entries matched only by a fuzzy guess, whose wording now has an exact alias.
-
-    Needs and donations are handled alike.
-    """
-    with _lock:
-        index = alias_index()
-        linked = 0
-        pending = unresolved_entries() + [e for e in _entries.values() if e.via == "fuzzy" and not e.closed]
-        for entry in pending:
-            alias = index.get(normalize(entry.label))
-            if alias is not None:
-                entry.item_id, entry.alias_id, entry.via = alias.item_id, alias.id, "alias"
-                linked += 1
-        return linked
-
-
-@dataclass(frozen=True)
-class Guess:
-    wording: str
-    item: Item
-    count: int
-
-
-def fuzzy_guesses() -> list[Guess]:
-    """Wordings the system matched by closeness only, grouped, most common first.
-
-    A coordinator who confirms one (by adding it as an alias) makes it permanent; the rest stay guesses.
-    """
-    with _lock:
-        groups: dict[tuple[str, str], list[Entry]] = {}
-        for entry in active_entries():
-            if entry.via == "fuzzy" and entry.item_id is not None:
-                groups.setdefault((normalize(entry.label), entry.item_id), []).append(entry)
-        found = [Guess(rows[0].label, _items[item_id], len(rows)) for (_, item_id), rows in groups.items()]
-        return sorted(found, key=lambda g: (-g.count, g.wording))
-
-
 # ---------- aliases ----------
 
 
@@ -313,35 +290,8 @@ def get_alias(alias_id: str) -> Alias:
         return _aliases[alias_id]
 
 
-def expire_suggestions(at: datetime | None = None) -> int:
-    """Drop model suggestions older than `SUGGESTION_TTL` that no coordinator reviewed.
-
-    Entries that used one go back to the held list. Approved and seeded aliases never expire.
-    """
-    moment = at or now_utc()
-    with _lock:
-        stale = [a for a in _aliases.values() if a.status == "suggested" and a.created_at + SUGGESTION_TTL <= moment]
-        for alias in stale:
-            for entry in _entries.values():
-                if entry.alias_id == alias.id:
-                    entry.item_id, entry.alias_id, entry.via = None, None, "unmatched"
-            del _aliases[alias.id]
-        return len(stale)
-
-
 def alias_index() -> dict[str, Alias]:
-    """Normalized text -> alias, for every alias that has not been rejected. Used for exact lookups."""
-    expire_suggestions()
-    with _lock:
-        return {a.key: a for a in _aliases.values() if a.status != "rejected"}
-
-
-def trusted_index() -> dict[str, Alias]:
-    """Normalized text -> alias, for seeded and approved aliases only.
-
-    Fuzzy and phrase matching compare against this, never against unreviewed guesses, so a
-    mistake cannot become the anchor for more mistakes.
-    """
+    """Normalized text -> alias, for every alias that has not been rejected. All of them are trusted."""
     with _lock:
         return {a.key: a for a in _aliases.values() if a.status in TRUSTED}
 
@@ -352,17 +302,15 @@ def rejected_keys() -> set[str]:
         return {a.key for a in _aliases.values() if a.status == "rejected"}
 
 
-def add_alias(
-    text: str, item_id: str, *, status: AliasStatus, source: AliasSource, at: datetime | None = None
-) -> Alias:
+def add_alias(text: str, item_id: str, *, at: datetime | None = None) -> Alias:
+    """A coordinator teaches the system another wording for an existing item."""
     with _lock:
         get_item(item_id)
         clash = alias_index().get(normalize(text))
         if clash is not None:
             raise AliasConflict(clash.id)
-        alias = _add_alias_locked(text, item_id, status, source, at or now_utc())
-        if source == "coordinator":
-            rematch_unresolved()
+        alias = _add_alias_locked(text, item_id, "approved", "coordinator", at or now_utc())
+        rematch_unresolved()
         return alias
 
 
@@ -371,12 +319,12 @@ def update_alias(
     *,
     text: str | None = None,
     item_id: str | None = None,
-    status: AliasStatus | None = None,
+    status: Literal["approved", "rejected"] | None = None,
 ) -> Alias:
-    """Coordinator edit: rename, remap, approve, or reject.
+    """Coordinator edit: rename, remap, or reject or restore an alias.
 
     Entries that matched this alias follow it: a remap moves them to the new
-    item, and a rejection sends them back to the unresolved list.
+    item, and a rejection sends them back to the held list.
     """
     with _lock:
         alias = get_alias(alias_id)
@@ -398,6 +346,8 @@ def update_alias(
                 for entry in _entries.values():
                     if entry.alias_id == alias.id:
                         entry.item_id, entry.alias_id, entry.via = None, None, "unmatched"
+            else:
+                rematch_unresolved()
         return alias
 
 
@@ -413,12 +363,25 @@ def add_entry(
     item_id: str | None,
     alias_id: str | None,
     via: str,
+    candidates: tuple[Candidate, ...] = (),
+    none_fit: float | None = None,
     at: datetime | None = None,
 ) -> Entry:
     with _lock:
         created = at or now_utc()
         entry = Entry(
-            _next("en"), location_id, kind, quantity, label, item_id, alias_id, via, created, created + TTL[kind]
+            _next("en"),
+            location_id,
+            kind,
+            quantity,
+            label,
+            item_id,
+            alias_id,
+            via,
+            created,
+            created + TTL[kind],
+            candidates=candidates,
+            none_fit=none_fit,
         )
         _entries[entry.id] = entry
         return entry
@@ -431,6 +394,10 @@ def get_entry(entry_id: str) -> Entry:
         return _entries[entry_id]
 
 
+def _open(entry: Entry, moment: datetime) -> bool:
+    return not entry.closed and entry.expires_at > moment
+
+
 def active_entries(
     *, location_id: str | None = None, kind: str | None = None, item_id: str | None = None, at: datetime | None = None
 ) -> list[Entry]:
@@ -440,8 +407,7 @@ def active_entries(
         return [
             e
             for e in _entries.values()
-            if not e.closed
-            and e.expires_at > moment
+            if _open(e, moment)
             and e.item_id is not None
             and (location_id is None or e.location_id == location_id)
             and (kind is None or e.kind == kind)
@@ -452,37 +418,98 @@ def active_entries(
 def unresolved_entries(at: datetime | None = None) -> list[Entry]:
     moment = at or now_utc()
     with _lock:
-        return [e for e in _entries.values() if not e.closed and e.expires_at > moment and e.item_id is None]
+        return [e for e in _entries.values() if _open(e, moment) and e.item_id is None]
 
 
-def resolve_entry(entry_id: str, item_id: str, *, remember: bool) -> Entry:
-    """A coordinator picks the item for an entry the system could not match.
+def guess_entries(at: datetime | None = None) -> list[Entry]:
+    """Open entries the system matched itself (fuzzy or model) and no person has confirmed."""
+    moment = at or now_utc()
+    with _lock:
+        return [e for e in _entries.values() if _open(e, moment) and e.item_id is not None and e.via in GUESS_VIA]
 
-    Every other held entry with the same wording is resolved too, whether it is
-    a need or a donation, so both sides of a trade line up at once.
+
+def rematch_unresolved() -> int:
+    """Link held and guessed entries whose wording now has an exact alias. Needs and donations alike."""
+    with _lock:
+        index = alias_index()
+        linked = 0
+        for entry in unresolved_entries() + guess_entries():
+            alias = index.get(normalize(entry.label))
+            if alias is not None:
+                entry.item_id, entry.alias_id, entry.via = alias.item_id, alias.id, "alias"
+                linked += 1
+        return linked
+
+
+@dataclass(frozen=True)
+class Guess:
+    wording: str
+    item: Item
+    count: int
+    via: str  # "fuzzy" or "model"
+    entry_id: str  # one entry with this wording, to act on with resolve or promote
+    candidates: tuple[Candidate, ...]
+
+
+def guesses() -> list[Guess]:
+    """Wordings the system matched by itself, grouped, most common first.
+
+    Nothing here is stored as an alias. A coordinator confirms one with `resolve_entry`, typing the
+    correct spelling, or turns it into a new item with `promote_entry`.
+    """
+    with _lock:
+        groups: dict[tuple[str, str], list[Entry]] = {}
+        for entry in guess_entries():
+            assert entry.item_id is not None
+            groups.setdefault((normalize(entry.label), entry.item_id), []).append(entry)
+        found = [
+            Guess(rows[0].label, _items[item_id], len(rows), rows[0].via, rows[0].id, rows[0].candidates)
+            for (_, item_id), rows in groups.items()
+        ]
+        return sorted(found, key=lambda g: (-g.count, g.wording))
+
+
+def resolve_entry(entry_id: str, item_id: str, *, alias_text: str | None = None) -> Entry:
+    """A coordinator sets the item for a held or guessed entry.
+
+    `alias_text` is the correct wording to remember for next time. It is typed by the coordinator, so
+    a misspelling is never stored. Leave it out to settle just these entries and learn nothing.
+    Every other held or guessed entry with the same typed wording is settled too, needs and donations alike.
     """
     with _lock:
         entry = get_entry(entry_id)
         get_item(item_id)
-        key = normalize(entry.label)
         index = alias_index()
         alias_id: str | None = None
-        if key in index and index[key].item_id == item_id:
-            alias_id = index[key].id
-        elif remember and key and key not in index:
-            alias_id = _add_alias_locked(entry.label, item_id, "approved", "coordinator", now_utc()).id
-        twins = [h for h in unresolved_entries() if h.id != entry.id and normalize(h.label) == key]
+        if alias_text and normalize(alias_text):
+            existing = index.get(normalize(alias_text))
+            if existing is not None and existing.item_id != item_id:
+                raise AliasConflict(existing.id)
+            alias_id = existing.id if existing else _add_alias_locked(
+                alias_text, item_id, "approved", "coordinator", now_utc()
+            ).id
+        key = normalize(entry.label)
+        twins = [e for e in unresolved_entries() + guess_entries() if e.id != entry.id and normalize(e.label) == key]
         for target in [entry, *twins]:
             target.item_id, target.alias_id, target.via = item_id, alias_id, "coordinator"
+        if alias_id is not None:
+            rematch_unresolved()
         return entry
 
 
-def promote_entry(entry_id: str, name: str | None = None, *, confirm_new: bool = False) -> Entry:
-    """Create a new catalog item from a held entry's wording and resolve it (and its twins) to it."""
+def promote_entry(
+    entry_id: str, name: str | None = None, *, alias_text: str | None = None, confirm_new: bool = False
+) -> Entry:
+    """Create a new catalog item and settle the entry, and its twins, to it.
+
+    `name` is the item's name and its first alias; it defaults to the typed wording, so give a clean one
+    when the wording was misspelled. `alias_text` adds one more correct wording.
+    """
     with _lock:
         entry = get_entry(entry_id)
-        item = add_item(name.strip() if name and name.strip() else entry.label.title(), confirm_new=confirm_new)
-        return resolve_entry(entry.id, item.id, remember=True)
+        title = name.strip() if name and name.strip() else entry.label.title()
+        item = add_item(title, (alias_text,) if alias_text else (), confirm_new=confirm_new)
+        return resolve_entry(entry.id, item.id)
 
 
 def close_entry(entry_id: str) -> Entry:
@@ -493,10 +520,10 @@ def close_entry(entry_id: str) -> Entry:
 
 
 def is_verified(entry: Entry) -> bool:
-    """True when a human accepted how this entry was matched."""
+    """True when a person accepted how this entry was matched."""
     with _lock:
-        if entry.via == "fuzzy":
-            return False  # matched by closeness only, even when the matching alias is trusted
+        if entry.via in GUESS_VIA:
+            return False  # the system guessed, even when the answer points at a trusted alias
         if entry.alias_id is None:
             return entry.via in ("picked", "coordinator")
         return _aliases[entry.alias_id].status in TRUSTED

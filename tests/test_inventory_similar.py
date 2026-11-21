@@ -16,7 +16,7 @@ from fastapi.testclient import TestClient
 
 from src.server.ai.hotspots import COORDINATOR_API_KEY
 from src.server.api.inventory import router
-from src.server.inventory import store
+from src.server.inventory import resolver, store
 
 PANTRY = "hunger-task-force-south"
 OTHER = "house-of-peace"
@@ -29,8 +29,10 @@ COORD = {"X-Coordinator-Key": COORDINATOR_API_KEY}
 
 
 @pytest.fixture(autouse=True)
-def fresh_store() -> None:
+def fresh_store(monkeypatch: pytest.MonkeyPatch) -> None:
     store.reset()
+    for key in ("TYPESAFE_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY"):
+        monkeypatch.setattr(resolver.settings, key, None)
     store.add_item("Baby crib")
 
 
@@ -83,7 +85,11 @@ def test_confirming_creates_the_item_anyway() -> None:
 
 def test_the_coordinator_can_instead_say_it_is_another_name() -> None:
     entry = post(PANTRY, "need", text="crib")
-    res = client.post(f"{BASE}/admin/entries/{entry['id']}/resolve", json={"item_id": "baby-crib"}, headers=COORD)
+    res = client.post(
+        f"{BASE}/admin/entries/{entry['id']}/resolve",
+        json={"item_id": "baby-crib", "alias_text": "crib"},
+        headers=COORD,
+    )
     assert res.status_code == 200
     assert post(OTHER, "offer", text="crib")["item"]["name"] == "Baby crib"  # the new name works for everyone
 
@@ -105,20 +111,11 @@ def test_one_shared_generic_word_is_not_enough_to_warn() -> None:
     assert res.status_code == 201  # shares "baby" with several items, but is not one of them
 
 
-def test_rejected_wordings_are_not_offered_as_candidates(monkeypatch: pytest.MonkeyPatch) -> None:
-    from src.server.ai.client import TriageLLMClient
-    from src.server.inventory import resolver
-
-    async def complete(self: TriageLLMClient, prompt: str) -> str:
-        return "winter-coats"
-
-    monkeypatch.setattr(resolver.settings, "AI_MOCK_MODE", False)
-    monkeypatch.setattr(resolver.settings, "GEMINI_API_KEY", "test-key")
-    monkeypatch.setattr(TriageLLMClient, "complete", complete)
-    post(PANTRY, "need", text="puffy snow garment")  # guessed by the model, then rejected by a coordinator
-    guess = client.get(f"{BASE}/admin/aliases?status=suggested", headers=COORD).json()[0]
-    client.patch(f"{BASE}/admin/aliases/{guess['id']}", json={"status": "rejected"}, headers=COORD)
-    row = held()[0]
-    assert all(s["wording"] != "puffy snow garment" for s in row["similar"])
+def test_rejected_wordings_are_not_offered_as_candidates() -> None:
+    post(PANTRY, "need", text="parkq")  # close to the seeded wording "parka", but below the auto-match cutoff
+    assert [s["wording"] for s in held()[0]["similar"]] == ["parka"]
+    alias = next(a for a in store.list_aliases() if a.text == "parka")
+    client.patch(f"{BASE}/admin/aliases/{alias.id}", json={"status": "rejected"}, headers=COORD)
+    assert all(s["wording"] != "parka" for s in held()[0]["similar"])
 
 

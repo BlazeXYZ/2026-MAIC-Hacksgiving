@@ -40,16 +40,15 @@ The demo stores claims in memory. Restarting the server resets the board.
 
 Pantries and community safe places can list what they **have**, what they **need**, and what is **offered**. People pick an item from the shared catalog or describe it in their own words; free text is mapped to a catalog item through an alias table.
 
-Matching order, cheapest first: exact alias, known phrase inside the text, fuzzy match, then one small model call for phrases never seen before (skipped in mock mode). The alias table stays human-curated:
+Matching order, cheapest first: exact alias, known phrase inside the text, fuzzy match, then a **decision model** for wording nothing else could place, and finally a hold for a coordinator. The alias table stays human-curated:
 
-- Phrase and fuzzy matching compare only against **trusted** aliases (seeded or approved), so a guess can never become the anchor for more guesses.
-- A fuzzy match is **not stored**. It is recomputed each time and flagged `verified: false`, so misspellings do not pile up. `GET admin/guesses` lists the most common ones; adding one as an alias confirms it for good.
-- Only a **model answer** (it costs a call) is saved, as a `suggested` alias. It works for exact repeats, stays flagged until a coordinator approves it, and is dropped after 30 days if nobody does.
-- Rejected wordings are never guessed again. Text that cannot be matched is held for a coordinator.
+- Only seeded and coordinator-approved wordings are stored. Fuzzy matches and model answers are recomputed each time and kept on the entry as guesses, flagged `verified: false`, so a misspelling never reaches the table.
+- The decision model is [Jev](https://github.com/sebastianbennis/jev-system-one-reference) (set `TYPESAFE_API_KEY`; model pinned by `TYPESAFE_MODEL`, default `jev-1.13.0`), with Gemini or OpenAI as fallbacks and nothing at all in mock mode. It answers a `choice` question over the catalog plus a **"None fit"** option and returns a probability for each, so the top 3 candidates are kept on the entry. An answer is used (still flagged) when its best item is at least 0.6 likely and beats "None fit". Otherwise the entry is held with its candidates. Only scrubbed, 120-character wording is sent, and the Jev integration is tested against stubs, so run one real call with a key before relying on it.
+- A coordinator settles a held or guessed entry with `resolve` (pick an item, and optionally type the **correct wording** to remember) or `promote` (make a new item, with a clean `name` and an optional `alias_text`). Needs and donations with the same wording are settled together. Rejected wordings are never guessed again.
 
 Public routes (`/api/v1/inventory`): `catalog`, `locations`, `locations/{id}`, `locations/{id}/matches`, `locations/{id}/advice`, and `POST entries`.
 
-Coordinator routes (`/api/v1/inventory/admin`, need `X-Coordinator-Key`): list, create, rename, remap, approve or reject aliases; rename catalog items; list and resolve held entries; close entries.
+Coordinator routes (`/api/v1/inventory/admin`, need `X-Coordinator-Key`): list, create, rename, remap, reject or restore aliases; review `guesses`; rename catalog items; list and resolve held entries; close entries.
 
 **Privacy:** shelters are excluded from inventory entirely (see `inventory/locations.py`). They are left out of every list and answer 404 like an unknown place. Entries never store who made them, and typed text is scrubbed of contact details. Needs expire after 14 days, offers after 7, stock after 30. Data is held in memory and resets on restart.
 

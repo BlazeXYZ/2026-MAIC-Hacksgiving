@@ -19,6 +19,7 @@ from fastapi.testclient import TestClient
 from src.server.ai.hotspots import COORDINATOR_API_KEY
 from src.server.api.inventory import router
 from src.server.inventory import resolver, store
+from src.server.inventory.jev import ModelAnswer
 from src.server.inventory.locations import eligible_locations
 
 PANTRY = "hunger-task-force-south"
@@ -33,8 +34,10 @@ COORD = {"X-Coordinator-Key": COORDINATOR_API_KEY}
 
 
 @pytest.fixture(autouse=True)
-def fresh_store() -> None:
+def fresh_store(monkeypatch: pytest.MonkeyPatch) -> None:
     store.reset()
+    for key in ("TYPESAFE_API_KEY", "GEMINI_API_KEY", "OPENAI_API_KEY"):  # no real model calls, whatever .env says
+        monkeypatch.setattr(resolver.settings, key, None)
 
 
 def post(location: str = PANTRY, kind: str = "need", **body: object) -> dict:
@@ -77,23 +80,18 @@ def test_unknown_words_are_unmatched() -> None:
     assert resolver.resolve_local("quantum widget").item_id is None
 
 
-def test_model_answer_becomes_a_suggested_alias() -> None:
-    async def picker(text: str, items: list[store.Item]) -> str | None:
-        return "winter-coats"
+def test_model_answer_is_a_flagged_guess_and_is_never_stored_as_an_alias() -> None:
+    async def picker(text: str, items: list[store.Item]) -> ModelAnswer | None:
+        return ModelAnswer((store.Candidate("winter-coats", 0.9),), 0.05)
 
+    before = len(store.list_aliases())
     result = asyncio.run(resolver.resolve("puffy snow garment", picker))
-    assert (result.item_id, result.via) == ("winter-coats", "llm")
-    assert store.get_alias(result.alias_id or "").status == "suggested"
-
-    async def must_not_run(text: str, items: list[store.Item]) -> str | None:
-        raise AssertionError("the model should not be asked about a phrase we already know")
-
-    again = asyncio.run(resolver.resolve("puffy snow garment", must_not_run))
-    assert again.via == "alias"
+    assert (result.item_id, result.via, result.alias_id) == ("winter-coats", "model", None)
+    assert len(store.list_aliases()) == before
 
 
 def test_unsure_model_leaves_the_text_unmatched() -> None:
-    async def picker(text: str, items: list[store.Item]) -> str | None:
+    async def picker(text: str, items: list[store.Item]) -> ModelAnswer | None:
         return None
 
     result = asyncio.run(resolver.resolve("mystery thing", picker))
@@ -108,6 +106,7 @@ def _live_model(monkeypatch: pytest.MonkeyPatch, answer: str) -> None:
         return answer
 
     monkeypatch.setattr(resolver.settings, "AI_MOCK_MODE", False)
+    monkeypatch.setattr(resolver.settings, "TYPESAFE_API_KEY", None)
     monkeypatch.setattr(resolver.settings, "GEMINI_API_KEY", "test-key")
     monkeypatch.setattr(TriageLLMClient, "complete", complete)
 
@@ -115,11 +114,12 @@ def _live_model(monkeypatch: pytest.MonkeyPatch, answer: str) -> None:
 def test_model_answers_are_checked_against_the_catalog(monkeypatch: pytest.MonkeyPatch) -> None:
     items = store.list_items()
     _live_model(monkeypatch, "winter-coats")
-    assert asyncio.run(resolver.pick_with_model("snow garment", items)) == "winter-coats"
+    answer = asyncio.run(resolver.pick_with_model("snow garment", items))
+    assert answer is not None and answer.candidates[0].item_id == "winter-coats"
     _live_model(monkeypatch, "definitely-not-an-item")
-    assert asyncio.run(resolver.pick_with_model("snow garment", items)) is None
+    assert asyncio.run(resolver.pick_with_model("snow garment", items)) == ModelAnswer((), 1.0)  # "none fit"
     _live_model(monkeypatch, "NONE")
-    assert asyncio.run(resolver.pick_with_model("snow garment", items)) is None
+    assert asyncio.run(resolver.pick_with_model("snow garment", items)) == ModelAnswer((), 1.0)
 
 
 def test_model_is_never_called_in_mock_mode(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -143,14 +143,21 @@ def test_free_text_match_is_verified_for_a_seed_alias() -> None:
     assert result["verified"] is True
 
 
-def test_guessed_match_is_flagged_until_a_coordinator_approves(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_guessed_match_is_flagged_until_a_coordinator_confirms(monkeypatch: pytest.MonkeyPatch) -> None:
     _live_model(monkeypatch, "winter-coats")
     result = post(text="puffy snow garment")
-    assert (result["via"], result["verified"]) == ("llm", False)
-    alias = client.get("/api/v1/inventory/admin/aliases?status=suggested", headers=COORD).json()[0]
-    client.patch(f"/api/v1/inventory/admin/aliases/{alias['id']}", json={"status": "approved"}, headers=COORD)
+    assert (result["via"], result["verified"]) == ("model", False)
+    guess = client.get("/api/v1/inventory/admin/guesses", headers=COORD).json()[0]
+    res = client.post(
+        f"/api/v1/inventory/admin/entries/{guess['entry_id']}/resolve",
+        json={"item_id": "winter-coats", "alias_text": "snow garment"},
+        headers=COORD,
+    )
+    assert res.status_code == 200
     entry = client.get(f"/api/v1/inventory/locations/{PANTRY}").json()["need"][0]
     assert entry["verified"] is True
+    texts = {a["text"] for a in client.get("/api/v1/inventory/admin/aliases", headers=COORD).json()}
+    assert "snow garment" in texts and "puffy snow garment" not in texts  # the corrected wording, not what was typed
 
 
 def test_unmatched_text_is_held_not_listed() -> None:
@@ -251,37 +258,37 @@ def test_renaming_to_a_wording_already_in_use_is_a_conflict() -> None:
     assert res.status_code == 409
 
 
-def test_remapping_an_alias_moves_the_entries_that_used_it(monkeypatch: pytest.MonkeyPatch) -> None:
-    _live_model(monkeypatch, "winter-coats")
-    post(text="puffy snow garment")
-    suggested = client.get("/api/v1/inventory/admin/aliases?status=suggested", headers=COORD).json()[0]
-    client.patch(f"/api/v1/inventory/admin/aliases/{suggested['id']}", json={"item_id": "blankets"}, headers=COORD)
+def test_remapping_an_alias_moves_the_entries_that_used_it() -> None:
+    post(text="parka")
+    alias = next(a for a in store.list_aliases() if a.text == "parka")
+    client.patch(f"/api/v1/inventory/admin/aliases/{alias.id}", json={"item_id": "blankets"}, headers=COORD)
     need = client.get(f"/api/v1/inventory/locations/{PANTRY}").json()["need"][0]
     assert need["item"]["id"] == "blankets"
 
 
-def test_rejecting_an_alias_sends_its_entries_back_for_review(monkeypatch: pytest.MonkeyPatch) -> None:
-    _live_model(monkeypatch, "winter-coats")
-    post(text="puffy snow garment")
-    suggested = client.get("/api/v1/inventory/admin/aliases?status=suggested", headers=COORD).json()[0]
-    client.patch(f"/api/v1/inventory/admin/aliases/{suggested['id']}", json={"status": "rejected"}, headers=COORD)
+def test_rejecting_an_alias_sends_its_entries_back_for_review() -> None:
+    post(text="parka")
+    alias = next(a for a in store.list_aliases() if a.text == "parka")
+    client.patch(f"/api/v1/inventory/admin/aliases/{alias.id}", json={"status": "rejected"}, headers=COORD)
     assert client.get(f"/api/v1/inventory/locations/{PANTRY}").json()["need"] == []
     assert len(client.get("/api/v1/inventory/admin/unresolved", headers=COORD).json()) == 1
-    assert resolver.resolve_local("puffy snow garment").item_id is None  # the rejected guess is not reused
-    again = post(text="puffy snow garment")
-    assert again["status"] == "held"  # and it waits for a human instead of asking the model again
-    assert client.get("/api/v1/inventory/admin/aliases?status=suggested", headers=COORD).json() == []
+    assert resolver.resolve_local("parka").item_id is None  # the rejected wording is not reused
+    assert post(text="parka")["status"] == "held"  # it waits for a human instead of being guessed again
 
 
-def test_resolving_a_held_entry_teaches_the_system() -> None:
+def test_resolving_a_held_entry_teaches_the_system_the_corrected_wording() -> None:
     held = post(text="puffy snow garment")
     assert held["status"] == "held"
     res = client.post(
-        f"/api/v1/inventory/admin/entries/{held['id']}/resolve", json={"item_id": "winter-coats"}, headers=COORD
+        f"/api/v1/inventory/admin/entries/{held['id']}/resolve",
+        json={"item_id": "winter-coats", "alias_text": "snow garment"},
+        headers=COORD,
     )
     assert res.status_code == 200 and res.json()["item"]["id"] == "winter-coats"
-    again = post(text="puffy snow garment")
+    again = post(text="snow garments")
     assert (again["status"], again["item"]["id"], again["verified"]) == ("matched", "winter-coats", True)
+    assert "puffy snow garment" not in {a.text for a in store.list_aliases()}  # what was typed was not stored
+    assert post(text="puffy snow garment")["via"] == "phrase"  # it still matches, as a known phrase inside
 
 
 def test_coordinator_can_rename_a_catalog_item_and_close_an_entry() -> None:
