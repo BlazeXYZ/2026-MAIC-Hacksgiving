@@ -32,7 +32,7 @@ export default function ServerGate(): ReactElement {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('error') === 'unreachable') {
-      setError('That server did not answer. Check the IP, the port, and that this phone is on the same network.');
+      setError('That server did not answer. Check the address, the port, and that this phone is signed in to Tailscale.');
     }
     if (Capacitor.isNativePlatform()) {
       void StatusBar.setStyle({ style: Style.Dark }).catch(() => undefined);
@@ -93,7 +93,7 @@ export default function ServerGate(): ReactElement {
       return;
     }
     setPhase('opening');
-    window.location.assign(serverUrl(next.host, next.port));
+    window.location.replace(serverUrl(next.host, next.port));
   }
 
   async function forget(): Promise<void> {
@@ -128,7 +128,7 @@ export default function ServerGate(): ReactElement {
         </div>
         <h1 id="gate-title">Connect to a <em>server.</em></h1>
         <p className="gate-lead">
-          Type the address of the ComForce hub you want this phone to open. It stays on the device for the next demo.
+          Type the Tailscale address of the ComForce hub you want this phone to open. It stays on the device for the next demo.
         </p>
         <form onSubmit={(event) => void onSubmit(event)}>
           {error && <p className="gate-error" role="alert">{error}</p>}
@@ -138,14 +138,14 @@ export default function ServerGate(): ReactElement {
             </p>
           )}
           <label>
-            IP address
+            Address
             <input
               name="host"
-              inputMode="decimal"
+              inputMode="url"
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              placeholder="192.168.1.20"
+              placeholder="100.64.0.1"
               value={host}
               aria-invalid={error ? true : undefined}
               onChange={(event) => setHost(event.target.value)}
