@@ -115,7 +115,7 @@ export default function ItemsPanel({ adminKey, items, onChanged }: Props): React
         </p>
       )}
 
-      <ul className="inv-list card inv-group">
+      <ul className="inv-list card">
         {items.map((item) => (
           <li key={item.id}>
             {editingId === item.id ? (
