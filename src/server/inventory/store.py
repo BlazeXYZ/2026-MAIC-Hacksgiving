@@ -76,6 +76,11 @@ def now_utc() -> datetime:
     return datetime.now(timezone.utc)
 
 
+def _as_utc(value: datetime) -> datetime:
+    """Normalize SQLAlchemy SQLite timestamps to the timezone-aware runtime format."""
+    return value.replace(tzinfo=timezone.utc) if value.tzinfo is None else value
+
+
 def _singular(word: str) -> str:
     if len(word) <= 3 or word.endswith("ss"):
         return word
@@ -173,6 +178,101 @@ _handoffs: list[Handoff] = []
 _counters = {"al": 0, "en": 0, "ho": 0}
 
 
+def _db_session():
+    """Return a live shared-database session, or None for standalone/unit use."""
+    try:
+        from src.server.db import create_db_session
+
+        return create_db_session()
+    except ModuleNotFoundError:
+        return None
+
+
+def _counter_from_id(prefix: str, ids: list[str]) -> int:
+    numbers = []
+    for value in ids:
+        if value.startswith(prefix + "-"):
+            try:
+                numbers.append(int(value.rsplit("-", 1)[1]))
+            except ValueError:
+                pass
+    return max(numbers, default=0)
+
+
+def reload_from_db() -> None:
+    """Reload all shared inventory state after database initialization or process startup."""
+    with _lock:
+        session = _db_session()
+        if session is None:
+            return
+        needs_seed = False
+        try:
+            from src.server.db import (
+                InventoryAlias,
+                InventoryEntry,
+                InventoryHandoff,
+                InventoryItem,
+            )
+
+            _items.clear()
+            _aliases.clear()
+            _entries.clear()
+            _handoffs.clear()
+            for row in session.query(InventoryItem).all():
+                _items[row.id] = Item(row.id, row.name)
+            needs_seed = not _items
+            for row in session.query(InventoryAlias).all():
+                _aliases[row.id] = Alias(
+                    row.id,
+                    row.text,
+                    row.item_id,
+                    row.status,
+                    row.source,
+                    _as_utc(row.created_at),
+                )
+            for row in session.query(InventoryEntry).all():
+                candidates = tuple(
+                    Candidate(candidate["item_id"], candidate.get("probability"))
+                    for candidate in (row.candidates or [])
+                )
+                _entries[row.id] = Entry(
+                    row.id,
+                    row.location_id,
+                    row.kind,
+                    row.quantity,
+                    row.label,
+                    row.item_id,
+                    row.alias_id,
+                    row.via,
+                    _as_utc(row.created_at),
+                    _as_utc(row.expires_at),
+                    row.closed,
+                    candidates,
+                    row.none_fit,
+                )
+            for row in session.query(InventoryHandoff).all():
+                _handoffs.append(
+                    Handoff(
+                        row.id,
+                        row.item_id,
+                        row.quantity,
+                        row.from_location_id,
+                        row.to_location_id,
+                        row.remaining,
+                        row.need_remaining,
+                        _as_utc(row.at),
+                    )
+                )
+            _handoffs.sort(key=lambda record: record.at)
+            _counters["al"] = _counter_from_id("al", list(_aliases))
+            _counters["en"] = _counter_from_id("en", list(_entries))
+            _counters["ho"] = _counter_from_id("ho", [record.id for record in _handoffs])
+        finally:
+            session.close()
+        if needs_seed:
+            reset()
+
+
 def _next(prefix: str) -> str:
     _counters[prefix] += 1
     return f"{prefix}-{_counters[prefix]}"
@@ -200,6 +300,39 @@ def reset() -> None:
                 if key not in taken:
                     taken.add(key)
                     _add_alias_locked(text, item_id, "seeded", "seed", now_utc())
+        session = _db_session()
+        if session is not None:
+            try:
+                from src.server.db import (
+                    InventoryAlias,
+                    InventoryEntry,
+                    InventoryHandoff,
+                    InventoryItem,
+                )
+
+                session.query(InventoryHandoff).delete()
+                session.query(InventoryEntry).delete()
+                session.query(InventoryAlias).delete()
+                session.query(InventoryItem).delete()
+                for item in _items.values():
+                    session.add(InventoryItem(id=item.id, name=item.name))
+                for alias in _aliases.values():
+                    session.add(
+                        InventoryAlias(
+                            id=alias.id,
+                            text=alias.text,
+                            item_id=alias.item_id,
+                            status=alias.status,
+                            source=alias.source,
+                            created_at=alias.created_at,
+                        )
+                    )
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
 
 
 # ---------- catalog ----------
@@ -207,11 +340,13 @@ def reset() -> None:
 
 def list_items() -> list[Item]:
     with _lock:
+        reload_from_db()
         return list(_items.values())
 
 
 def get_item(item_id: str) -> Item:
     with _lock:
+        reload_from_db()
         if item_id not in _items:
             raise ItemNotFound(item_id)
         return _items[item_id]
@@ -219,8 +354,23 @@ def get_item(item_id: str) -> Item:
 
 def rename_item(item_id: str, name: str) -> Item:
     with _lock:
+        reload_from_db()
         item = get_item(item_id)
         item.name = name.strip()
+        session = _db_session()
+        if session is not None:
+            try:
+                from src.server.db import InventoryItem
+
+                row = session.get(InventoryItem, item.id)
+                if row is not None:
+                    row.name = item.name
+                    session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
         return item
 
 
@@ -265,6 +415,7 @@ def add_item(name: str, extra_aliases: tuple[str, ...] = (), *, confirm_new: boo
     Held and guessed entries that use any of these wordings are matched to the new item right away.
     """
     with _lock:
+        reload_from_db()
         clean = name.strip()
         wordings = [clean, *(a.strip() for a in extra_aliases if a.strip())]
         index = alias_index()
@@ -285,12 +436,47 @@ def add_item(name: str, extra_aliases: tuple[str, ...] = (), *, confirm_new: boo
             item_id, n = f"{base}-{n}", n + 1
         item = _items[item_id] = Item(item_id, clean)
         seen: set[str] = set()
+        created_aliases = []
         for text in wordings:
             key = normalize(text)
             if key and key not in seen:
                 seen.add(key)
-                _add_alias_locked(text, item.id, "approved", "coordinator", now_utc())
+                created_aliases.append(
+                    _add_alias_locked(text, item.id, "approved", "coordinator", now_utc())
+                )
         rematch_unresolved()
+        session = _db_session()
+        if session is not None:
+            try:
+                from src.server.db import InventoryAlias, InventoryEntry, InventoryItem
+
+                session.add(InventoryItem(id=item.id, name=item.name))
+                for alias in created_aliases:
+                    session.add(
+                        InventoryAlias(
+                            id=alias.id,
+                            text=alias.text,
+                            item_id=alias.item_id,
+                            status=alias.status,
+                            source=alias.source,
+                            created_at=alias.created_at,
+                        )
+                    )
+                for entry in _entries.values():
+                    row = session.get(InventoryEntry, entry.id)
+                    if (
+                        row is not None
+                        and (row.item_id != entry.item_id or row.alias_id != entry.alias_id or row.via != entry.via)
+                    ):
+                        row.item_id = entry.item_id
+                        row.alias_id = entry.alias_id
+                        row.via = entry.via
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
         return item
 
 
@@ -299,12 +485,14 @@ def add_item(name: str, extra_aliases: tuple[str, ...] = (), *, confirm_new: boo
 
 def list_aliases(status: str | None = None) -> list[Alias]:
     with _lock:
+        reload_from_db()
         found = [a for a in _aliases.values() if status is None or a.status == status]
         return sorted(found, key=lambda a: (a.item_id, a.text.casefold()))
 
 
 def get_alias(alias_id: str) -> Alias:
     with _lock:
+        reload_from_db()
         if alias_id not in _aliases:
             raise AliasNotFound(alias_id)
         return _aliases[alias_id]
@@ -325,12 +513,38 @@ def rejected_keys() -> set[str]:
 def add_alias(text: str, item_id: str, *, at: datetime | None = None) -> Alias:
     """A coordinator teaches the system another wording for an existing item."""
     with _lock:
+        reload_from_db()
         get_item(item_id)
         clash = alias_index().get(normalize(text))
         if clash is not None:
             raise AliasConflict(clash.id)
         alias = _add_alias_locked(text, item_id, "approved", "coordinator", at or now_utc())
         rematch_unresolved()
+        session = _db_session()
+        if session is not None:
+            try:
+                from src.server.db import InventoryAlias, InventoryEntry
+
+                session.add(
+                    InventoryAlias(
+                        id=alias.id,
+                        text=alias.text,
+                        item_id=alias.item_id,
+                        status=alias.status,
+                        source=alias.source,
+                        created_at=alias.created_at,
+                    )
+                )
+                for entry in _entries.values():
+                    row = session.get(InventoryEntry, entry.id)
+                    if row is not None and entry.alias_id == alias.id:
+                        row.item_id, row.alias_id, row.via = entry.item_id, entry.alias_id, entry.via
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
         return alias
 
 
@@ -347,6 +561,7 @@ def update_alias(
     item, and a rejection sends them back to the held list.
     """
     with _lock:
+        reload_from_db()
         alias = get_alias(alias_id)
         if item_id is not None:
             get_item(item_id)
@@ -363,11 +578,39 @@ def update_alias(
         if status is not None:
             alias.status = status
             if status == "rejected":
+                rejected_entry_ids = {
+                    entry.id for entry in _entries.values() if entry.alias_id == alias.id
+                }
                 for entry in _entries.values():
                     if entry.alias_id == alias.id:
                         entry.item_id, entry.alias_id, entry.via = None, None, "unmatched"
             else:
+                rejected_entry_ids = set()
                 rematch_unresolved()
+        else:
+            rejected_entry_ids = set()
+        session = _db_session()
+        if session is not None:
+            try:
+                from src.server.db import InventoryAlias, InventoryEntry
+
+                row = session.get(InventoryAlias, alias.id)
+                if row is not None:
+                    row.text, row.item_id, row.status = alias.text, alias.item_id, alias.status
+                for entry in _entries.values():
+                    entry_row = session.get(InventoryEntry, entry.id)
+                    if entry_row is not None and entry.id not in rejected_entry_ids and entry.alias_id == alias.id:
+                        entry_row.item_id, entry_row.alias_id, entry_row.via = entry.item_id, entry.alias_id, entry.via
+                    elif entry_row is not None and entry.id in rejected_entry_ids:
+                        entry_row.item_id = None
+                        entry_row.alias_id = None
+                        entry_row.via = "unmatched"
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
         return alias
 
 
@@ -388,6 +631,7 @@ def add_entry(
     at: datetime | None = None,
 ) -> Entry:
     with _lock:
+        reload_from_db()
         created = at or now_utc()
         entry = Entry(
             _next("en"),
@@ -404,11 +648,45 @@ def add_entry(
             none_fit=none_fit,
         )
         _entries[entry.id] = entry
+        session = _db_session()
+        if session is not None:
+            try:
+                from src.server.db import InventoryEntry
+
+                session.add(
+                    InventoryEntry(
+                        id=entry.id,
+                        location_id=entry.location_id,
+                        kind=entry.kind,
+                        quantity=entry.quantity,
+                        label=entry.label,
+                        item_id=entry.item_id,
+                        alias_id=entry.alias_id,
+                        via=entry.via,
+                        created_at=entry.created_at,
+                        expires_at=entry.expires_at,
+                        closed=entry.closed,
+                        candidates=[
+                            {"item_id": candidate.item_id, "probability": candidate.probability}
+                            for candidate in entry.candidates
+                        ],
+                        none_fit=entry.none_fit,
+                    )
+                )
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
+        if alias_id is not None:
+            rematch_unresolved()
         return entry
 
 
 def get_entry(entry_id: str) -> Entry:
     with _lock:
+        reload_from_db()
         if entry_id not in _entries:
             raise EntryNotFound(entry_id)
         return _entries[entry_id]
@@ -424,6 +702,7 @@ def active_entries(
     """Open entries that have been matched to an item and have not expired."""
     moment = at or now_utc()
     with _lock:
+        reload_from_db()
         return [
             e
             for e in _entries.values()
@@ -438,6 +717,7 @@ def active_entries(
 def unresolved_entries(at: datetime | None = None) -> list[Entry]:
     moment = at or now_utc()
     with _lock:
+        reload_from_db()
         return [e for e in _entries.values() if _open(e, moment) and e.item_id is None]
 
 
@@ -445,6 +725,7 @@ def guess_entries(at: datetime | None = None) -> list[Entry]:
     """Open entries the system matched itself (fuzzy or model) and no person has confirmed."""
     moment = at or now_utc()
     with _lock:
+        reload_from_db()
         return [e for e in _entries.values() if _open(e, moment) and e.item_id is not None and e.via in GUESS_VIA]
 
 
@@ -497,6 +778,7 @@ def resolve_entry(entry_id: str, item_id: str, *, alias_text: str | None = None)
     Every other held or guessed entry with the same typed wording is settled too, needs and donations alike.
     """
     with _lock:
+        reload_from_db()
         entry = get_entry(entry_id)
         get_item(item_id)
         index = alias_index()
@@ -509,11 +791,47 @@ def resolve_entry(entry_id: str, item_id: str, *, alias_text: str | None = None)
                 alias_text, item_id, "approved", "coordinator", now_utc()
             ).id
         key = normalize(entry.label)
-        twins = [e for e in unresolved_entries() + guess_entries() if e.id != entry.id and normalize(e.label) == key]
+        twins = [
+            e
+            for e in _entries.values()
+            if e.id != entry.id
+            and _open(e, now_utc())
+            and (e.item_id is None or e.via in GUESS_VIA)
+            and normalize(e.label) == key
+        ]
         for target in [entry, *twins]:
             target.item_id, target.alias_id, target.via = item_id, alias_id, "coordinator"
-        if alias_id is not None:
-            rematch_unresolved()
+        session = _db_session()
+        if session is not None:
+            try:
+                from src.server.db import InventoryAlias, InventoryEntry
+
+                if alias_id is not None:
+                    alias = _aliases[alias_id]
+                    row = session.get(InventoryAlias, alias.id)
+                    if row is None:
+                        session.add(
+                            InventoryAlias(
+                                id=alias.id,
+                                text=alias.text,
+                                item_id=alias.item_id,
+                                status=alias.status,
+                                source=alias.source,
+                                created_at=alias.created_at,
+                            )
+                        )
+                for target in [entry, *twins]:
+                    row = session.get(InventoryEntry, target.id)
+                    if row is not None:
+                        row.item_id = target.item_id
+                        row.alias_id = target.alias_id
+                        row.via = target.via
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
         return entry
 
 
@@ -540,6 +858,7 @@ def handoff(entry_id: str, quantity: int, to_need_id: str | None = None, *, at: 
     """
     moment = at or now_utc()
     with _lock:
+        reload_from_db()
         entry = get_entry(entry_id)
         if entry.closed or entry.expires_at <= moment or entry.item_id is None:
             raise InvalidHandoff("That entry is no longer open.")
@@ -578,19 +897,67 @@ def handoff(entry_id: str, quantity: int, to_need_id: str | None = None, *, at: 
             moment,
         )
         _handoffs.append(record)
+        session = _db_session()
+        if session is not None:
+            try:
+                from src.server.db import InventoryEntry, InventoryHandoff
+
+                entry_row = session.get(InventoryEntry, entry.id)
+                if entry_row is not None:
+                    entry_row.quantity = entry.quantity
+                    entry_row.closed = entry.closed
+                if need is not None:
+                    need_row = session.get(InventoryEntry, need.id)
+                    if need_row is not None:
+                        need_row.quantity = need.quantity
+                        need_row.closed = need.closed
+                session.add(
+                    InventoryHandoff(
+                        id=record.id,
+                        item_id=record.item_id,
+                        quantity=record.quantity,
+                        from_location_id=record.from_location_id,
+                        to_location_id=record.to_location_id,
+                        remaining=record.remaining,
+                        need_remaining=record.need_remaining,
+                        at=record.at,
+                    )
+                )
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
         return record
 
 
 def list_handoffs(limit: int = 50) -> list[Handoff]:
     """Most recent first."""
     with _lock:
+        reload_from_db()
         return list(reversed(_handoffs))[:limit]
 
 
 def close_entry(entry_id: str) -> Entry:
     with _lock:
+        reload_from_db()
         entry = get_entry(entry_id)
         entry.closed = True
+        session = _db_session()
+        if session is not None:
+            try:
+                from src.server.db import InventoryEntry
+
+                row = session.get(InventoryEntry, entry.id)
+                if row is not None:
+                    row.closed = True
+                    session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
         return entry
 
 

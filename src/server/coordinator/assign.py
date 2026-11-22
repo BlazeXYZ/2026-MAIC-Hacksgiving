@@ -11,7 +11,12 @@ from src.server.ai.pii import scrub_pii
 from src.server.coordinator.present import to_coordinator_ticket
 from src.server.coordinator.schema import AssignRequest, CoordinatorTicket
 from src.server.intake.schema import TicketStatus
-from src.server.intake.store import Ticket, TicketNotFound, mutate
+from src.server.intake.store import (
+    Ticket,
+    TicketConcurrentUpdate,
+    TicketNotFound,
+    mutate,
+)
 
 _ALIASES = (
     "Harbor",
@@ -55,4 +60,9 @@ def assign_ticket(ticket_id: str, payload: AssignRequest) -> CoordinatorTicket:
         ticket = mutate(ticket_id, apply)
     except TicketNotFound:
         raise HTTPException(status_code=404, detail="Ticket not found.") from None
+    except TicketConcurrentUpdate:
+        raise HTTPException(
+            status_code=409,
+            detail="This ticket was updated by another request.",
+        ) from None
     return to_coordinator_ticket(ticket)
