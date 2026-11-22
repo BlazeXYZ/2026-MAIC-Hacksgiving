@@ -1,497 +1,396 @@
-# 2026 MAIC Hacksgiving: AI for Good
+# ComForce MKE Community Hub
 
-This repository holds our team project for the **4th Annual MAIC Hacksgiving Hackathon**, hosted by the **MSOE Artificial Intelligence Club (MAIC)** at the **Milwaukee School of Engineering (MSOE)** in Dwight and Dian Diercks Hall.
+**AI for Good hackathon project | 2026 MAIC Hacksgiving**
 
-Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the announcement stated, "With our partner, ComforceMKE, we will be helping the Milwaukee Community in times of trouble!"
+ComForce MKE is a cross-platform community response hub built with React, FastAPI,
+and AI-assisted coordination. It helps Milwaukee residents find aid, connect with
+volunteers, report needs, and get through unsafe or urgent situations while giving
+coordinators tools to organize the response.
 
----
+Built for the **4th Annual MAIC Hacksgiving Hackathon** at the Milwaukee School of
+Engineering, in partnership with **ComforceMKE** (Community Task Force MKE).
 
-## Quick Links
-
-- [Kubernetes setup](deploy/KUBERNETES.md) — dev, qa, and prod on a local kind cluster or EKS
-- [Project Ideas & Brainstorming](IDEAS.md)
-- [Contributing & Style Guide](CONTRIBUTING.md)
-- [Project Documentation](docs/README.md)
-- [Jupyter Notebooks](notebooks/README.md)
-
----
-
-## Table of Contents
-
-- [Project Overview](#project-overview)
-- [The Partner & Community Mission](#the-partner--community-mission)
-- [Platform Architecture](#platform-architecture)
-- [Core Features & Modular Communities](#core-features--modular-communities)
-- [Milwaukee Data Sources](#milwaukee-data-sources)
-- [Repository Structure](#repository-structure)
-- [Local Development Guide](#local-development-guide)
-  - [Prerequisites](#prerequisites)
-  - [Option 1: Native Process Development (Fastest Iteration)](#option-1-native-process-development-fastest-iteration)
-  - [Option 2: One-Command Docker Compose](#option-2-one-command-docker-compose)
-  - [Option 3: Local Kubernetes with Kind](#option-3-local-kubernetes-with-kind)
-- [Posting to Production (Deployment Guide)](#posting-to-production-deployment-guide)
-  - [1. AWS Cloud Deployment with EKS & Terraform (Recommended)](#1-aws-cloud-deployment-with-eks--terraform-recommended)
-  - [2. Existing Kubernetes Cluster Deployment](#2-existing-kubernetes-cluster-deployment)
-  - [3. Single-Node Production Deployment with Docker Compose](#3-single-node-production-deployment-with-docker-compose)
-  - [4. Mobile App Production Release (Android & iOS)](#4-mobile-app-production-release-android--ios)
-- [Hackathon Schedule](#hackathon-schedule)
-- [Submission Checklist](#submission-checklist)
-- [Team Members](#team-members)
-- [Acknowledgments](#acknowledgments)
+**Platform:** Web + Android/iOS
+**Backend:** Python + FastAPI + PostgreSQL/SQLite
+**Frontend:** React + TypeScript + Vite + Capacitor
+**Presentation length:** Designed for a 4-minute pitch
 
 ---
 
-## Project Overview
+## Four-Minute Presentation Map
 
-- **Project Title:** ComForce MKE Community Hub
-- **Summary:** A combined web and mobile application (exported through Capacitor) that makes connecting with ComforceMKE initiatives interactive and responsive instead of just filling out static web forms.
-- **Client Stack:** React, TypeScript, Vite, Capacitor (iOS and Android export), OpenStreetMap, Tailwind CSS
-- **Server Stack:** Python 3.10+, FastAPI, PostgreSQL, `uv` package manager, Uvicorn
-- **Deploy:** Docker Compose locally. Terraform keeps dev, qa, and prod in separate state. Each one can run as a local Kubernetes cluster or, when you choose an account, on AWS EKS.
-- **AI Models:** Transformer-based need heatmaps, small classifier for content moderation and triage, and LLM recommendations
+This README follows the recommended presentation sequence:
 
----
-
-## The Partner & Community Mission
-
-ComforceMKE is a resident-led group founded in 2014 that works 24/7 on crisis response, violence interruption, missing persons searches, family grief support, and emergency food and housing across Milwaukee.
-
-Right now, many organizations rely on static web forms that feel slow and impersonal during an emergency. Our platform brings ComforceMKE's services into an interactive, community-driven interface accessible on both desktop web browsers and mobile phones.
+| Time | Section | Presentation point |
+| --- | --- | --- |
+| 0:00-0:35 | [The problem](#the-problem) | Disconnected forms and spreadsheets slow down help |
+| 0:35-1:10 | [Our solution](#our-solution) | One accessible hub for residents and coordinators |
+| 1:10-2:20 | [What is built](#what-is-built) | Three community hubs and coordinated aid tools |
+| 2:20-2:50 | [How the system works](#how-the-system-works) | React client, FastAPI, data, and AI layers |
+| 2:50-3:35 | [Demo flow](#demo-flow) | Show a real resident and coordinator journey |
+| 3:35-4:00 | [Impact and next steps](#impact-and-next-steps) | Why the platform matters and what comes next |
 
 ---
 
-## Platform Architecture
+## The Problem
 
-The project lives in a single GitHub repository with separate `client` and `server` folders under `src/`:
+During a crisis, people may need to navigate several disconnected websites, phone
+lines, forms, and spreadsheets. That fragmentation creates avoidable delays:
 
-```
-[Web Browser & Capacitor Mobile Client] (src/client)
-  ├── Modular Community Selector (Domestic Safety, Missing Persons, Pantries)
-  ├── Urgent Priority Alert Banner (Overrides screens during critical searches)
-  ├── Safe Route Planner (Routes to MSOE Public Safety or Sojourner Peace Center)
-  ├── Volunteer Support Ticket Board (Claim tickets, review priority tasks)
-  └── District Statistics Dashboard (Third Ward, Juneautown, Near West Side)
-            │
-            ▼ HTTP / REST / JSON
-[FastAPI Python Backend] (src/server, managed with uv)
-  ├── AI Moderation & Question Finding (Cleans messages, links to verified aid)
-  ├── Smart Volunteer Dispatch (Identifies who can help without blasting spam)
-  ├── Safe Path Generator (Calculates verified routes to public services)
-  ├── Heatmap & Google API Ingestion (Processes location & need density)
-  └── Pantry Stocking Advisor (LLM recommendations for high-need supplies)
-```
+- Residents struggle to find the right service or safe route quickly.
+- Community conversations, volunteer activity, inventory, and aid requests live
+  in separate places.
+- Urgent missing-person alerts can be hidden in generic community feeds.
+- Coordinators need a clear view of active requests and available resources.
+- Sensitive personal details should not be exposed more widely than necessary.
+
+Static forms are especially difficult during emotional or time-sensitive situations.
+ComForce MKE turns several of those disconnected interactions into an organized,
+guided experience.
 
 ---
 
-## Core Features & Modular Communities
+## Our Solution
 
-The platform is designed around **Modular Communities**. Every community shares core tools (threads, maps, verified posts, and volunteer tickets), but each community can enable custom tools:
+ComForce MKE is a modular community response platform for both **web and mobile**.
 
-### 1. Domestic Abuse Support (Initial Flagship Community)
-* **Safe Walk & Routing:** If you are on the MSOE campus, it automatically plans a route along lit paths to MSOE Public Safety at 1025 N Broadway. In the city, it directs to Sojourner Family Peace Center.
-* **Confidential Support Tickets:** Residents can request discrete check-ins without sharing their full contact details publicly.
+It gives each resident:
+
+- A choice of relevant community hubs
+- A clear view of urgent alerts
+- Access to maps, help surveys, safe routes, and volunteer requests
+- An anonymous way to post needs or surplus supplies
+- A moderated forum for community information
+
+It gives coordinators:
+
+- Ticket and volunteer assignment workflows
+- Forum moderation tools
+- Community inventory review
+- Handoff tracking
+- A view of active needs and resource coverage
+
+The system is designed to be expandable: every hub can share common tools while
+adding mission-specific capabilities.
+
+---
+
+## What Is Built
+
+### 1. Domestic Safety Support
+
+The Domestic Safety hub provides confidential safety planning and a safe-route tool.
+
+- Select an origin and optional destination
+- Get a route toward a verified public service
+- Use MSOE public safety on campus
+- Use Sojourner Family Peace Center for citywide support
+- Ask for help through a guided triage survey
+
+Emergency contact and safety information are shown where users need them.
 
 ### 2. Missing Persons Search Network
-* **Priority Alert Override:** When an active search begins, an urgent banner appears across the app, alerting nearby volunteers regardless of which community tab they are viewing.
-* **Search Grid Coordinator:** Volunteers can join search parties and mark map sectors as "searching," "cleared," or "lead found" in real time.
 
-### 3. Food Pantry & Mutual Aid
-* **Interactive Pantry Finder:** Displays open emergency pantries, mobile markets, and hours pulled from local open data.
-* **Pantry Owner AI Advisor:** An LLM reviews district need patterns and recommends what high-demand items pantry coordinators should stock (such as infant formula or warm winter clothing).
+The Missing Persons hub centers on urgent coordination.
 
-### 4. Smart Volunteer Dispatch & District Dashboard
-* **Targeted Notification AI:** Instead of sending annoying push notifications to hundreds of inactive volunteers, an AI filter identifies which volunteers are active and close enough to help.
-* **Coordinator Dashboard:** Visualizes open aid requests by Milwaukee district (such as Juneautown versus the Third Ward) so coordinators can see where resources are needed most.
+- Priority alerts can override the normal view across the app
+- Search-grid mapping divides an area into sectors
+- Volunteers can mark sectors as searching or cleared
+- Coordinators can publish and review urgent information
+- Forum posts can connect the community around a search
+
+The alert is deliberately prominent: nearby help should not be buried below ordinary
+community content.
+
+### 3. Food Pantry and Mutual Aid
+
+The Food Pantry hub connects available supplies with active needs.
+
+- Browse pantry, place, and inventory data
+- Post needs, donations, or stock
+- Match entries against a shared item catalog
+- Find nearby locations that can fill a need
+- Find open needs that local stock or offers could fill
+- Review unknown items or uncertain matches as a coordinator
+
+The inventory system matches exact aliases, known phrases, fuzzy matches, and a
+decision model before holding uncertain entries for review.
+
+### 4. Community Forums
+
+Each hub has a moderated discussion feed.
+
+- Pseudonymous handles keep sessions separate from accounts
+- Posts and replies can be sorted or searched
+- Held posts are kept out of public listings
+- Phone numbers, addresses, email addresses, and other PII are scrubbed
+- Coordinators can publish edited content or remove it
+- Helpful marks show which answers the community found useful
+
+### 5. Coordinator Tools
+
+The staff workspace brings operational information together.
+
+- Sign in with a coordinator key
+- Review tickets and assign volunteers
+- Moderate held forum posts
+- Review inventory guesses and unresolved items
+- Approve aliases and catalog changes
+- Record handoffs and track their effects on stock and needs
+
+Coordinator routes use a key and do not expose anonymous handoff data publicly.
 
 ---
 
-## Milwaukee Data Sources
+## How the System Works
 
-Our team is reviewing real Milwaukee open data to ground the app in actual local resources:
+```text
+Resident or coordinator
+          |
+          v
+React + TypeScript web client
+Capacitor wrapper for Android and iOS
+          |
+          | HTTP / REST / JSON
+          v
+FastAPI Python backend
+          |
+          +-- Triage and routing
+          +-- PII and content moderation
+          +-- Volunteer ticket assignment
+          +-- Inventory matching and handoffs
+          +-- Forum moderation
+          +-- Pantry recommendations
+          |
+          v
+SQLite for local development
+PostgreSQL for Docker and production
+```
 
-1. **IMPACT 2-1-1 & Milwaukee Food Environment GIS:** Public ArcGIS datasets covering every emergency food pantry, meal site, and grocery access point in Milwaukee County.
-2. **Hunger Task Force Site Data:** Verified locations and operating hours of emergency food sites and mobile food markets.
-3. **Domestic Violence Crisis Services:** Verified coordinates and 24/7 hotline numbers for Sojourner Family Peace Center and the Milwaukee Women's Center.
-4. **City of Milwaukee Open Data Portal:** Civic neighborhood boundaries (Juneautown, Historic Third Ward, Near West Side) and community centers.
-5. **Google Places API:** Community points of interest, public libraries, and verified public service facilities.
-6. **MSOE Campus Geography:** Campus walkways, Diercks Hall (1025 N Milwaukee St), and MSOE Public Safety (1025 N Broadway).
+### Core technology
+
+| Layer | Technology | Role |
+| --- | --- | --- |
+| Mobile and web client | React, TypeScript, Vite, Capacitor | Responsive UI and native app shells |
+| Maps | Leaflet and OpenStreetMap | Community locations, search grids, and routes |
+| API | Python, FastAPI, Pydantic | REST APIs and structured request/response schemas |
+| Data | SQLite or PostgreSQL | Local and deployed persistence |
+| AI-assisted features | Configurable Gemini, OpenAI, and Jev matching | Triage, moderation, advice, and catalog matching |
+| Deployment | Docker, Nginx, Kubernetes, Terraform | Local, containerized, and cloud-style delivery |
+
+### Privacy and safety
+
+- Shelter locations are excluded from public inventory listings.
+- Inventory entries do not store who made them.
+- Forum and inventory text is screened for contact details.
+- Held posts remain private until a coordinator reviews them.
+- API keys, passwords, and sensitive values stay outside the repository.
+- Development data and fixtures use synthetic information.
 
 ---
 
-## Repository Structure
+## Demo Flow
+
+Use this sequence for a concise live presentation:
+
+1. **Start as a resident.** Show the community hub selector and the urgent-alert
+   banner.
+2. **Open Domestic Safety.** Complete the help survey or choose a safe-route
+   destination.
+3. **Open Missing Persons.** Explain the priority search view and search-grid
+   coordination.
+4. **Open Food Pantry.** Post or review a need, donation, or stock entry.
+5. **Switch to the coordinator view.** Review a ticket or held item and complete
+   the coordinator action.
+6. **Return to the resident view.** Show how the status or available resource
+   changed.
+
+For a backup demo, prepare a 2-minute screen recording of the web and mobile views.
+
+---
+
+## Repository Guide
 
 ```text
 2026-MAIC-Hacksgiving/
-├── .github/                  # Pull request and issue templates
-├── data/                     # Sample data and schemas
-│   ├── raw/                  # Raw sample files (git-ignored)
-│   └── processed/            # Cleaned mock data for testing
-├── deploy/                   # Images and Terraform for Kubernetes
-│   ├── docker/               # API and web Dockerfiles, nginx proxy
-│   ├── KUBERNETES.md         # Step-by-step dev, qa, and prod on kind or EKS
-│   └── terraform/            # Shared stack, with a separate root for dev, qa, and prod
-├── docs/                     # Pitch notes, slides, and diagrams
-├── notebooks/                # Jupyter notebooks for data tests and prompt trials
-├── src/
-│   ├── client/               # React + TypeScript + Vite + Capacitor app
-│   │   ├── src/              # React UI components and views
-│   │   ├── capacitor.config.ts  # Capacitor mobile build settings
-│   │   ├── package.json      # Client dependencies
-│   │   └── vite.config.ts    # Vite bundler config with API proxy
-│   └── server/               # FastAPI Python backend managed with uv
-│       ├── core/             # Settings and configuration
-│       ├── pyproject.toml    # Modern Python dependencies for uv
-│       └── main.py           # FastAPI entry point and routes
-├── tests/                    # Backend unit tests
-├── .env.example              # Template for API keys and environment variables
-├── .gitignore                # Git ignore rules for virtualenvs, keys, and data
-├── CONTRIBUTING.md           # Branch rules, commit styles, and code conventions
-├── IDEAS.md                  # Project brainstorms and idea submission template
-├── requirements.txt          # Python dependencies (pip fallback)
-└── README.md                 # Main project guide
+├── src/client/               # React, TypeScript, and Capacitor application
+│   ├── src/components/       # Hubs, maps, inventory, forums, and coordinator UI
+│   ├── src/screens/          # Coordinator and status screens
+│   ├── src/api/              # Frontend API clients
+│   └── tests/                # Frontend unit tests
+├── src/server/               # FastAPI application
+│   ├── ai/                   # Triage, moderation, matching, and recommendations
+│   ├── api/                  # Mounted feature routes
+│   ├── coordinator/          # Staff queue and assignment logic
+│   ├── forums/               # Thread, reply, and moderation logic
+│   ├── inventory/            # Catalog, matching, stock, and handoffs
+│   ├── intake/               # Survey, ticket, and triage logic
+│   └── resources/            # Pantries, safe places, and routes
+├── deploy/                   # Docker, Kubernetes, and Terraform
+├── tests/                    # Backend pytest suite
+├── docs/                     # Presentation decks and project assets
+├── notebooks/                # Prompt and data experiments
+├── docker-compose.yml        # Local full-stack environment
+└── CONTRIBUTING.md           # Git, review, and coding workflow
 ```
 
+### Related documentation
+
+- [Client setup and mobile builds](src/client/README.md)
+- [Backend setup and API overview](src/server/README.md)
+- [Local Kubernetes and deployment](deploy/KUBERNETES.md)
+- [Pitch and design notes](IDEAS.md)
+- [Documentation assets](docs/README.md)
+- [Contributing workflow](CONTRIBUTING.md)
+
 ---
 
-## Local Development Guide
+## Run Locally
 
 ### Prerequisites
-* **Python 3.10+** (with [`uv`](https://github.com/astral-sh/uv) or standard `pip`)
-* **Node.js 18+** (with npm)
-* **Docker or Podman** (for containerized local dev or Kubernetes)
-* **Git** installed and configured
 
----
+- Python 3.10+
+- Node.js 18+
+- npm
+- Docker or Podman for the full-stack option
+- `uv` for the recommended Python setup
 
-### Option 1: Native Process Development (Fastest Iteration)
+### Option A: Docker Compose
 
-Running services directly on your host machine offers the fastest feedback loop, hot module reloading (HMR) for frontend components, and instant Python debugger attachment.
+From the repository root:
 
-#### 1. Backend Server Setup (FastAPI + SQLite)
+```bash
+docker compose up
+docker compose exec api python -m src.server.seed
+```
 
-1. Switch to the server directory:
-   ```bash
-   cd src/server
-   ```
-2. Using `uv` (recommended):
-   ```bash
-   # Create and sync virtual environment
-   uv venv
-   uv sync
+Open:
 
-   # Run backend development server
-   uv run python main.py
-   ```
-   *Alternative with standard pip:*
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # Windows: .venv\Scripts\Activate.ps1
-   pip install -r ../../requirements.txt
-   python main.py
-   ```
-3. **Database initialization & automatic table creation:**
-   The backend automatically initializes an embedded SQLite database (`sqlite:///dev.db`) on startup when `DATABASE_URL` is unset, so no external database server is required.
-4. **Seed sample Milwaukee community data:**
-   In another terminal, populate the local database with verified safe places, 11 emergency food pantries, and sample support tickets:
-   ```bash
-   uv run python -m src.server.seed
-   ```
-   *The API will be running at `http://localhost:8000` with interactive Swagger docs at `http://localhost:8000/docs`.*
+- Web: `http://localhost:3000`
+- API: `http://localhost:8000`
+- API documentation: `http://localhost:8000/docs`
 
-#### 2. Frontend Client Setup (React + Vite + Capacitor)
+Stop the local stack:
 
-1. In a separate terminal, switch to the client directory:
-   ```bash
-   cd src/client
-   ```
-2. Install frontend dependencies and start Vite dev server:
-   ```bash
-   npm install
-   npm run dev
-   ```
-3. Open `http://localhost:3000` in your browser. API requests to `/api` are automatically proxied to the backend at `http://localhost:8000`.
+```bash
+docker compose down
+```
 
-#### 3. Mobile Device Sync (Capacitor)
+### Option B: Run the services directly
 
-Compile the web assets and synchronize with native mobile wrappers:
+Backend:
+
+```bash
+cd src/server
+uv venv
+uv sync
+uv run python main.py
+```
+
+The API defaults to an embedded SQLite database and is available at
+`http://localhost:8000`.
+
+Frontend:
+
+```bash
+cd src/client
+npm install
+npm run dev
+```
+
+Open `http://localhost:3000`. Vite proxies `/api` requests to the backend.
+
+Copy `.env.example` to `.env` before configuring external AI providers. The application
+can also run in mock/development modes, so API keys are not required for every local
+flow.
+
+### Mobile builds
+
+Build and sync the web bundle:
+
 ```bash
 cd src/client
 npm run build
 npx cap sync
 ```
-To launch in native emulators:
+
+Open the native projects:
+
 ```bash
-npm run cap:android  # Opens Android Studio
-npm run cap:ios      # Opens Xcode (macOS only)
+npm run cap:android
+npm run cap:ios
+```
+
+The repository also includes scripts for Android and iOS demo builds:
+
+```bash
+bash scripts/mobile/build-android.sh
+bash scripts/mobile/build-ios.sh
 ```
 
 ---
 
-### Option 2: One-Command Docker Compose
+## Validation
 
-Launch the complete full-stack environment (PostgreSQL 16, FastAPI backend with live reload, and React frontend served via Nginx reverse proxy) with a single command from the project root:
+Run the backend tests and frontend tests from the repository root:
 
 ```bash
-docker compose up
+pytest
+ruff check .
 ```
 
-#### Services & Standardized Ports:
-- **Client (Web):** `http://localhost:3000` (Nginx serving compiled React client with reverse proxy to `/api`)
-- **API (FastAPI Backend):** `http://localhost:8000` (Runs with `--reload` and volume-mounted `./src/server` for live code reload)
-- **Database (PostgreSQL 16):** `localhost:5432` (`comforce:comforce-dev@localhost:5432/comforce` with persistent `pgdata` volume)
+Frontend tests:
 
-#### Seed Data Inside Container:
 ```bash
-docker compose exec api python -m src.server.seed
-```
-
-#### Verification:
-```bash
-# Check that all three containers are healthy and running
-docker compose ps
-
-# Test API connectivity from client network
-curl http://localhost:8000/
-```
-
-To stop containers:
-```bash
-docker compose down
+cd src/client
+npm test
+npm run build
 ```
 
 ---
 
-### Option 3: Local Kubernetes with Kind
+## Impact and Next Steps
 
-Test production-style Kubernetes manifests and Terraform configurations locally on a one-node [kind](https://kind.sigs.k8s.io/) cluster.
+The immediate impact is an easier path from an urgent need to a visible response:
 
-1. **Build local container images:**
-   ```bash
-   docker build -f deploy/docker/Dockerfile.api -t comforce-api:local .
-   docker build -f deploy/docker/Dockerfile.web -t comforce-web:local .
-   ```
-2. **Deploy to local kind cluster with Terraform:**
-   ```bash
-   cd deploy/terraform/envs/dev
-   cp terraform.tfvars.example terraform.tfvars
-   terraform init
-   terraform apply
-   ```
-3. **Connect and view:**
-   ```bash
-   export KUBECONFIG=$HOME/.kube/comforce-dev.yaml
-   kubectl -n comforce-dev get pods
-   kubectl -n comforce-dev port-forward svc/web 8080:80
-   ```
-   Open `http://localhost:8080` in your browser.
+1. **Residents** receive organized, accessible next steps.
+2. **Volunteers** can find and claim focused work.
+3. **Coordinators** can moderate information and inventory.
+4. **Partner organizations** can connect their services through modular hubs.
 
----
+The project is an MVP rather than a finished municipal platform. The strongest
+next-step story is to add real partner data and operational authentication, then
+run controlled pilots for one community use case.
 
-## Posting to Production (Deployment Guide)
+Near-term priorities:
 
-ComForce MKE supports multiple production deployment targets depending on your infrastructure.
+- Integrate verified ComforceMKE and public-Milwaukee data
+- Add persistent, secured coordinator accounts
+- Improve real-time alerts and volunteer status
+- Pilot the missing-person and mutual-aid workflows
+- Expand from demonstration data to role-based access and audited operations
 
-### 1. AWS Cloud Deployment with EKS & Terraform (Recommended)
-
-Production infrastructure is provisioned as code using Terraform under `deploy/terraform/envs/prod`. It creates a dedicated VPC, an Amazon EKS Kubernetes cluster, an Amazon ECR container registry, and EBS persistent storage for PostgreSQL.
-
-#### Step 1: Configure AWS CLI & Permissions
-Ensure your AWS CLI v2 is authenticated with credentials that have permissions to create VPC, EKS, IAM roles, and ECR:
-```bash
-aws configure
-aws sts get-caller-identity
-```
-
-#### Step 2: Configure Production Terraform Variables
-```bash
-cd deploy/terraform/envs/prod
-cp terraform.tfvars.example terraform.tfvars
-```
-Edit `terraform.tfvars`:
-```hcl
-target      = "aws"
-aws_region  = "us-east-1"
-db_password = "ChooseAStrongSecureProductionPassword123!"
-```
-*(Note: `terraform.tfvars` and `*.tfstate` are excluded from git for security).*
-
-#### Step 3: Provision AWS Infrastructure
-```bash
-terraform init
-terraform apply
-```
-*This provisions the VPC, public subnets, internet gateway, EKS control plane, managed worker node group, EBS CSI driver with `comforce-gp3` StorageClass, and ECR repositories. (Takes ~10–15 minutes).*
-
-#### Step 4: Build & Push Production Images to Amazon ECR
-From the repository root, tag and push the production images using the outputs from Terraform:
-```bash
-cd deploy/terraform/envs/prod
-REGISTRY=$(terraform output -raw ecr_registry)
-API_IMAGE=$(terraform output -raw api_image)
-WEB_IMAGE=$(terraform output -raw web_image)
-REGION=$(terraform output -raw aws_region)
-
-# Authenticate Docker to Amazon ECR
-aws ecr get-login-password --region "$REGION" | docker login --username AWS --password-stdin "$REGISTRY"
-
-# Build and push production images
-docker build -f deploy/docker/Dockerfile.api -t "$API_IMAGE" .
-docker build -f deploy/docker/Dockerfile.web -t "$WEB_IMAGE" .
-docker push "$API_IMAGE"
-docker push "$WEB_IMAGE"
-```
-
-#### Step 5: Rollout Deployments and Verify
-Update your local kubeconfig to point to the new production cluster and trigger a rolling update:
-```bash
-aws eks update-kubeconfig --name "$(terraform output -raw cluster_name)" --region "$REGION"
-kubectl -n comforce-prod rollout restart deployment/api deployment/web
-kubectl -n comforce-prod get pods -w
-```
-
-#### Step 6: Access Production Services
-```bash
-# Port-forward to verify live production service:
-kubectl -n comforce-prod port-forward svc/web 8082:80
-```
-Open `http://localhost:8082`. When ready for public domain traffic, configure your Ingress controller or Route 53 DNS pointing to the Application Load Balancer.
-
-#### Step 7: Tearing Down Production (To Avoid Cloud Costs)
-```bash
-cd deploy/terraform/envs/prod
-terraform destroy
-```
+The architecture is intentionally designed to scale beyond one partner or one
+community. A successful first hub proves the shared model: add a map, add
+moderated discussion, add a mission-specific tool, and connect the result to a
+coordinator workflow.
 
 ---
 
-### 2. Existing Kubernetes Cluster Deployment
+## Team
 
-If deploying to an existing Kubernetes cluster (e.g., GKE, Azure AKS, or an internal on-premises cluster):
-
-1. Set `target = "existing"` in `deploy/terraform/envs/prod/terraform.tfvars`:
-   ```hcl
-   target          = "existing"
-   kubeconfig_path = "~/.kube/config"
-   db_password     = "<production-database-password>"
-   api_image       = "ghcr.io/your-org/comforce-api:latest"
-   web_image       = "ghcr.io/your-org/comforce-web:latest"
-   ```
-2. Run `terraform apply` to install the `comforce-prod` namespace, database StatefulSet, secrets, and deployments directly to your existing cluster.
-
----
-
-### 3. Single-Node Production Deployment with Docker Compose
-
-For deploying on a single cloud VPS (e.g., AWS EC2, DigitalOcean Droplet, Linode, or Hetzner):
-
-1. Clone the repository on the server:
-   ```bash
-   git clone https://github.com/BlazeXYZ/2026-MAIC-Hacksgiving.git /opt/comforce
-   cd /opt/comforce
-   ```
-2. Create a secure production environment:
-   ```bash
-   export POSTGRES_PASSWORD='<strong-password>'
-   ```
-   Compose requires that secret to be supplied by the deployment environment. Do not put the production password in the checked-in Compose file or commit a production `.env`.
-
-3. Start containers with the production override:
-   ```bash
-   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
-   ```
-   The production override sets `APP_ENV=production`, `DEBUG=False`, disables reload, removes the source-volume mount, and keeps PostgreSQL private on the Compose network. Database credentials are read from `POSTGRES_PASSWORD` and no database port is published.
-4. Verify the resolved production configuration before deployment:
-   ```bash
-   POSTGRES_PASSWORD='<strong-password>' docker compose -f docker-compose.yml -f docker-compose.prod.yml config
-   docker compose -f docker-compose.yml -f docker-compose.prod.yml ps
-   ```
-4. Configure Nginx with Let's Encrypt / Certbot on the host to provide HTTPS and proxy traffic to port 3000 (web) and 8000 (api).
-
----
-
-### 4. Mobile App Production Release (Android & iOS)
-
-Demo builds are a shell around the website. The phone asks for an IPv4 address and a port, saves them on the device, and opens that hub full screen. Tap **Server** to pick a different address. From the repo root:
-
-```bash
-bash scripts/mobile/build-android.sh   # dist/mobile/ComForceMKE-arm64.apk
-bash scripts/mobile/build-ios.sh       # macOS only; dist/mobile/ComForceMKE-unsigned.ipa
-```
-
-The **Mobile apps** GitHub Actions workflow builds the same two files. The APK is an arm64 debug build you can sideload. The IPA is unsigned arm64 and needs a re-sign before it will install on an iPhone.
-
-To post the Capacitor mobile application to public app stores:
-
-#### Google Play Store (Android)
-1. Build the production web bundle and sync:
-   ```bash
-   cd src/client
-   npm run build
-   npx cap sync android
-   npx cap open android
-   ```
-2. In Android Studio:
-   - Configure version code and version name in `android/app/build.gradle`.
-   - Select **Build > Generate Signed Bundle / APK**.
-   - Select **Android App Bundle (.aab)** and sign with your production upload keystore.
-   - Upload the generated `.aab` file to the [Google Play Console](https://play.google.com/console).
-
-#### Apple App Store (iOS)
-1. Build the production web bundle and sync:
-   ```bash
-   cd src/client
-   npm run build
-   npx cap sync ios
-   npx cap open ios
-   ```
-2. In Xcode:
-   - Configure Bundle Identifier and Version in the project settings.
-   - Select your registered Apple Developer Team under **Signing & Capabilities**.
-   - Select target device **Any iOS Device (arm64)**.
-   - Click **Product > Archive**.
-   - In the Organizer window, click **Distribute App** and submit to **TestFlight** and **App Store Connect**.
-
----
-
-## Hackathon Schedule
-
-All times are in Central Time at Diercks Hall:
-
-| Date & Time | Event | Focus |
-| :--- | :--- | :--- |
-| **Thursday, Nov 19 (6:30 PM - 7:30 PM)** | **Kick-off** | Partner problem details, team check-in, scope lock |
-| **Friday, Nov 20 (3:00 PM - 7:00 PM)** | **Hacking Day 1** | Wireframe client, implement API endpoints, load sample data |
-| **Saturday, Nov 21 (10:00 AM - 2:00 PM)** | **Hacking Day 2** | AI model integration, mobile build test, ticket flow |
-| **Sunday, Nov 22 (10:00 AM - 4:00 PM)** | **Finals & Expo** | Code freeze, rehearse pitch, live judge demos |
-
----
-
-## Submission Checklist
-
-Before the Sunday deadline:
-
-- [ ] Both `src/client` and `src/server` run cleanly following these instructions.
-- [ ] A 2-minute backup video demo is recorded showing the web and mobile views.
-- [ ] Presentation slides are exported to PDF and saved in `docs/`.
-- [ ] No API keys, passwords, or private resident data are in the git history.
-- [ ] The live demo shows both community ticket claiming and safe route planning.
-
----
-
-## Team Members
-
-| Name | Role | Responsibilities | Contact |
-| :--- | :--- | :--- | :--- |
-| **Avery B** | ... | ... | `@Akiisqt` |
-| **Chris B** | ... | ... | `@BlazeXYZ` |
-| **Hayden F** | ... | ... | `@Fonsh19` |
-| **Paxson G** | ... | ... | `@TNTwise` |
-| **Sam F** | ... | ... | `@samfreund` |
-
----
+| Team member | GitHub |
+| --- | --- |
+| Avery B | [@Akiisqt](https://github.com/Akiisqt) |
+| Chris B | [@BlazeXYZ](https://github.com/BlazeXYZ) |
+| Hayden F | [@Fonsh19](https://github.com/Fonsh19) |
+| Jeremiah K | [@jck75-msoe](https://github.com/jck75-msoe) |
+| Julian A | [@Julian-Abelarde](https://github.com/Julian-Abelarde) |
+| Paxson G | [@TNTwise](https://github.com/TNTwise) |
+| Sam F | [@samfreund](https://github.com/samfreund) |
 
 ## Acknowledgments
 
-* **MSOE Artificial Intelligence Club (MAIC)** for hosting Hacksgiving.
-* **Milwaukee School of Engineering (MSOE)** for providing Diercks Hall and Rosie compute access.
-* **ComforceMKE** for partnering with MSOE students to build tools for the Milwaukee community.
+- **MSOE Artificial Intelligence Club (MAIC)** for hosting Hacksgiving
+- **Milwaukee School of Engineering (MSOE)** for Diercks Hall and Rosie compute access
+- **ComforceMKE** for partnering with students on real Milwaukee community needs

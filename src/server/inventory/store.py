@@ -230,6 +230,15 @@ def reload_from_db() -> None:
                     row.source,
                     _as_utc(row.created_at),
                 )
+            placeholder = session.query(InventoryEntry).filter(
+                InventoryEntry.id == "en-1",
+                InventoryEntry.item_id.is_(None),
+                InventoryEntry.label == "mystery thing",
+                InventoryEntry.via == "unmatched",
+            ).first()
+            if placeholder is not None:
+                session.delete(placeholder)
+                session.commit()
             for row in session.query(InventoryEntry).all():
                 candidates = tuple(
                     Candidate(candidate["item_id"], candidate.get("probability"))
@@ -732,9 +741,13 @@ def guess_entries(at: datetime | None = None) -> list[Entry]:
 def rematch_unresolved() -> int:
     """Link held and guessed entries whose wording now has an exact alias. Needs and donations alike."""
     with _lock:
+        # Use the caller's working state: reloading here would discard pending alias changes.
         index = alias_index()
+        moment = now_utc()
         linked = 0
-        for entry in unresolved_entries() + guess_entries():
+        for entry in _entries.values():
+            if not _open(entry, moment) or (entry.item_id is not None and entry.via not in GUESS_VIA):
+                continue
             alias = index.get(normalize(entry.label))
             if alias is not None:
                 entry.item_id, entry.alias_id, entry.via = alias.item_id, alias.id, "alias"
