@@ -19,6 +19,7 @@ from src.server.ai.hotspots import COORDINATOR_API_KEY
 from src.server.api.inventory import router
 from src.server.db import InventoryEntry, close_db, get_db, init_db
 from src.server.inventory import resolver, store
+from src.server.seed import seed_database
 
 PANTRY = "hunger-task-force-south"
 OTHER = "house-of-peace"
@@ -116,7 +117,7 @@ def test_new_catalog_alias_is_available_without_a_database_reload(
     assert result.json()["item"]["id"] == item.json()["id"]
 
 
-def test_placeholder_unmatched_entry_is_removed_on_reinit(database: str) -> None:
+def test_unmatched_entry_survives_reload_and_seeding(database: str) -> None:
     now = datetime.now(UTC)
     session = next(get_db())
     try:
@@ -143,6 +144,8 @@ def test_placeholder_unmatched_entry_is_removed_on_reinit(database: str) -> None
 
     close_db()
     init_db(database)
-    detail = make_app().get(f"{BASE}/locations/{PANTRY}").json()
+    assert [entry.id for entry in store.unresolved_entries()] == ["en-1"]
 
-    assert detail["need"] == []
+    seed_database(database)
+    init_db(database)
+    assert [entry.id for entry in store.unresolved_entries()] == ["en-1"]

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { LocateFixed } from 'lucide-react';
 import { DISTRICTS, useSurvey, type District, type DistrictId } from '../../state/survey';
 
@@ -33,6 +33,10 @@ type LocateState = { kind: 'idle' } | { kind: 'busy' } | { kind: 'found'; name: 
 export function DistrictPicker() {
   const { survey, update, t } = useSurvey();
   const [locate, setLocate] = useState<LocateState>({ kind: 'idle' });
+  const pickerId = useId();
+  const locateRequest = useRef(0);
+
+  useEffect(() => () => { locateRequest.current += 1; }, []);
 
   function useLocation() {
     if (!('geolocation' in navigator) || !window.isSecureContext) {
@@ -40,18 +44,23 @@ export function DistrictPicker() {
       return;
     }
     setLocate({ kind: 'busy' });
+    const request = ++locateRequest.current;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
+        if (request !== locateRequest.current) return;
         const d = nearestDistrict([pos.coords.latitude, pos.coords.longitude]);
         update({ district: d.id });
         setLocate({ kind: 'found', name: d.name });
       },
-      () => setLocate({ kind: 'failed', reason: 'denied' }),
+      () => {
+        if (request === locateRequest.current) setLocate({ kind: 'failed', reason: 'denied' });
+      },
       { enableHighAccuracy: false, timeout: 10_000, maximumAge: 300_000 },
     );
   }
 
   function pick(id: DistrictId) {
+    locateRequest.current += 1;
     update({ district: id });
     setLocate({ kind: 'idle' });
   }
@@ -67,24 +76,18 @@ export function DistrictPicker() {
           {t(locate.reason === 'denied' ? 'district.denied' : 'district.unsupported')}
         </p>
       )}
-      <p className="kicker" id="district-or">
+      <p className="kicker" id={pickerId}>
         {t('district.or')}
       </p>
-      <div className="pick" role="radiogroup" aria-labelledby="district-or">
+      <div className="pick" role="radiogroup" aria-labelledby={pickerId}>
         {DISTRICTS.map((d) => (
-          <button
-            key={d.id}
-            type="button"
-            role="radio"
-            aria-checked={survey.district === d.id}
-            onClick={() => pick(d.id)}
-          >
+          <label key={d.id}>
             <span>
               <b>{d.name}</b>
               <small>{d.hint}</small>
             </span>
-            <span className="radio-dot" aria-hidden="true" />
-          </button>
+            <input type="radio" name={pickerId} checked={survey.district === d.id} onChange={() => pick(d.id)} />
+          </label>
         ))}
       </div>
     </div>

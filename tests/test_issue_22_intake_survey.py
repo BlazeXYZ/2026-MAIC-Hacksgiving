@@ -13,7 +13,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.server.ai.schemas import TriageOutputSchema
 from src.server.api.intake_survey import router
-from src.server.intake.store import reset_state
+from src.server.intake.store import reset_state, snapshot
 
 client = TestClient(FastAPI())
 client.app.include_router(router)
@@ -24,6 +24,19 @@ def _clean_tickets():
     reset_state()
     yield
     reset_state()
+
+
+def test_triage_preview_does_not_create_a_ticket() -> None:
+    response = client.post(
+        "/api/v1/intake/triage",
+        json={"selected_options": ["Food", "Today"], "language": "en"},
+    )
+
+    assert response.status_code == 200, response.text
+    assert response.json()["category"] == "food"
+    assert response.json()["urgency"] == "today"
+    assert "token" not in response.json()
+    assert snapshot() == []
 
 
 def test_preset_survey_returns_pending_token_and_skips_the_model(monkeypatch):

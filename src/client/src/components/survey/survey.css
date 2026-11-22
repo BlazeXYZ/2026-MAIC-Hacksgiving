@@ -1,5 +1,23 @@
-.lang-seg { width: 100%; }
-.lang-seg button { flex: 1; min-height: 44px; font-size: 15px; }
+.lang-seg {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.25rem;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--paper);
+}
+.lang-seg button {
+  flex: 1;
+  min-height: 44px;
+  padding: 0.35rem 0.5rem;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 15px;
+  font-weight: 650;
+  cursor: pointer;
+}
+.lang-seg button[aria-pressed="true"] { background: var(--green); color: #fff; }
 .lang-seg[data-compact] { width: auto; }
 .lang-seg[data-compact] button { min-height: 36px; font-size: 13px; padding: 0 10px; }
 
@@ -26,22 +44,21 @@
 
 /* #4 list of neighborhoods */
 .pick { background: var(--card); border: 1px solid var(--line); border-radius: var(--r); }
-.pick button { display: grid; grid-template-columns: minmax(0, 1fr) 24px; gap: 12px; align-items: center; width: 100%; min-height: 56px;
+.pick label { display: grid; grid-template-columns: minmax(0, 1fr) 24px; gap: 12px; align-items: center; width: 100%; min-height: 56px;
   padding: 10px 16px; border: 0; background: none; text-align: left; cursor: pointer; }
-.pick button + button { border-top: 1px solid var(--line); }
+.pick label + label { border-top: 1px solid var(--line); }
 .pick b { display: block; font-weight: 700; font-size: 15px; }
 .pick small { display: block; font-size: 13px; color: var(--ink-3); }
-.radio-dot { width: 22px; height: 22px; border-radius: 50%; border: 2px solid var(--line-2); }
-.pick button[aria-checked="true"] { background: var(--green-wash); }
-.pick button[aria-checked="true"] .radio-dot { border: 7px solid var(--green); }
+.pick input { width: 20px; height: 20px; accent-color: var(--green); }
+.pick label:has(:checked) { background: var(--green-wash); }
 
 /* #6 review card */
-.review { padding: 20px; display: grid; gap: 14px; }
+.review { margin-top: 0.75rem; padding: 20px; display: grid; gap: 14px; }
 .review-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .review .why { font-size: 18px; }
 .review-actions { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
 .review-skel { display: grid; gap: 10px; }
-.review-skel .skeleton { height: 14px; }
+.review-skel .skeleton { height: 14px; border-radius: 6px; background: var(--sunk); }
 
 /* privacy switch row */
 .setrow { display: flex; gap: 16px; align-items: flex-start; padding: 16px; }
