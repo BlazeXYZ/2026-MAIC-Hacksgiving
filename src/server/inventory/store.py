@@ -415,6 +415,7 @@ def add_item(name: str, extra_aliases: tuple[str, ...] = (), *, confirm_new: boo
     Held and guessed entries that use any of these wordings are matched to the new item right away.
     """
     with _lock:
+        reload_from_db()
         clean = name.strip()
         wordings = [clean, *(a.strip() for a in extra_aliases if a.strip())]
         index = alias_index()
@@ -435,12 +436,47 @@ def add_item(name: str, extra_aliases: tuple[str, ...] = (), *, confirm_new: boo
             item_id, n = f"{base}-{n}", n + 1
         item = _items[item_id] = Item(item_id, clean)
         seen: set[str] = set()
+        created_aliases = []
         for text in wordings:
             key = normalize(text)
             if key and key not in seen:
                 seen.add(key)
-                _add_alias_locked(text, item.id, "approved", "coordinator", now_utc())
+                created_aliases.append(
+                    _add_alias_locked(text, item.id, "approved", "coordinator", now_utc())
+                )
         rematch_unresolved()
+        session = _db_session()
+        if session is not None:
+            try:
+                from src.server.db import InventoryAlias, InventoryEntry, InventoryItem
+
+                session.add(InventoryItem(id=item.id, name=item.name))
+                for alias in created_aliases:
+                    session.add(
+                        InventoryAlias(
+                            id=alias.id,
+                            text=alias.text,
+                            item_id=alias.item_id,
+                            status=alias.status,
+                            source=alias.source,
+                            created_at=alias.created_at,
+                        )
+                    )
+                for entry in _entries.values():
+                    row = session.get(InventoryEntry, entry.id)
+                    if (
+                        row is not None
+                        and (row.item_id != entry.item_id or row.alias_id != entry.alias_id or row.via != entry.via)
+                    ):
+                        row.item_id = entry.item_id
+                        row.alias_id = entry.alias_id
+                        row.via = entry.via
+                session.commit()
+            except Exception:
+                session.rollback()
+                raise
+            finally:
+                session.close()
         return item
 
 

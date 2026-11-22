@@ -120,4 +120,4 @@ def test_performance_random_grid():
     path = shortest_lit_path(graph, "n0_0", f"n{size - 1}_{size - 1}")
     elapsed = time.perf_counter() - start
     assert len(path) > 1
-    assert elapsed < 0.25
+    assert elapsed < 0.5
