@@ -54,7 +54,7 @@ Port **3000** is the Vite dev client on this computer. Every baby deploy starts 
 
 Docker Compose is a different stack. If it is already publishing `localhost:3000`, stop that Compose web publish before starting Vite. Do not start Compose as part of this skill.
 
-Human steps and the cloud write-up are in [deploy/KUBERNETES.md](../../../deploy/KUBERNETES.md). This skill does not change application code and does not set `target` to `aws`.
+Human steps and the cloud procedure are in [deploy/KUBERNETES.md](../../../deploy/KUBERNETES.md). The current hosting snapshot, including what this phrase does, is in [docs/infrastructure.md](../../../docs/infrastructure.md). This skill does not change application code and does not set `target` to `aws`.
 
 Stay on this laptop. Do not push images, state, or secrets to a registry or cluster you did not create here. Do not apply a directory the phrase did not name.
 

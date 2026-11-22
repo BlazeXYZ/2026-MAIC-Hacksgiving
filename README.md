@@ -30,6 +30,11 @@ This README follows the recommended presentation sequence:
 | 2:50-3:35 | [Demo flow](#demo-flow) | Show a real resident and coordinator journey |
 | 3:35-4:00 | [Impact and next steps](#impact-and-next-steps) | Why the platform matters and what comes next |
 
+- [Infrastructure situation](docs/infrastructure.md) — no cloud cluster is running; `baby deploy up dev` is the local kind path
+- [Kubernetes setup](deploy/KUBERNETES.md) — dev, qa, and prod on a local kind cluster or EKS
+- [Project Documentation](docs/README.md)
+- [Jupyter Notebooks](notebooks/README.md)
+
 ---
 
 ## The Problem
@@ -53,6 +58,11 @@ guided experience.
 ## Our Solution
 
 ComForce MKE is a modular community response platform for both **web and mobile**.
+
+- **Client Stack:** React, TypeScript, Vite, Capacitor (iOS and Android export), OpenStreetMap, Tailwind CSS
+- **Server Stack:** Python 3.10+, FastAPI, PostgreSQL, `uv` package manager, Uvicorn
+- **Deploy:** Docker Compose locally. Terraform keeps dev, qa, and prod in separate state. Each one can run as a local Kubernetes cluster or on AWS EKS. No AWS apply has been run; the laptop path is [docs/infrastructure.md](docs/infrastructure.md).
+- **AI Models:** Transformer-based need heatmaps, small classifier for content moderation and triage, and LLM recommendations
 
 It gives each resident:
 
