@@ -741,9 +741,13 @@ def guess_entries(at: datetime | None = None) -> list[Entry]:
 def rematch_unresolved() -> int:
     """Link held and guessed entries whose wording now has an exact alias. Needs and donations alike."""
     with _lock:
+        # Use the caller's working state: reloading here would discard pending alias changes.
         index = alias_index()
+        moment = now_utc()
         linked = 0
-        for entry in unresolved_entries() + guess_entries():
+        for entry in _entries.values():
+            if not _open(entry, moment) or (entry.item_id is not None and entry.via not in GUESS_VIA):
+                continue
             alias = index.get(normalize(entry.label))
             if alias is not None:
                 entry.item_id, entry.alias_id, entry.via = alias.item_id, alias.id, "alias"
