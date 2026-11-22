@@ -122,3 +122,23 @@
 .isrid-source a {
   color: inherit;
 }
+
+.isrid-note {
+  margin: 0.4rem 0 0;
+  font-size: 0.75rem;
+  font-style: italic;
+  color: var(--ink-2);
+}
+
+.isrid-tip {
+  margin: 0.6rem 0 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  background: var(--green-wash);
+  color: var(--green-ink);
+}
+
+.isrid-tip a {
+  color: inherit;
+  font-size: 0.7rem;
+}

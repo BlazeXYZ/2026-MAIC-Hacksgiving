@@ -79,6 +79,21 @@ export default function IsridRingsPanel({
         {distances.n !== null && <li className="isrid-legend-n">n = {distances.n} cases</li>}
       </ul>
 
+      {distances.note && (
+        <p className="isrid-note" role="note">
+          {distances.note}
+        </p>
+      )}
+
+      {category.tip && (
+        <p className="isrid-tip">
+          <strong>Search tip:</strong> {category.tip.text}{' '}
+          <a href={category.tip.source.url} target="_blank" rel="noreferrer">
+            ({category.tip.source.citation}, {category.tip.source.location})
+          </a>
+        </p>
+      )}
+
       <p className="isrid-caveat" role="note">
         <strong>Caveat:</strong> ISRID data is mostly from wilderness and rural searches. Urban cases, especially
         teens using buses or trains, may not follow these rings. Use them to plan where to start, not to rule
