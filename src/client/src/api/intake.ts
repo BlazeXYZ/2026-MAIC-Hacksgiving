@@ -18,7 +18,7 @@ import { translate, type Language } from '../i18n/strings';
 
 const TIMEOUT_MS = 8000;
 
-/** Not in PR #50 yet: a triage preview that does not create a ticket. Until it exists, `previewTriage` uses the local guess. */
+/** Preview the server triage result without creating a ticket. */
 const TRIAGE_PREVIEW_PATH = '/api/v1/intake/triage';
 
 export type Sampled<T> = T & { sample?: boolean };
@@ -199,7 +199,7 @@ export async function getTicket(token: string): Promise<TicketLookup> {
     const ticket = await request<PublicTicket>(`${apiPaths.ticket}/${encodeURIComponent(clean)}`);
     return { kind: 'found', ticket };
   } catch (err) {
-    if (serverMissing(err)) return { kind: 'not-found' };
-    throw err; // 429 and other refusals go to the screen as errors
+    if (err instanceof ApiError && err.status === 404) return { kind: 'not-found' };
+    throw err;
   }
 }

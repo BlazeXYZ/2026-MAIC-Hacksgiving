@@ -21,6 +21,9 @@ export interface CoordinatorTicket {
 export interface QueueCounts {
   total_urgent: number;
   total_pending: number;
+  total_open?: number;
+  total_matching?: number;
+  district_counts?: Record<string, { total: number; urgent: number }>;
 }
 
 export interface QueuePage {

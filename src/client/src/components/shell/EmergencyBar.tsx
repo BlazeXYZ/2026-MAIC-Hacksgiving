@@ -9,9 +9,9 @@ export const COMFORCE_HOTLINE = { display: '414-395-0552', tel: 'tel:4143950552'
  * so someone in a crisis never has to finish a form first.
  */
 export function EmergencyBar() {
-  const { t } = useSurvey();
+  const { t, survey } = useSurvey();
   return (
-    <div className="emergency" role="region" aria-label={t('emergency.lede')}>
+    <div className="emergency" role="region" lang={survey.language === 'es' ? 'es' : 'en'} aria-label={t('emergency.lede')}>
       <span className="emergency-lede">{t('emergency.lede')}</span>
       <a className="emergency-call is-911" href="tel:911">
         <Phone aria-hidden="true" />
