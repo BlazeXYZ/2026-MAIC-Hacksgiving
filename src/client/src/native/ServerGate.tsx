@@ -105,7 +105,7 @@ export default function ServerGate(): ReactElement {
   }
 
   if (phase === 'hub') {
-    return <App focusHub />;
+    return <App />;
   }
 
   if (phase === 'opening') {
