@@ -3,6 +3,11 @@
 One lock covers every read and write, like `intake/store.py` and
 `inventory/store.py`. A restart, or `reset()`, goes back to the seed threads.
 Nothing records who a poster is: authors are pseudonyms from `HANDLES`.
+
+Missing-person cases live here too. Each case owns exactly one lead thread,
+pinned while the case is active and locked once it is resolved. Every reply to
+a lead thread is held for a coordinator, who publishes it as `Verified`, keeps
+it private (coordinators only), or removes it.
 """
 
 from __future__ import annotations
@@ -14,11 +19,22 @@ from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from src.server.ai.pii import scrub_pii
-from src.server.forums.rules import HUB_IDS, automatic_answer, hold_reason
-from src.server.forums.seed import SEED_THREADS, Flair, Role
+from src.server.forums.rules import (
+    HUB_IDS,
+    LEAD_TIP_NOTICE,
+    automatic_answer,
+    hold_reason,
+    lead_tip_reason,
+)
+from src.server.forums.seed import SEED_CASES, SEED_THREADS, CaseStatus, Flair, Role
 
-Status = Literal["published", "held"]
+#: `private` is a lead tip a coordinator kept off the thread. Only coordinator
+#: routes ever return it.
+Status = Literal["published", "held", "private"]
 Sort = Literal["hot", "new", "top"]
+ReviewAction = Literal["publish", "keep_private", "remove"]
+
+CASE_HUB = "missing-persons"
 
 #: Pseudonyms handed to posters. Shared with the Search grid's volunteer names.
 HANDLES: tuple[str, ...] = (
@@ -42,6 +58,9 @@ class Reply:
     helpful: int = 0
     status: Status = "published"
     held_reason: str | None = None
+    flair: Flair | None = None
+    #: Search grid sector a lead tip names, for example "C2". Lead tips only.
+    sector: str | None = None
 
 
 @dataclass
@@ -61,9 +80,24 @@ class Thread:
     status: Status = "published"
     held_reason: str | None = None
     replies: list[Reply] = field(default_factory=list)
+    #: Set on a case's lead thread. Every reply to it is held.
+    case_id: str | None = None
+    #: A locked thread takes no new replies (its case is resolved).
+    locked: bool = False
 
     def public_replies(self) -> list[Reply]:
         return [r for r in self.replies if r.status == "published"]
+
+
+@dataclass
+class Case:
+    id: str
+    display_name: str
+    last_known_point: str
+    status: CaseStatus
+    thread_id: str
+    created_at: datetime
+    resolved_at: datetime | None = None
 
 
 class ForumError(Exception):
@@ -77,6 +111,7 @@ class ForumError(Exception):
 
 _lock = threading.RLock()
 _threads: dict[str, Thread] = {}
+_cases: dict[str, Case] = {}
 
 
 def _now() -> datetime:
@@ -92,6 +127,7 @@ def reset(now: datetime | None = None) -> None:
     now = now or _now()
     with _lock:
         _threads.clear()
+        _cases.clear()
         for seed in SEED_THREADS:
             thread = Thread(
                 id=seed["id"],
@@ -121,6 +157,16 @@ def reset(now: datetime | None = None) -> None:
                     )
                 )
             _threads[thread.id] = thread
+        for seed_case in SEED_CASES:
+            case = _open_case_locked(
+                seed_case["display_name"],
+                seed_case["last_known_point"],
+                case_id=seed_case["id"],
+                thread_id=f"lead-{seed_case['id']}",
+                at=now - timedelta(minutes=seed_case["minutes_ago"]),
+            )
+            if seed_case["status"] == "resolved":
+                _resolve_case_locked(case, now)
 
 
 def _require_hub(hub_id: str) -> None:
@@ -220,13 +266,27 @@ def create_reply(
     handle: str | None = None,
     *,
     coordinator: bool = False,
+    sector: str | None = None,
 ) -> Reply:
-    """Reply to a public thread, or to a public reply on it."""
+    """Reply to a public thread, or to a public reply on it.
+
+    On a case's lead thread every neighbor reply is a tip and is held, whatever
+    `hold_reason` says. A coordinator's own reply goes up directly.
+    """
     body = body.strip()
-    reason = None if coordinator else hold_reason(body)
     author, role = _author(handle, coordinator)
     with _lock:
         thread = _public_thread(thread_id)
+        if thread.locked:
+            raise ForumError(409, "This case is closed. The lead thread takes no new tips.")
+        is_tip = thread.case_id is not None and not coordinator
+        reason: str | None
+        if coordinator:
+            reason = None
+        elif is_tip:
+            reason = lead_tip_reason(body)
+        else:
+            reason = hold_reason(body)
         if parent_id is not None and not any(
             r.id == parent_id and r.status == "published" for r in thread.replies
         ):
@@ -241,6 +301,7 @@ def create_reply(
             parent_id=parent_id,
             status="held" if reason else "published",
             held_reason=reason,
+            sector=sector.strip().upper() if is_tip and sector and sector.strip() else None,
         )
         thread.replies.append(reply)
         return reply
@@ -296,19 +357,31 @@ def thread_of(reply: Reply) -> Thread:
         return _threads[reply.thread_id]
 
 
+def private_tips() -> list[Reply]:
+    """Lead tips a coordinator kept private, oldest first. Coordinator routes only."""
+    with _lock:
+        rows = [r for t in _threads.values() for r in t.replies if r.status == "private"]
+        rows.sort(key=lambda row: row.created_at)
+        return rows
+
+
 def review(
-    post_id: str, action: Literal["publish", "remove"], body: str | None = None
+    post_id: str, action: ReviewAction, body: str | None = None
 ) -> Thread | Reply | None:
-    """Publish a held post with private details scrubbed, or remove it.
+    """Publish a held post with private details scrubbed, keep a tip private, or remove it.
 
     A coordinator may pass an edited `body`, for example to take out a
-    "come to my house" line the scrubber cannot see. Returns the published
+    "come to my house" line the scrubber cannot see. A published lead tip gets
+    the `Verified` flair. `keep_private` only applies to lead tips: the tip
+    stays with coordinators and never reaches a public route. Returns the
     post, or None once it has been removed.
     """
     edited = body.strip() if body and body.strip() else None
     with _lock:
         for thread in list(_threads.values()):
             if thread.id == post_id and thread.status == "held":
+                if action == "keep_private":
+                    raise ForumError(409, "Only a tip on a case lead thread can be kept private.")
                 if action == "remove":
                     del _threads[thread.id]
                     return None
@@ -326,10 +399,104 @@ def review(
                     if action == "remove":
                         thread.replies.remove(reply)
                         return None
+                    if action == "keep_private":
+                        if thread.case_id is None:
+                            raise ForumError(
+                                409, "Only a tip on a case lead thread can be kept private."
+                            )
+                        if edited:
+                            reply.body = edited
+                        reply.status = "private"
+                        return reply
                     reply.body = scrub_pii(edited or reply.body)
                     reply.status, reply.held_reason = "published", None
+                    if thread.case_id is not None:
+                        reply.flair = "Verified"
                     return reply
     raise ForumError(404, "No held post with that id.")
+
+
+# ---------- missing-person cases ----------
+
+
+def _open_case_locked(
+    display_name: str,
+    last_known_point: str,
+    *,
+    case_id: str | None = None,
+    thread_id: str | None = None,
+    at: datetime | None = None,
+) -> Case:
+    at = at or _now()
+    case = Case(
+        id=case_id or _new_id("case"),
+        display_name=display_name,
+        last_known_point=last_known_point,
+        status="active",
+        thread_id=thread_id or _new_id("lead"),
+        created_at=at,
+    )
+    _threads[case.thread_id] = Thread(
+        id=case.thread_id,
+        hub_id=CASE_HUB,
+        author=COORDINATOR_HANDLE,
+        role="coordinator",
+        title=f"Lead thread: {display_name}. Send tips here",
+        body=(
+            f"Last known point: {last_known_point}. Reply with what you saw, the nearest "
+            f"corner or landmark, and the time. {LEAD_TIP_NOTICE}"
+        ),
+        created_at=at,
+        pinned=True,
+        flair="Alert",
+        steps=[
+            LEAD_TIP_NOTICE,
+            "Say what you saw, the nearest corner or landmark, and when. Never a house number.",
+            "Know the Search grid sector, like C2? Add it so a verified lead can mark it.",
+        ],
+        case_id=case.id,
+    )
+    _cases[case.id] = case
+    return case
+
+
+def _resolve_case_locked(case: Case, at: datetime) -> None:
+    case.status, case.resolved_at = "resolved", at
+    thread = _threads[case.thread_id]
+    thread.locked, thread.pinned = True, False
+
+
+def open_case(display_name: str, last_known_point: str) -> Case:
+    """Open a case and its one pinned lead thread in the Missing Persons hub."""
+    display_name, last_known_point = display_name.strip(), last_known_point.strip()
+    if not display_name or not last_known_point:
+        raise ForumError(422, "A case needs a display name and a last-known point.")
+    if hold_reason(f"{display_name}\n{last_known_point}"):
+        raise ForumError(
+            422,
+            "Use initials or a first name and a public corner. No address, phone, or email.",
+        )
+    with _lock:
+        return _open_case_locked(display_name, last_known_point)
+
+
+def resolve_case(case_id: str) -> Case:
+    """Close a case. Its lead thread is unpinned and locked."""
+    with _lock:
+        case = _cases.get(case_id)
+        if case is None:
+            raise ForumError(404, "No case with that id.")
+        if case.status == "active":
+            _resolve_case_locked(case, _now())
+        return case
+
+
+def list_cases() -> list[Case]:
+    """Every case, active first, newest first within each status."""
+    with _lock:
+        rows = sorted(_cases.values(), key=lambda c: c.created_at, reverse=True)
+        rows.sort(key=lambda c: c.status != "active")
+        return rows
 
 
 reset()

@@ -1,6 +1,9 @@
 import type { LatLngTuple } from 'leaflet';
+import { STALE_AFTER_HOURS } from './searchCoverage';
 
-export type SectorStatus = 'Unsearched' | 'Searching' | 'Cleared' | 'Lead Found';
+// 'Stale' is never stored: it is derived from a Cleared sector whose last pass is
+// older than STALE_AFTER_HOURS (see resolveStatus in searchCoverage.ts).
+export type SectorStatus = 'Unsearched' | 'Searching' | 'Cleared' | 'Stale' | 'Lead Found';
 
 export interface SearchSector {
   id: string;
@@ -11,6 +14,8 @@ export interface SearchSector {
   volunteers: string[];
   notes?: string;
   updatedAt: string;
+  lastSearchedAt: string | null; // ISO time of the most recent completed (Cleared) pass
+  passCount: number; // completed passes over this sector
 }
 
 // Hex literals mirror the design tokens in src/client/src/styles/global.css
@@ -34,6 +39,12 @@ export const STATUS_COLORS: Record<SectorStatus, { fill: string; border: string;
     badgeBg: '#E4F0E6', // --green-wash
     text: '#174A2C', // --green-ink
   },
+  Stale: {
+    fill: '#B4532A', // --stale
+    border: '#7A3414', // --stale-ink
+    badgeBg: '#FBEAE1', // --stale-wash
+    text: '#7A3414', // --stale-ink (7.7:1 on --stale-wash)
+  },
   'Lead Found': {
     fill: '#4338A8', // --police
     border: '#3730A3', // darker police
@@ -51,8 +62,11 @@ const STEP_LON = 0.0050; // ~4 blocks east/west
 const ROWS = ['A', 'B', 'C', 'D'];
 const COLS = [1, 2, 3, 4];
 
-export function generateInitialSectors(): SearchSector[] {
+const MINUTE_MS = 60 * 1000;
+
+export function generateInitialSectors(nowMs: number = Date.now()): SearchSector[] {
   const sectors: SearchSector[] = [];
+  const minutesAgo = (m: number): string => new Date(nowMs - m * MINUTE_MS).toISOString();
 
   for (let r = 0; r < ROWS.length; r++) {
     const rowName = ROWS[r];
@@ -69,11 +83,15 @@ export function generateInitialSectors(): SearchSector[] {
       let status: SectorStatus = 'Unsearched';
       let volunteers: string[] = [];
       let notes = '';
+      let passCount = 0;
+      let lastSearchedAt: string | null = null;
 
       if (id === 'B2') {
         status = 'Cleared';
         volunteers = ['Lantern', 'Maple'];
         notes = 'Alleys and storefront entries checked. Nothing noted.';
+        passCount = 1;
+        lastSearchedAt = minutesAgo(40);
       } else if (id === 'B3') {
         status = 'Searching';
         volunteers = ['Cedar', 'Harbor'];
@@ -92,10 +110,16 @@ export function generateInitialSectors(): SearchSector[] {
         status = 'Cleared';
         volunteers = ['Sparrow', 'Cedar'];
         notes = 'Park paths and parking lots checked. Nothing noted.';
+        // Demo: cleared long enough ago that it shows as Stale.
+        passCount = 1;
+        lastSearchedAt = minutesAgo(STALE_AFTER_HOURS * 60 + 75);
       } else if (id === 'B1') {
         status = 'Cleared';
         volunteers = ['Harbor'];
         notes = 'Residential blocks walked twice. Neighbors asked to check garages.';
+        // Demo: multi-pass sector.
+        passCount = 2;
+        lastSearchedAt = minutesAgo(25);
       } else if (id === 'C1') {
         status = 'Searching';
         volunteers = ['Maple', 'Brook'];
@@ -104,6 +128,9 @@ export function generateInitialSectors(): SearchSector[] {
         status = 'Cleared';
         volunteers = ['Willow'];
         notes = 'Wisconsin Ave storefronts and side streets cleared.';
+        // Demo: turns Stale about one minute after the page loads.
+        passCount = 1;
+        lastSearchedAt = minutesAgo(STALE_AFTER_HOURS * 60 - 1);
       }
 
       const coordinates: LatLngTuple[] = [
@@ -125,6 +152,8 @@ export function generateInitialSectors(): SearchSector[] {
         volunteers,
         notes,
         updatedAt: 'Just now',
+        lastSearchedAt,
+        passCount,
       });
     }
   }

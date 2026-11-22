@@ -6,12 +6,25 @@ const config: CapacitorConfig = {
   webDir: 'dist',
   server: {
     androidScheme: 'https',
-    cleartext: true
+    cleartext: true,
+    // The shell navigates the web view to whatever IP the phone saved.
+    allowNavigation: ['*'],
+    errorPath: 'error.html',
+  },
+  android: {
+    allowMixedContent: true,
+  },
+  ios: {
+    contentInset: 'automatic',
   },
   plugins: {
-    Haptics: {},
-    App: {}
-  }
+    SplashScreen: {
+      launchShowDuration: 600,
+      launchAutoHide: true,
+      backgroundColor: '#0F6B3A',
+      showSpinner: false,
+    },
+  },
 };
 
 export default config;

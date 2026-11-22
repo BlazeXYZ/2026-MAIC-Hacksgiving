@@ -67,7 +67,6 @@ def seed_demo_tickets(now: datetime | None = None) -> int:
         # add_ticket issues a random token; swap in the fixed demo token.
         def _apply(t: store.Ticket, token: str = token, status: TicketStatus = status,
                    alias: str | None = alias, notes: str | None = notes, created: datetime = created) -> None:
-            old = t.token
             t.token = token
             t.status = status
             if alias:
@@ -76,10 +75,7 @@ def seed_demo_tickets(now: datetime | None = None) -> int:
             t.notes = notes
             if status is not TicketStatus.pending:
                 t.timeline.append((created + timedelta(minutes=10), status))
-            store._by_token.pop(old, None)
-            store._by_token[token] = t.ticket_id
 
-        with store._lock:
-            _apply(store._tickets[ticket.ticket_id])
+        store.mutate(ticket.ticket_id, _apply)
         added += 1
     return added

@@ -1,0 +1,66 @@
+name: Mobile apps
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - feat/mobile-shell
+    paths:
+      - "src/client/**"
+      - "scripts/mobile/**"
+      - ".github/workflows/mobile-apps.yml"
+
+jobs:
+  android-apk:
+    name: Android arm64 APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/client/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/comforce-mobile/android-sdk
+          key: android-sdk-34-35
+
+      - name: Build one arm64 APK
+        run: bash scripts/mobile/build-android.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ComForceMKE-arm64-apk
+          path: dist/mobile/ComForceMKE-arm64.apk
+          if-no-files-found: error
+
+  ios-ipa:
+    name: iOS unsigned IPA
+    runs-on: macos-15
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/client/package-lock.json
+
+      - name: Build one unsigned arm64 IPA
+        run: bash scripts/mobile/build-ios.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ComForceMKE-unsigned-ipa
+          path: dist/mobile/ComForceMKE-unsigned.ipa
+          if-no-files-found: error
