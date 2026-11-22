@@ -94,15 +94,39 @@
   <!-- 5 · Trust & safety: jev moderation, PII scrubbing, human review -->
   <section class="slide">
     <p class="kicker" data-step="1">Trust &amp; safety</p>
-    <h2 class="title" data-step="2">[Three gates between a post and the <em>public board</em>.]</h2>
-    <div class="card steps" data-step="3" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:56px">
-      <div class="step done"><span class="n">1</span><h3>Local checks</h3><p>Pattern rules catch phone numbers, home addresses, emails and SSNs, plus known abuse wording. Held text never reaches the public list — the board shows a count, not the content — and the author gets a plain-language reason.</p></div>
-      <div class="step on"><span class="n">2</span><h3>Jev second opinion</h3><p>The Jev decision model scores four abuse categories against "fine for the public thread"; anything at 0.5 probability or higher is held. Locally held text is never sent, and no key or failure changes the local outcome.</p></div>
-      <div class="step"><span class="n">3</span><h3>Human review</h3><p>A coordinator reads every held post with its reason, then publishes it scrubbed, edits it, or removes it. Missing-persons tips are always held first, so a bad sighting can't send volunteers to the wrong place.</p></div>
+    <h2 class="title" data-step="2">[The AI <em>flags it</em>. A human <em>decides it</em>.]</h2>
+    <div class="cols c3" data-step="3" style="margin-top:72px;gap:64px">
+      <section>
+        <h3 style="font-weight:800;font-stretch:88%;font-size:36px">① Local checks</h3>
+        <ul class="list" style="margin-top:28px;font-size:28px;gap:22px">
+          <li>Phone, address, email, SSN</li>
+          <li>Known abuse wording</li>
+          <li>Held = count only, never content</li>
+          <li>Author told why, in plain words</li>
+        </ul>
+      </section>
+      <section>
+        <h3 style="font-weight:800;font-stretch:88%;font-size:36px">② Jev second opinion</h3>
+        <ul class="list" style="margin-top:28px;font-size:28px;gap:22px">
+          <li>Four abuse categories scored</li>
+          <li>≥ 0.5 probability → held</li>
+          <li>Held text never sent to the model</li>
+          <li>No key or failure changes the outcome</li>
+        </ul>
+      </section>
+      <section>
+        <h3 style="font-weight:800;font-stretch:88%;font-size:36px">③ Human review</h3>
+        <ul class="list" style="margin-top:28px;font-size:28px;gap:22px">
+          <li>Coordinator reads every hold</li>
+          <li>Publish scrubbed, edit, or remove</li>
+          <li>Missing-person tips: always held</li>
+          <li>Nothing goes public on AI alone</li>
+        </ul>
+      </section>
     </div>
-    <div class="cols c2" data-step="4" style="margin-top:40px;gap:40px">
-      <div class="tip"><svg class="ic"><use href="#i-shield"/></svg><span><b>PII never reaches a model: contact details are swapped for a <code>[REDACTED]</code> placeholder, and only scrubbed, 400-character text goes to Jev.</span></div>
-      <div class="tip"><svg class="ic"><use href="#i-check"/></svg><span><b>Human in the loop, always:</b> no post goes public on an AI verdict alone. Crisis wording is never treated as abuse; it gets a 24/7 hotline answer instead.</span></div>
+    <div class="cols c2" data-step="4" style="margin-top:72px;gap:48px">
+      <div class="tip"><svg class="ic"><use href="#i-shield"/></svg><span><b>PII never reaches a model</b> — <code>scrub_pii()</code>, coordinator-only <code>[REDACTED]</code>, 400 chars max to Jev.</span></div>
+      <div class="tip"><svg class="ic"><use href="#i-check"/></svg><span><b>Crisis wording is never abuse</b> — it gets a 24/7 hotline answer, not a hold.</span></div>
     </div>
   </section>
 
