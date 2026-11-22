@@ -97,7 +97,12 @@ function partOfDay(date: Date): string {
   return 'evening';
 }
 
-export default function App(): ReactElement {
+interface AppProps {
+  /** Scroll the hubs panel into view. Used right after a server connection. */
+  focusHub?: boolean;
+}
+
+export default function App({ focusHub = false }: AppProps): ReactElement {
   const [selectedCommunity, setSelectedCommunity] = useState<HubId>('domestic-safety');
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [askingForHelp, setAskingForHelp] = useState<boolean>(false);
@@ -138,6 +143,22 @@ export default function App(): ReactElement {
   useEffect(() => {
     if (askingForHelp) surveyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }, [askingForHelp]);
+
+  useEffect(() => {
+    if (!focusHub && window.location.hash !== '#hubs') return;
+    const started = performance.now();
+    const scroll = (): void => {
+      if (performance.now() - started > 1000) return;
+      hubRef.current?.scrollIntoView({ behavior: 'auto', block: 'start' });
+    };
+    scroll();
+    const frame = requestAnimationFrame(scroll);
+    const later = window.setTimeout(scroll, 200);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.clearTimeout(later);
+    };
+  }, [focusHub, priorityAlert]);
 
   const active = COMMUNITIES.find((c) => c.id === selectedCommunity) ?? COMMUNITIES[0];
   const isStaff = coordinatorKey !== null && STAFF_TABS.has(activeTab);

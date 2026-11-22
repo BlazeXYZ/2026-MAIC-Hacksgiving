@@ -4,10 +4,13 @@ import { Capacitor } from '@capacitor/core';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { StatusBar, Style } from '@capacitor/status-bar';
+import App from '../App';
 import { LogoMark } from '../components/ui/Icon';
-import { serverUrl, validateServer, type SavedServer } from './serverEndpoint';
+import { isCurrentServer, serverUrl, validateServer, type SavedServer } from './serverEndpoint';
 import { clearServer, loadServer, saveServer } from './serverStore';
 import './server-gate.css';
+
+type Phase = 'opening' | 'picker' | 'hub';
 
 function stayOnPicker(): boolean {
   const params = new URLSearchParams(window.location.search);
@@ -15,8 +18,12 @@ function stayOnPicker(): boolean {
   return !Capacitor.isNativePlatform();
 }
 
+function hideSplash(): void {
+  void SplashScreen.hide().catch(() => undefined);
+}
+
 export default function ServerGate(): ReactElement {
-  const [ready, setReady] = useState<boolean>(false);
+  const [phase, setPhase] = useState<Phase>('opening');
   const [host, setHost] = useState<string>('');
   const [port, setPort] = useState<string>('');
   const [saved, setSaved] = useState<SavedServer | null>(null);
@@ -32,21 +39,40 @@ export default function ServerGate(): ReactElement {
       void StatusBar.setBackgroundColor({ color: '#FDFDF9' }).catch(() => undefined);
     }
     let cancelled = false;
-    void (async () => {
-      const stored = await loadServer();
+    // Preferences can hang if the native bridge is not ready. Fall back to the picker.
+    const failSafe = window.setTimeout(() => {
       if (cancelled) return;
+      setPhase((current) => (current === 'opening' ? 'picker' : current));
+      hideSplash();
+    }, 4000);
+    void (async () => {
+      let stored: SavedServer | null = null;
+      try {
+        stored = await loadServer();
+      } catch {
+        stored = null;
+      }
+      if (cancelled) return;
+      window.clearTimeout(failSafe);
       if (stored && !stayOnPicker()) {
+        if (isCurrentServer(stored)) {
+          setSaved(stored);
+          setPhase('hub');
+          hideSplash();
+          return;
+        }
         window.location.replace(serverUrl(stored.host, stored.port));
         return;
       }
       setSaved(stored);
       setHost(stored?.host ?? '');
       setPort(stored?.port ?? '');
-      setReady(true);
-      void SplashScreen.hide().catch(() => undefined);
+      setPhase('picker');
+      hideSplash();
     })();
     return () => {
       cancelled = true;
+      window.clearTimeout(failSafe);
     };
   }, []);
 
@@ -62,8 +88,11 @@ export default function ServerGate(): ReactElement {
     setSaved(next);
     setError(null);
     void Haptics.impact({ style: ImpactStyle.Medium }).catch(() => undefined);
-    const picker = `${window.location.pathname}?picker=1`;
-    window.history.replaceState(null, '', picker);
+    if (isCurrentServer(next)) {
+      setPhase('hub');
+      return;
+    }
+    setPhase('opening');
     window.location.assign(serverUrl(next.host, next.port));
   }
 
@@ -75,7 +104,11 @@ export default function ServerGate(): ReactElement {
     setError(null);
   }
 
-  if (!ready) {
+  if (phase === 'hub') {
+    return <App focusHub />;
+  }
+
+  if (phase === 'opening') {
     return (
       <main className="gate">
         <div className="gate-opening">

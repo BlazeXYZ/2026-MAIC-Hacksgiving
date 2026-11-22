@@ -24,5 +24,13 @@ export function validateServer(host: string, port: string): string | null {
 }
 
 export function serverUrl(host: string, port: string): string {
-  return `http://${host.trim()}:${port.trim()}/`;
+  return `http://${host.trim()}:${port.trim()}/#hubs`;
+}
+
+/** True when this page is already the saved server, so a redirect would reload in place. */
+export function isCurrentServer(server: SavedServer): boolean {
+  const here = window.location;
+  if (here.hostname !== server.host.trim()) return false;
+  const herePort = here.port || (here.protocol === 'https:' ? '443' : '80');
+  return herePort === server.port.trim();
 }
