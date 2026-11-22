@@ -6,7 +6,8 @@ import {
 } from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-const MILWAUKEE: LatLngTuple = [43.0389, -87.9065];
+import { MILWAUKEE_CENTER, MILWAUKEE_DEFAULT_ZOOM } from '../map/defaultView';
+
 const ATTRIBUTION = '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>';
 const BASEMAP = new URL('../assets/community-basemap.png', import.meta.url).href;
 
@@ -73,9 +74,24 @@ export default function LeafletMap({
     if (!container) return;
 
     // A zoom transition can outlive the map when someone switches screens mid-zoom.
-    const map = createMap(container, { scrollWheelZoom: false, zoomAnimation: false, maxZoom: 19 });
+    // Center and zoom must both be set. Without them Leaflet paints the world at (0, 0).
+    const map = createMap(container, {
+      center: MILWAUKEE_CENTER,
+      zoom: MILWAUKEE_DEFAULT_ZOOM,
+      scrollWheelZoom: false,
+      zoomAnimation: false,
+      maxZoom: 19,
+    });
     mapRef.current = map;
-    map.fitBounds(BASEMAP_BOUNDS, { maxZoom: 15 });
+
+    // fitBounds on a zero-size canvas resolves to zoom 0 and leaves the world view in place.
+    let framedBasemap = false;
+    const frameBasemap = () => {
+      if (container.clientWidth === 0 || container.clientHeight === 0) return;
+      map.fitBounds(BASEMAP_BOUNDS, { maxZoom: 15, animate: false });
+      framedBasemap = true;
+    };
+    frameBasemap();
 
     map.createPane('local-basemap').style.zIndex = '190';
     imageOverlay(BASEMAP, BASEMAP_BOUNDS, { pane: 'local-basemap', attribution: ATTRIBUTION }).addTo(map);
@@ -93,7 +109,10 @@ export default function LeafletMap({
       setNotice('Location unavailable. You can still browse the map.');
     });
 
-    const observer = new ResizeObserver(() => map.invalidateSize({ pan: false }));
+    const observer = new ResizeObserver(() => {
+      map.invalidateSize({ pan: false });
+      if (!framedBasemap) frameBasemap();
+    });
     observer.observe(container);
     return () => {
       observer.disconnect();
@@ -144,7 +163,7 @@ export default function LeafletMap({
     }
     markerRefs.current = visibleMarkers;
     setPopupHosts(hosts);
-    if (markers.length > 0) {
+    if (markers.length > 0 && map.getSize().x > 0 && map.getSize().y > 0) {
       map.fitBounds(latLngBounds(markers.map(({ position }) => position)), { padding: [48, 48], maxZoom: 15 });
     }
     return () => {
@@ -196,7 +215,7 @@ export default function LeafletMap({
       <div ref={containerRef} className="community-map-canvas" role="region" aria-label="Interactive street map of Milwaukee" />
       <div className="community-map-tools">
         <button type="button" disabled={locating} onClick={() => {
-          mapRef.current?.setView(MILWAUKEE, 14, { animate: false });
+          mapRef.current?.setView(MILWAUKEE_CENTER, MILWAUKEE_DEFAULT_ZOOM, { animate: false });
           setNotice('');
         }}>
           Recenter on Milwaukee
