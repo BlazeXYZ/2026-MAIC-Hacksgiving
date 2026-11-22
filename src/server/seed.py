@@ -8,6 +8,7 @@ All coordinates strictly verified within Milwaukee County bounds.
 from __future__ import annotations
 
 import logging
+from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import select
@@ -29,6 +30,27 @@ def _validate_milwaukee_coordinates(name: str, lat: float, lon: float) -> None:
         raise ValueError(
             f"Resource '{name}' coordinates ({lat}, {lon}) are outside Milwaukee County bounds."
         )
+
+
+def _seed_ticket(item: dict[str, Any]) -> dict[str, Any]:
+    """Add the creation timestamp and initial timeline expected from intake tickets."""
+    created_at = datetime.now(timezone.utc)
+    return {
+        **item,
+        "created_at": created_at,
+        "timeline": [{"at": created_at.isoformat(), "status": item["status"]}],
+    }
+
+
+def _repair_seed_ticket(ticket: Ticket, item: dict[str, Any]) -> None:
+    """Fill missing seeded-ticket fields without changing valid existing values."""
+    if ticket.ticket_id is None:
+        ticket.ticket_id = item["ticket_id"]
+    if not ticket.timeline:
+        created_at = ticket.created_at
+        if created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+        ticket.timeline = [{"at": created_at.isoformat(), "status": item["status"]}]
 
 
 SAFE_PLACES: tuple[dict[str, Any], ...] = (
@@ -279,6 +301,7 @@ FOOD_PANTRIES: tuple[dict[str, Any], ...] = (
 
 SAMPLE_TICKETS: tuple[dict[str, Any], ...] = (
     {
+        "ticket_id": "0b0a4d8e6f124d0e9a7c5b2f1e3d8061",
         "token": "tok_mke_urgent_shelter",
         "status": "pending",
         "urgency": "urgent",
@@ -290,6 +313,7 @@ SAMPLE_TICKETS: tuple[dict[str, Any], ...] = (
         "notes": "Elderly resident with service animal.",
     },
     {
+        "ticket_id": "1c2d3e4f506172839aabbccd4eef6072",
         "token": "tok_mke_urgent_formula",
         "status": "pending",
         "urgency": "urgent",
@@ -301,6 +325,7 @@ SAMPLE_TICKETS: tuple[dict[str, Any], ...] = (
         "notes": "Needs hypoallergenic formula if available.",
     },
     {
+        "ticket_id": "2d3e4f506172839abbccddeeff607183",
         "token": "tok_mke_today_ride",
         "status": "assigned",
         "urgency": "today",
@@ -314,6 +339,7 @@ SAMPLE_TICKETS: tuple[dict[str, Any], ...] = (
         "notes": "Appointment scheduled for 2:30 PM.",
     },
     {
+        "ticket_id": "3e4f506172839abbccddeeff60718394",
         "token": "tok_mke_today_warmth",
         "status": "pending",
         "urgency": "today",
@@ -325,6 +351,7 @@ SAMPLE_TICKETS: tuple[dict[str, Any], ...] = (
         "notes": "Sizes: Child Medium, Adult Large.",
     },
     {
+        "ticket_id": "4f506172839abbccddeeff60718394a5",
         "token": "tok_mke_week_food",
         "status": "in_progress",
         "urgency": "this_week",
@@ -391,6 +418,7 @@ DEMO_EXTRA_RESOURCES: tuple[dict[str, Any], ...] = (
 
 DEMO_EXTRA_TICKETS: tuple[dict[str, Any], ...] = (
     {
+        "ticket_id": "506172839abbccddeeff60718394a5b6",
         "token": "tok_mke_demo_ride_clinic",
         "status": "pending",
         "urgency": "today",
@@ -402,6 +430,7 @@ DEMO_EXTRA_TICKETS: tuple[dict[str, Any], ...] = (
         "notes": "Demo record only.",
     },
     {
+        "ticket_id": "6172839abbccddeeff60718394a5b6c7",
         "token": "tok_mke_demo_support_call",
         "status": "assigned",
         "urgency": "this_week",
@@ -414,6 +443,7 @@ DEMO_EXTRA_TICKETS: tuple[dict[str, Any], ...] = (
         "notes": "Demo record only.",
     },
     {
+        "ticket_id": "72839abbccddeeff60718394a5b6c7d8",
         "token": "tok_mke_demo_groceries",
         "status": "resolved",
         "urgency": "this_week",
@@ -441,9 +471,12 @@ def seed_demo_extras(db_url: str | None = None) -> dict[str, int]:
             session.add(Resource(**item))
             resources_added += 1
     for item in DEMO_EXTRA_TICKETS:
-        if session.scalar(select(Ticket).where(Ticket.token == item["token"])) is None:
-            session.add(Ticket(**item))
+        existing = session.scalar(select(Ticket).where(Ticket.token == item["token"]))
+        if existing is None:
+            session.add(Ticket(**_seed_ticket(item)))
             tickets_added += 1
+        else:
+            _repair_seed_ticket(existing, item)
     session.commit()
     return {"resources_added": resources_added, "tickets_added": tickets_added}
 
@@ -506,8 +539,10 @@ def seed_database(db_url: str | None = None) -> dict[str, int]:
         for item in SAMPLE_TICKETS:
             existing_ticket = session.scalar(select(Ticket).where(Ticket.token == item["token"]))
             if existing_ticket is None:
-                session.add(Ticket(**item))
+                session.add(Ticket(**_seed_ticket(item)))
                 tickets_added += 1
+            else:
+                _repair_seed_ticket(existing_ticket, item)
 
         session.commit()
     finally:
