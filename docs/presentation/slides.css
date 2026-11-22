@@ -87,6 +87,14 @@ h1,h2,h3,h4,p,ul,ol,blockquote,figure{margin:0}
 .slide-foot{display:flex;align-items:center;gap:24px;height:104px;margin-top:auto;border-top:1px solid var(--line);font-size:20px;font-weight:600;color:var(--ink-3)}
 .slide-foot .num{margin-left:auto;font-variant-numeric:tabular-nums}
 
+/* ---------- QR badge, top right of every slide ---------- */
+/* A printed-card chip so the same badge reads on both paper and dark-green slides:
+   green modules on the site paper, framed like the .card components. */
+.qr{position:absolute;top:48px;right:64px;z-index:2;display:flex;padding:18px;background:var(--card);border:1px solid var(--card-edge);border-radius:var(--r);
+  box-shadow:var(--drop);text-decoration:none;color:var(--ink-2)}
+.qr:hover{border-color:var(--green)}
+.qr svg{width:136px;height:136px;display:block;shape-rendering:crispEdges}
+
 /* ---------- printed cards ---------- */
 .card{background:var(--card);border:1px solid var(--card-edge);border-radius:var(--r);box-shadow:var(--drop)}
 .card-h{display:flex;align-items:center;gap:14px;padding:20px 32px;background-color:#EEF4EB;background-image:var(--fence-light);border-bottom:1px solid var(--line);border-radius:var(--r) var(--r) 0 0;font-weight:700;font-size:26px}
@@ -167,6 +175,45 @@ h1,h2,h3,h4,p,ul,ol,blockquote,figure{margin:0}
 .shot{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top;background:var(--paper) var(--fence-light)}
 .shot.placeholder{display:grid;place-items:center;color:var(--ink-3);font-size:24px;font-weight:600}
 
+/* ---------- screenshot carousel ----------
+   A slide with [data-carousel] steps through its .car-item children before the deck turns the page.
+   Each item is a caption on the left and a desktop browser frame or one or two phones on the right. */
+.slide.solution{padding-top:88px}
+.solution .solution-head{display:flex;align-items:baseline;gap:32px}
+.solution .solution-head .title{margin-top:0;font-size:80px}
+.carousel{position:relative;flex:1;min-height:0;margin:32px 0 24px}
+.car-item{position:absolute;inset:0;display:grid;grid-template-columns:520px minmax(0,1fr);gap:72px;align-items:center;
+  opacity:0;visibility:hidden;transform:translateX(48px);
+  transition:opacity .45s var(--ease),transform .55s var(--ease),visibility 0s linear .55s}
+.car-item.is-before{transform:translateX(-48px)}
+.car-item.is-active{opacity:1;visibility:visible;transform:none;transition:opacity .45s var(--ease),transform .55s var(--ease),visibility 0s}
+.car-cap{display:flex;flex-direction:column;gap:20px;padding-bottom:72px}
+.car-cap .tags{display:flex;gap:10px;flex-wrap:wrap}
+.car-cap h3{font-family:var(--f-voice);font-weight:500;font-size:60px;line-height:1.02;letter-spacing:-.02em;text-wrap:balance}
+.car-cap p{font-size:26px;line-height:1.45;color:var(--ink-2)}
+.car-cap .why{font-size:24px}
+.tag.device{background:var(--ink);color:#fff}
+.tag.device::before{display:none}
+.tag.device .ic{width:18px;height:18px}
+.car-stage{height:100%;min-height:0;display:flex;align-items:center;justify-content:center;gap:48px}
+/* desktop shots: the mockup's browser chrome, sized by the stage height so 16:10 always fits */
+.car-stage .browser{width:100%;flex:none}
+.car-stage .browser img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top}
+/* phone shots: the mockup's phone shell */
+/* The screenshots have no status bar, so the frame draws one (with the island) above the image. */
+.phone{height:100%;max-height:820px;aspect-ratio:414/912;padding:56px 12px 12px;border-radius:58px;background:#0D1210;box-shadow:inset 0 0 0 2px #2A332E,0 40px 70px -30px rgba(0,0,0,.55);position:relative;flex:none}
+.phone::before{content:"";position:absolute;inset:12px;border-radius:46px;background:#FDFDF9}
+.phone img{position:relative;display:block;width:100%;height:100%;object-fit:cover;object-position:top;border-radius:0 0 46px 46px}
+.phone::after{content:"";position:absolute;top:22px;left:50%;width:30%;height:30px;margin-left:-15%;border-radius:20px;background:#0D1210}
+/* the carousel's own position: segmented like the mockup's progress bars */
+.car-nav{position:absolute;left:0;bottom:0;width:520px;display:flex;align-items:center;gap:20px;z-index:2}
+.car-nav .segs{flex:1}
+.car-nav .segs i{height:10px;background:rgba(108,119,111,.22);transition:background .3s}
+.car-nav .segs i.done{background:var(--green)}
+.car-nav .segs i.on{background:var(--hivis);box-shadow:inset 0 0 0 1px #B9C42A}
+.car-cap .tag:not(.device){box-shadow:inset 0 0 0 1px rgba(22,32,27,.12)}
+.car-nav .count{font-size:20px;font-weight:700;color:var(--ink-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+
 /* pull quote in the AI's voice */
 .quote{max-width:24em;font-family:var(--f-voice);font-style:italic;font-weight:400;font-size:72px;line-height:1.15;letter-spacing:-.015em;text-wrap:balance}
 .quote::before{content:"\201C";display:block;height:.55em;font-size:2.2em;line-height:1;color:var(--hivis);font-style:normal}
@@ -193,12 +240,9 @@ h1,h2,h3,h4,p,ul,ol,blockquote,figure{margin:0}
 .progress i{flex:1;height:6px;border-radius:2px;background:rgba(108,119,111,.25);transition:background .3s}
 .progress i.done{background:var(--green-2)}
 .progress i.on{background:var(--hivis)}
-.hint{position:fixed;right:16px;bottom:16px;z-index:30;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(12,58,36,.9);color:var(--stage-fg);font:600 13px var(--f);opacity:0;transition:opacity .4s;pointer-events:none}
-.hint.show{opacity:1}
-.hint kbd{font:700 12px var(--f);background:var(--hivis);color:var(--ink);border-radius:5px;padding:3px 7px}
 
 @media (prefers-reduced-motion:reduce){
-  .slide,.slide.is-active,.slide [data-step]{transition:opacity .2s linear!important;transform:none!important}
+  .slide,.slide.is-active,.slide [data-step],.car-item,.car-item.is-active{transition:opacity .2s linear!important;transform:none!important}
 }
 @media print{
   @page{size:1920px 1080px;margin:0}
@@ -206,5 +250,5 @@ h1,h2,h3,h4,p,ul,ol,blockquote,figure{margin:0}
   .deck{position:static;margin:0;transform:none;height:auto;overflow:visible}
   .slide{position:relative;height:1080px;opacity:1;visibility:visible;transform:none;break-after:page}
   .slide [data-step]{opacity:1;transform:none}
-  .progress,.hint{display:none}
+  .progress{display:none}
 }
