@@ -36,6 +36,7 @@ export default function SearchGridMap() {
   const mapRef = useRef<MapInstance | null>(null);
   const polygonLayersRef = useRef<Map<string, Polygon>>(new Map());
   const groupRef = useRef<ReturnType<typeof layerGroup> | null>(null);
+  const hasFittedRef = useRef<boolean>(false);
 
   const [sectors, setSectors] = useState<SearchSector[]>(() => generateInitialSectors());
   const [selectedId, setSelectedId] = useState<string>('B3');
@@ -100,6 +101,7 @@ export default function SearchGridMap() {
       observer.disconnect();
       map.remove();
       mapRef.current = null;
+      hasFittedRef.current = false; // a re-mounted map needs its first fit again
     };
   }, []);
 
@@ -138,10 +140,13 @@ export default function SearchGridMap() {
 
     polygonLayersRef.current = layerMap;
 
-    if (allPoints.length > 0 && mapRef.current) {
+    // Fit the grid once. Sector coordinates never change, so re-fitting on status changes,
+    // selection, or the stale clock would only throw away the user's pan and zoom.
+    if (!hasFittedRef.current && allPoints.length > 0 && mapRef.current) {
       mapRef.current.fitBounds(latLngBounds(allPoints), { padding: [20, 20], maxZoom: 15 });
+      hasFittedRef.current = true;
     }
-    // statusSignature (not nowMs) so the 30s clock tick does not redraw or re-fit the map
+    // statusSignature (not nowMs) so the 30s clock tick does not redraw the polygons
     // unless a sector actually changed to Stale.
   }, [sectors, selectedId, statusSignature]);
 
