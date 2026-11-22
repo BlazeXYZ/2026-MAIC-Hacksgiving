@@ -384,6 +384,8 @@ coordinator workflow.
 | Avery B | [@Akiisqt](https://github.com/Akiisqt) |
 | Chris B | [@BlazeXYZ](https://github.com/BlazeXYZ) |
 | Hayden F | [@Fonsh19](https://github.com/Fonsh19) |
+| Jeremiah K | [@jck75-msoe](https://github.com/jck75-msoe) |
+| Julian A | [@Julian-Abelarde](https://github.com/Julian-Abelarde) |
 | Paxson G | [@TNTwise](https://github.com/TNTwise) |
 | Sam F | [@samfreund](https://github.com/samfreund) |
 
