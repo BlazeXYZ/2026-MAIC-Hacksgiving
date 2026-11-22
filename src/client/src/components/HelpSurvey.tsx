@@ -260,7 +260,7 @@ export default function HelpSurvey({ onCheckStatus, onViewInventoryPlace }: Help
           )}
           {accepted.sample && <p className="help-survey-note">{t('intake.sampleRequest')}</p>}
           <button className="help-survey-action" type="button" onClick={() => onCheckStatus(accepted.token)}>
-            Check request status
+            {t('status.open')}
           </button>{' '}
           <button className="help-survey-action secondary" type="button" onClick={startOver}>
             {t('status.new')}
