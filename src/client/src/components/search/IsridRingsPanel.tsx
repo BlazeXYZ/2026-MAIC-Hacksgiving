@@ -95,9 +95,9 @@ export default function IsridRingsPanel({
       )}
 
       <p className="isrid-caveat" role="note">
-        <strong>Caveat:</strong> ISRID data is mostly from wilderness and rural searches. Urban cases, especially
-        teens using buses or trains, may not follow these rings. Use them to plan where to start, not to rule
-        areas out.
+        <strong>Caveat:</strong> Urban rings come from ISRID&apos;s urban cases, a smaller part of the database.
+        Teens in cities often go to a friend&apos;s or relative&apos;s home, or travel by bus, so use the rings to
+        decide where to start, not to rule areas out.
       </p>
 
       <p className="isrid-source">

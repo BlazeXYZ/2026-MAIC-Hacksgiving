@@ -9,9 +9,10 @@ import type { LatLngTuple } from 'leaflet';
  * in its `source`, and nothing is entered from memory. A category that has no
  * public source we could verify is marked `placeholder: true` and the UI says so.
  *
- * Important caveat (shown in the UI next to the rings): ISRID is mostly
- * wilderness and rural data. Urban cases, especially teens who can use
- * transit, may not follow these rings.
+ * Important caveat (shown in the UI next to the rings): most ISRID cases are
+ * wilderness and rural, so the Urban rings rest on a smaller set of urban
+ * cases (and there is no Urban row for teens). City teens often go to someone
+ * they know or travel by bus, so the rings guide where to start, not where to stop.
  */
 
 export type RingPercentile = 25 | 50 | 75 | 95;
