@@ -2,10 +2,15 @@ package com.comforcemke.hub;
 
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.net.Uri;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebResourceError;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebResourceResponse;
 import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import androidx.activity.OnBackPressedCallback;
@@ -36,6 +41,38 @@ public class MainActivity extends BridgeActivity {
         webView.setWebViewClient(
             new BridgeWebViewClient(getBridge()) {
                 @Override
+                public WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                    // Let the web view open the saved server itself. The packaged proxy
+                    // would claim every host and turn a live Tailscale dashboard into a load error.
+                    if (isRemote(request.getUrl())) {
+                        return null;
+                    }
+                    return super.shouldInterceptRequest(view, request);
+                }
+
+                @Override
+                public void onReceivedHttpError(
+                    WebView view,
+                    WebResourceRequest request,
+                    WebResourceResponse errorResponse
+                ) {
+                    // A dashboard response is not a dead server. Stay on the page.
+                }
+
+                @Override
+                public void onReceivedError(WebView view, WebResourceRequest request, WebResourceError error) {
+                    if (
+                        request.isForMainFrame()
+                        && isRemote(request.getUrl())
+                        && isConnectionFailure(error.getErrorCode())
+                    ) {
+                        openPicker();
+                        return;
+                    }
+                    super.onReceivedError(view, request, error);
+                }
+
+                @Override
                 public void onPageFinished(WebView view, String url) {
                     super.onPageFinished(view, url);
                     chip.setVisibility(isLocal(url) ? View.GONE : View.VISIBLE);
@@ -50,11 +87,7 @@ public class MainActivity extends BridgeActivity {
                     @Override
                     public void handleOnBackPressed() {
                         if (!isLocal(webView.getUrl())) {
-                            if (webView.canGoBack()) {
-                                webView.goBack();
-                            } else {
-                                openPicker();
-                            }
+                            openPicker();
                             return;
                         }
                         setEnabled(false);
@@ -106,6 +139,30 @@ public class MainActivity extends BridgeActivity {
     private boolean isLocal(String url) {
         String appUrl = getBridge().getAppUrl();
         return url != null && appUrl != null && url.startsWith(appUrl);
+    }
+
+    private boolean isRemote(Uri uri) {
+        if (uri == null) {
+            return false;
+        }
+        String scheme = uri.getScheme();
+        if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
+            return false;
+        }
+        String host = uri.getHost();
+        String appUrl = getBridge().getAppUrl();
+        if (host == null || appUrl == null) {
+            return false;
+        }
+        String appHost = Uri.parse(appUrl).getHost();
+        return appHost != null && !host.equalsIgnoreCase(appHost);
+    }
+
+    private boolean isConnectionFailure(int code) {
+        return code == WebViewClient.ERROR_HOST_LOOKUP
+            || code == WebViewClient.ERROR_CONNECT
+            || code == WebViewClient.ERROR_TIMEOUT
+            || code == WebViewClient.ERROR_IO;
     }
 
     private void openPicker() {

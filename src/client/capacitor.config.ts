@@ -7,9 +7,9 @@ const config: CapacitorConfig = {
   server: {
     androidScheme: 'https',
     cleartext: true,
-    // The shell navigates the web view to whatever IP the phone saved.
+    // The shell navigates the web view to the saved Tailscale address or LAN host.
+    // A load error must not replace that dashboard with the packaged error page.
     allowNavigation: ['*'],
-    errorPath: 'error.html',
   },
   android: {
     allowMixedContent: true,

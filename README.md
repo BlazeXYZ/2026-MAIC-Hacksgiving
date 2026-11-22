@@ -411,7 +411,7 @@ For deploying on a single cloud VPS (e.g., AWS EC2, DigitalOcean Droplet, Linode
 
 ### 4. Mobile App Production Release (Android & iOS)
 
-Demo builds are a shell around the website. The phone asks for an IPv4 address and a port, saves them on the device, and opens that hub full screen. Tap **Server** to pick a different address. From the repo root:
+Demo builds are a shell around the website. The phone asks for an address and a port, saves them on the device, and opens that hub full screen. A Tailscale IPv4 address or MagicDNS name works. Tap **Server** to pick a different address. From the repo root:
 
 ```bash
 bash scripts/mobile/build-android.sh   # dist/mobile/ComForceMKE-arm64.apk

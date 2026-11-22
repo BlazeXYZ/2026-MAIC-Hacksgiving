@@ -44,7 +44,7 @@ For fast local testing of touch interactions, mobile safe areas, and responsive 
 
 ### 3. Native shell
 
-On a phone the app opens a connect screen. Type an IPv4 address and a port, then **Save and open**. That pair is stored on the device (Android SharedPreferences, iOS UserDefaults) and the web view loads `http://ip:port/`. A **Server** button on the remote page returns to the picker. In a desktop browser, open `http://localhost:3000/?shell=1` to preview the picker.
+On a phone the app opens a connect screen. Type an IPv4 address or hostname and a port, then **Save and open**. A Tailscale address such as `100.64.0.1` is saved on the device (Android SharedPreferences, iOS UserDefaults) and the web view loads `http://address:port/`. The dashboard stays in the web view; the connect screen does not take it back. A **Server** button on the remote page returns to the picker. In a desktop browser, open `http://localhost:3000/?shell=1` to preview the picker.
 
 ### 4. Build pipeline
 
