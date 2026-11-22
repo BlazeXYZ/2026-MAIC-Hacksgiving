@@ -26,27 +26,40 @@
 <!-- data-title is the text shown in every slide's footer. Add data-foot="none" to a slide to hide its footer. -->
 <main class="deck" data-title="MAIC Hacksgiving 2026">
 
-  <!-- 1 · Title -->
-  <section class="slide dark title-slide">
-    <span class="flag" data-step="1">MAIC Hacksgiving 2026</span>
-    <h1 class="display" data-step="2">Neighbors helping <em>neighbors</em>, faster.</h1>
-    <p class="lede" data-step="3">[One-sentence pitch: what ComForce MKE Hub is and who it serves.]</p>
-    <div class="byline" data-step="4">
-      <span><small>Team</small>[Team name]</span>
-      <span><small>Presented by</small>[Names]</span>
+  <!-- 1 · Title — just the name, full screen -->
+  <section class="slide dark title-slide" data-foot="none">
+    <div data-step="1" style="margin-top:220px;display:flex;justify-content:center">
+      <span style="display:inline-flex;align-items:flex-end;gap:24px">
+        <span style="display:flex;flex-direction:column;gap:5px;justify-content:flex-end">
+          <span style="font-weight:700;font-size:52px;letter-spacing:.12em;text-transform:uppercase;color:var(--stage-mute)">Comfort with</span>
+          <span style="font-weight:800;font-stretch:80%;font-size:148px;line-height:.9;letter-spacing:-.025em">ComForce</span>
+        </span>
+        <span style="font-weight:800;font-stretch:80%;font-size:228px;line-height:.82;letter-spacing:-.03em;color:var(--hivis)">MKE</span>
+      </span>
     </div>
     <svg class="city" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
   </section>
 
-  <!-- 2 · The problem: three big numbers -->
-  <section class="slide">
-    <p class="kicker" data-step="1">The problem</p>
-    <h2 class="title" data-step="2">[Headline that names the <em>problem</em>.]</h2>
-    <div class="cols c3">
-      <div class="card stat red" data-step="3"><b>[00]</b><span>[What this number means]</span><small>Source: [citation]</small></div>
-      <div class="card stat amber" data-step="4"><b>[00%]</b><span>[What this number means]</span><small>Source: [citation]</small></div>
-      <div class="card stat" data-step="5"><b>[0 hrs]</b><span>[What this number means]</span><small>Source: [citation]</small></div>
+  <!-- 2 · Title + cascading motto -->
+  <section class="slide dark title-slide">
+    <div data-step="1" style="margin-top:40px;display:flex;justify-content:center">
+      <span style="display:inline-flex;align-items:flex-end;gap:24px">
+        <span style="display:flex;flex-direction:column;gap:5px;justify-content:flex-end">
+          <span style="font-weight:700;font-size:52px;letter-spacing:.12em;text-transform:uppercase;color:var(--stage-mute)">Comfort with</span>
+          <span style="font-weight:800;font-stretch:80%;font-size:148px;line-height:.9;letter-spacing:-.025em">ComForce</span>
+        </span>
+        <span style="font-weight:800;font-stretch:80%;font-size:228px;line-height:.82;letter-spacing:-.03em;color:var(--hivis)">MKE</span>
+      </span>
     </div>
+    <div style="margin-top:64px;display:flex;justify-content:center">
+      <div style="width:1140px;display:flex;flex-direction:column;gap:24px">
+        <p data-step="2" style="margin-left:90px;color:var(--stage-fg);font-family:var(--f-voice);font-style:italic;font-size:48px;letter-spacing:-.01em">Every need visible.</p>
+        <p data-step="3" style="margin-left:270px;color:var(--stage-fg);font-family:var(--f-voice);font-style:italic;font-size:48px;letter-spacing:-.01em">Every volunteer matched.</p>
+        <p data-step="4" style="margin-left:450px;color:var(--stage-fg);font-family:var(--f-voice);font-style:italic;font-size:48px;letter-spacing:-.01em">Every identity protected.</p>
+        <p data-step="5" style="margin-left:630px;color:var(--stage-fg);font-family:var(--f-voice);font-style:italic;font-size:48px;letter-spacing:-.01em">Every minute saved.</p>
+      </div>
+    </div>
+    <svg class="city" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
   </section>
 
   <!-- 3 · Who it's for: text on the left, a request ticket on the right -->
