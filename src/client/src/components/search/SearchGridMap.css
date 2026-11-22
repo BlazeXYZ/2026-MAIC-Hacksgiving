@@ -179,3 +179,34 @@
   height: 12px;
   border-radius: 2px;
 }
+
+/* Stale / re-search coverage (issue #163) */
+.search-sector-coverage {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1rem;
+  margin-top: 0.4rem;
+  font-size: 0.825rem;
+  color: var(--ink-2);
+}
+
+.search-sector-coverage strong {
+  color: var(--ink);
+}
+
+.search-sector-assumption {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--ink-3);
+}
+
+.search-sector-stale-note {
+  margin: 0.4rem 0 0;
+  padding: 0.3rem 0.55rem;
+  border-radius: 4px;
+  border-left: 3px solid var(--stale);
+  background: var(--stale-wash);
+  color: var(--stale-ink);
+  font-size: 0.8rem;
+  font-weight: 600;
+}

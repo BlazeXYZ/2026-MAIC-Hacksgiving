@@ -26,6 +26,10 @@
   --hivis: #E4F23A;
   --tip: #F5F8D6;
   --tip-ink: #3E4410;
+  /* Search grid: Cleared sector that needs a re-search (stale-ink on stale-wash is 7.7:1). */
+  --stale: #B4532A;
+  --stale-wash: #FBEAE1;
+  --stale-ink: #7A3414;
   --f: "Bricolage Grotesque", system-ui, sans-serif;
   --f-voice: "Newsreader", Georgia, serif;
   --r: 12px;
