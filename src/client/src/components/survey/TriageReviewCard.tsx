@@ -22,21 +22,20 @@ export function TriageReviewCard({ triage, sending, error, onConfirm, onEdit }: 
   const district = DISTRICTS.find((d) => d.id === survey.district);
 
   return (
-    <section className="card review" aria-labelledby="review-title" aria-busy={!triage}>
-      <h2 id="review-title" className="kicker" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+    <section className="card review" aria-labelledby="review-title" aria-busy={!triage && !error}>
+      <h4 id="review-title" className="kicker" style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
         <Sparkles aria-hidden="true" size={14} />
         {t('review.title')}
-      </h2>
+      </h4>
 
-      {!triage ? (
+      {!triage && !error && (
         <div className="review-skel" role="status">
-          <span className="visually-hidden">{t('review.loading')}</span>
-          <div className="skeleton" style={{ width: '40%', height: 24 }} />
-          <div className="skeleton" />
-          <div className="skeleton" style={{ width: '85%' }} />
-          <div className="skeleton" style={{ width: '60%' }} />
+          <p className="meta">{t('review.loading')}</p>
+          <div className="skeleton" aria-hidden="true" />
+          <div className="skeleton" style={{ width: '60%' }} aria-hidden="true" />
         </div>
-      ) : (
+      )}
+      {triage && (
         <>
           <div className="review-tags">
             <span className={`tag ${URGENCY_CLASS[triage.urgency]}`}>{t(`urgency.${triage.urgency}`)}</span>

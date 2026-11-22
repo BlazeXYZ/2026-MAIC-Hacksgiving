@@ -1,3 +1,4 @@
+import { apiFetch } from '../api/transport';
 /** Verified safe places for the resident map (issue #12). */
 
 import type { SafePlace } from '../contracts/resources';
@@ -82,7 +83,7 @@ function isSafePlace(value: unknown): value is SafePlace {
 
 /** Fetch verified safe places. Rejects when the API is down or returns an unexpected shape. */
 export async function fetchSafePlaces(signal?: AbortSignal): Promise<SafePlace[]> {
-  const response = await fetch(SAFE_PLACES_PATH, { signal, headers: { Accept: 'application/json' } });
+  const response = await apiFetch(SAFE_PLACES_PATH, { signal, headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`Safe places request failed with ${response.status}`);
   const body: unknown = await response.json();
   if (!Array.isArray(body) || !body.every(isSafePlace)) {

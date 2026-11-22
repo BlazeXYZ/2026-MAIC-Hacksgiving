@@ -1,47 +1,79 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Copy, Lock } from 'lucide-react';
-import type { PublicTicket } from '../contracts/intake';
-import { getTicket, normalizeToken, type Sampled } from '../api/intake';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Copy } from 'lucide-react';
+import { getTicket, normalizeToken, type TicketLookup } from '../api/intake';
 import { PrivacyBadge } from '../components/privacy/PrivacyNotice';
 import { StatusTimeline } from '../components/status/StatusTimeline';
 import { COMFORCE_HOTLINE } from '../components/shell/EmergencyBar';
 import { useSurvey } from '../state/survey';
+import '../components/survey/survey.css';
 
 const POLL_MS = 15_000;
 
-type Load = { kind: 'idle' } | { kind: 'loading' } | { kind: 'found'; ticket: Sampled<PublicTicket> } | { kind: 'not-found' } | { kind: 'error' };
+type Lookup = { code: string };
+type Result = TicketLookup | { kind: 'error' };
+
+interface Props {
+  initialCode: string | null;
+  onNewRequest: () => void;
+}
 
 /**
  * Anonymous status page (#15). Looks a request up by its code, no login. Shows the timeline, a rough
  * time estimate and the volunteer's alias, never anyone's phone number or address.
  */
-export function StatusScreen({ token, onToken, onNewRequest }: { token: string | null; onToken: (t: string) => void; onNewRequest: () => void }) {
-  const { t } = useSurvey();
-  const [load, setLoad] = useState<Load>({ kind: token ? 'loading' : 'idle' });
-  const [draft, setDraft] = useState('');
+export function StatusScreen({ initialCode, onNewRequest }: Props) {
+  const { survey, t } = useSurvey();
+  const [lookup, setLookup] = useState<Lookup | null>(initialCode ? { code: initialCode } : null);
+  const [response, setResponse] = useState<{ lookup: Lookup; result: Result }>();
+  const [draft, setDraft] = useState(initialCode ?? '');
   const [copied, setCopied] = useState(false);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const result = response?.lookup === lookup ? response.result : undefined;
+  const draftCode = normalizeToken(draft);
+  const canCheck = Boolean(draftCode && (draftCode !== lookup?.code || result));
 
-  const fetchTicket = useCallback(async (code: string, quiet: boolean) => {
-    if (!quiet) setLoad({ kind: 'loading' });
-    try {
-      const res = await getTicket(code);
-      setLoad(res.kind === 'found' ? { kind: 'found', ticket: res.ticket } : { kind: 'not-found' });
-    } catch {
-      if (!quiet) setLoad({ kind: 'error' });
-    }
+  useEffect(() => {
+    titleRef.current?.focus({ preventScroll: true });
   }, []);
 
   useEffect(() => {
-    if (!token) return;
-    void fetchTicket(token, false);
-    const id = setInterval(() => void fetchTicket(token, true), POLL_MS);
-    return () => clearInterval(id);
-  }, [token, fetchTicket]);
+    if (!lookup) return;
+    const requested = lookup;
+    let cancelled = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    async function refresh(inBackground = false) {
+      let next: Result;
+      try {
+        next = await getTicket(requested.code);
+      } catch {
+        if (cancelled) return;
+        if (inBackground) {
+          timer = setTimeout(() => void refresh(true), POLL_MS);
+          return;
+        }
+        next = { kind: 'error' };
+      }
+      if (cancelled) return;
+
+      setResponse({ lookup: requested, result: next });
+      if (next.kind === 'found' && next.ticket.status !== 'resolved') {
+        timer = setTimeout(() => void refresh(true), POLL_MS);
+      }
+    }
+
+    void refresh();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [lookup]);
 
   function submit(e: FormEvent) {
     e.preventDefault();
-    const code = normalizeToken(draft);
-    if (code) onToken(code);
+    if (!canCheck) return;
+    setCopied(false);
+    setLookup({ code: draftCode });
   }
 
   async function copy(code: string) {
@@ -61,45 +93,39 @@ export function StatusScreen({ token, onToken, onNewRequest }: { token: string |
           <label htmlFor="token-input">{t('status.lookup')}</label>
           <input id="token-input" value={draft} onChange={(e) => setDraft(e.target.value)} placeholder="cf-XXXXXX" autoComplete="off" spellCheck={false} />
         </div>
-        <button type="submit" className="btn primary" disabled={!normalizeToken(draft)}>
+        <button type="submit" className="btn primary" disabled={!canCheck}>
           {t('status.lookup.go')}
         </button>
       </div>
-      {load.kind === 'not-found' && (
+      {result?.kind === 'not-found' && (
         <p className="field-error" role="alert">
           {t('status.notfound')}
         </p>
       )}
-      {load.kind === 'error' && (
+      {result?.kind === 'error' && (
         <p className="field-error" role="alert">
-          {t('review.failed')}
+          {t('status.failed')}
         </p>
       )}
     </form>
   );
 
-  const ticket = load.kind === 'found' ? load.ticket : null;
+  const ticket = result?.kind === 'found' ? result.ticket : null;
   const name = ticket?.assigned_volunteer_alias ?? t('status.someone');
 
   return (
-    <main className="page stack" style={{ paddingTop: 24 }}>
-      <header style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-        <div style={{ flex: 1 }}>
+    <section className="request-status stack" lang={survey.language === 'es' ? 'es' : 'en'} aria-labelledby="request-status-title">
+      <header className="request-status-header">
+        <div>
           <p className="meta">{t('status.kicker')}</p>
-          <h1 className="title">{t('status.title')}</h1>
+          <h1 id="request-status-title" className="title" ref={titleRef} tabIndex={-1}>{t('status.title')}</h1>
         </div>
         <PrivacyBadge />
       </header>
 
-      {!token || load.kind === 'not-found' || load.kind === 'error' ? lookupForm : null}
+      {lookupForm}
 
-      {load.kind === 'loading' && (
-        <div className="card card-pad review-skel" role="status">
-          <span className="visually-hidden">{t('review.loading')}</span>
-          <div className="skeleton" style={{ height: 28, width: '70%' }} />
-          <div className="skeleton" style={{ width: '40%' }} />
-        </div>
-      )}
+      {lookup && !result && <p className="meta" role="status">{t('status.loading')}</p>}
 
       {ticket && (
         <>
@@ -133,11 +159,6 @@ export function StatusScreen({ token, onToken, onNewRequest }: { token: string |
             <StatusTimeline status={ticket.status} events={ticket.timeline} />
           </div>
 
-          <div className="tip">
-            <Lock aria-hidden="true" />
-            <span>{t('status.masked')}</span>
-          </div>
-
           <div className="stack" style={{ gap: 8 }}>
             <a className="btn ghost block" href={COMFORCE_HOTLINE.tel}>
               {t('status.wrong')}
@@ -148,6 +169,6 @@ export function StatusScreen({ token, onToken, onNewRequest }: { token: string |
           </div>
         </>
       )}
-    </main>
+    </section>
   );
 }

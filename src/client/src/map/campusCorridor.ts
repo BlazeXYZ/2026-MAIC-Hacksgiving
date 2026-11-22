@@ -1,3 +1,4 @@
+import { apiFetch } from '../api/transport';
 import type { LatLngTuple } from 'leaflet';
 
 export interface RouteCheckpoint {
@@ -42,7 +43,7 @@ export const CORRIDOR_CHECKPOINTS: RouteCheckpoint[] = [
 export async function fetchCampusCorridor(signal?: AbortSignal): Promise<LatLngTuple[]> {
   try {
     const url = '/api/v1/routes/safe-walk?origin_lat=43.04535&origin_lon=-87.90655&destination=msoe_safety';
-    const response = await fetch(url, { signal });
+    const response = await apiFetch(url, { signal });
     if (!response.ok) return DEFAULT_CAMPUS_CORRIDOR;
     const data = await response.json();
     if (data?.geometry?.coordinates && Array.isArray(data.geometry.coordinates)) {

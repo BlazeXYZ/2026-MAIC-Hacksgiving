@@ -13,7 +13,9 @@
 .app { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: var(--paper); }
 
 /* ---------- top nav ---------- */
+.intake-chrome { position: sticky; top: 0; z-index: 40; background: var(--card); border-bottom: 1px solid var(--line); }
 .dnav { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 32px; min-height: calc(72px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 48px 0; background: var(--card); border-bottom: 1px solid var(--line); }
+.intake-chrome .dnav, .intake-chrome .ptop { position: static; }
 .dnav .logo { display: flex; align-items: center; gap: 10px; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; }
 .dnav .logo svg { width: 30px; height: 30px; flex: none; }
 .dnav .logo b { font-weight: 800; font-stretch: 85%; font-size: 20px; letter-spacing: -.01em; white-space: nowrap; }
@@ -79,9 +81,6 @@
 .needs b { display: block; font-weight: 700; font-size: 16px; line-height: 1.2; }
 .needs small { display: block; margin-top: 2px; font-size: 13.5px; color: var(--ink-3); }
 .needs .chev { color: var(--ink-3); width: 18px; height: 18px; }
-.sos { display: flex; gap: 8px; align-items: center; margin-top: auto; padding: 14px 24px; border-top: 1px solid var(--line); font-size: 13px; color: var(--ink-2); background: var(--paper); border-radius: 0 0 var(--r) var(--r); }
-.sos .ic { width: 16px; height: 16px; color: var(--red); }
-.sos a { font-weight: 700; color: var(--ink); }
 
 /* hub picker */
 .hubs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; padding: 16px 24px 0; }

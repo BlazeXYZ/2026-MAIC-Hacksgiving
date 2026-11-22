@@ -1,3 +1,4 @@
+import { apiFetch } from '../api/transport';
 import type { LatLngTuple } from 'leaflet';
 import { CoordinatorAccessError, coordinatorHeaders } from './access';
 
@@ -111,7 +112,7 @@ export async function fetchCoordinatorHotspots(
 ): Promise<HotspotCollection> {
   let response: Response;
   try {
-    response = await fetch(COORDINATOR_HOTSPOTS_PATH, {
+    response = await apiFetch(COORDINATOR_HOTSPOTS_PATH, {
       signal,
       headers: coordinatorHeaders(accessKey, { Accept: 'application/json' }),
     });

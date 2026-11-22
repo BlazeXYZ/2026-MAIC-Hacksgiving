@@ -42,9 +42,26 @@ For fast local testing of touch interactions, mobile safe areas, and responsive 
    - **Safe area insets:** The sticky emergency alert banner and navigation respect top notch / Dynamic Island and bottom gesture pill bar (`viewport-fit=cover` and `env(safe-area-inset-*)`).
    - **Touch targets:** All buttons, community selector pills, and ticket claim actions have a minimum touch target of 44x44px.
 
-### 3. Native shell
+### 3. Native API and local demo modes
 
-On a phone the app opens a connect screen. Type an IPv4 address and a port, then **Save and open**. That pair is stored on the device (Android SharedPreferences, iOS UserDefaults) and the web view loads `http://ip:port/`. A **Server** button on the remote page returns to the picker. In a desktop browser, open `http://localhost:3000/?shell=1` to preview the picker.
+To use the packaged hub on a phone, run `npm ci` in `src/client`, then set
+`VITE_API_ORIGIN` in `.env.local` to an HTTPS origin with a trusted certificate.
+For example, `VITE_API_ORIGIN=https://api.example.org`. This value is public and
+must contain only the origin. The app sends its API requests there and keeps the
+hub interface in the bundled WebView. The API allows the WebView origins
+`https://localhost` on Android and `capacitor://localhost` on iOS.
+
+After changing the origin, rebuild with `npm run build` and run
+`npx cap sync android` or `npx cap sync ios`. These projects are included in the
+repository. Open them with `npm run cap:android` or `npm run cap:ios`.
+
+For local demos, leave `VITE_API_ORIGIN` unset. The phone opens the server picker.
+Enter the demo server's IPv4 address and port and choose **Save and open**.
+Use sample data for this HTTP connection. A desktop browser can preview the
+picker at `http://localhost:3000/?shell=1`.
+
+On each native platform, verify that the packaged app opens the hub, loads map
+resources, accepts a synthetic help request, and signs in with a test staff key.
 
 ### 4. Build pipeline
 
