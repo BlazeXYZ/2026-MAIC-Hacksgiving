@@ -34,7 +34,7 @@ _SERVICES: dict[ServiceCategory, ServiceMatch] = {
         next_step="Call the 24/7 line or go to the safe-places pin. You do not need an ID.",
     ),
     ServiceCategory.warmth: ServiceMatch(
-        id="king-library",
+        id="king_library",
         name="King Library safe lobby",
         category=ServiceCategory.warmth,
         summary="A public lobby where you can warm up during library hours.",

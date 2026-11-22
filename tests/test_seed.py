@@ -85,3 +85,21 @@ def test_sample_tickets_span_urgency_tiers() -> None:
     assert "urgent" in urgencies
     assert "today" in urgencies
     assert "this_week" in urgencies
+
+
+def test_seed_service_ids_match_resource_ids() -> None:
+    """Verified seed tickets must point to records in the resources table."""
+    seed_database(TEST_SEED_DB_URL)
+    session = next(get_db())
+    try:
+        resource_ids = {row.id for row in session.scalars(select(Resource)).all()}
+    finally:
+        session.close()
+
+    assert {"sojourner", "king_library", "hunger-task-force-south"} <= resource_ids
+    ticket_ids = {
+        ticket["suggested_service_id"]
+        for ticket in SAMPLE_TICKETS
+        if ticket.get("suggested_service_id")
+    }
+    assert ticket_ids <= resource_ids

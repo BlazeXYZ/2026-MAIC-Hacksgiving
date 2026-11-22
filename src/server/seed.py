@@ -11,6 +11,7 @@ import logging
 from typing import Any
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from src.server.db import Resource, Ticket, close_db, get_db, init_db
 
@@ -32,7 +33,22 @@ def _validate_milwaukee_coordinates(name: str, lat: float, lon: float) -> None:
 
 SAFE_PLACES: tuple[dict[str, Any], ...] = (
     {
-        "id": "safe-place-sojourner",
+        "id": "king_library",
+        "name": "King Library Safe Haven",
+        "category": "Safe Place",
+        "address": "310 W Locust St, Milwaukee, WI 53212",
+        "district": "Haymarket",
+        "latitude": 43.0565,
+        "longitude": -87.9138,
+        "phone": None,
+        "hours_description": "Public library lobby during posted library hours",
+        "is_staffed": False,
+        "no_id_required": True,
+        "open_now": False,
+        "accessibility_notes": "Public lobby; no ID required",
+    },
+    {
+        "id": "sojourner",
         "name": "Sojourner Family Peace Center",
         "category": "Safe Place",
         "address": "619 W Walnut St, Milwaukee, WI 53212",
@@ -47,7 +63,7 @@ SAFE_PLACES: tuple[dict[str, Any], ...] = (
         "accessibility_notes": "Wheelchair accessible, secure intake facility",
     },
     {
-        "id": "safe-place-msoe",
+        "id": "msoe_safety",
         "name": "MSOE Public Safety",
         "category": "Safe Place",
         "address": "1025 N Broadway, Milwaukee, WI 53202",
@@ -62,7 +78,7 @@ SAFE_PLACES: tuple[dict[str, Any], ...] = (
         "accessibility_notes": "Street level entrance with automatic doors",
     },
     {
-        "id": "safe-place-mwc",
+        "id": "womens_center",
         "name": "Milwaukee Women's Center",
         "category": "Safe Place",
         "address": "611 N 19th St, Milwaukee, WI 53233",
@@ -79,6 +95,21 @@ SAFE_PLACES: tuple[dict[str, Any], ...] = (
 )
 
 FOOD_PANTRIES: tuple[dict[str, Any], ...] = (
+    {
+        "id": "hunger-task-force-south",
+        "name": "Hunger Task Force Southside Community Resource Center",
+        "category": "Food Pantry",
+        "address": "802 W Mitchell St, Milwaukee, WI 53204",
+        "district": "Near South Side",
+        "latitude": 43.01215,
+        "longitude": -87.9224,
+        "phone": "414-555-0110",
+        "hours_description": "Monday-Friday 9:00 AM - 5:00 PM",
+        "is_staffed": True,
+        "no_id_required": True,
+        "open_now": False,
+        "accessibility_notes": "Street-level entrance; no ID required",
+    },
     {
         "id": "pantry-friedens-hope",
         "name": "Friedens Community Ministries - Hope House",
@@ -255,7 +286,7 @@ SAMPLE_TICKETS: tuple[dict[str, Any], ...] = (
         "summary": "Immediate safe shelter needed tonight due to severe cold snap and displacement.",
         "district": "Near West Side",
         "language": "en",
-        "suggested_service_id": "safe-place-sojourner",
+        "suggested_service_id": "sojourner",
         "notes": "Elderly resident with service animal.",
     },
     {
@@ -290,7 +321,7 @@ SAMPLE_TICKETS: tuple[dict[str, Any], ...] = (
         "summary": "Winter coats and thermal blankets needed for family with two young children.",
         "district": "Riverwest",
         "language": "en",
-        "suggested_service_id": "pantry-riverwest",
+        "suggested_service_id": "king_library",
         "notes": "Sizes: Child Medium, Adult Large.",
     },
     {
@@ -417,6 +448,32 @@ def seed_demo_extras(db_url: str | None = None) -> dict[str, int]:
     return {"resources_added": resources_added, "tickets_added": tickets_added}
 
 
+LEGACY_RESOURCE_IDS: dict[str, str] = {
+    "safe-place-sojourner": "sojourner",
+    "safe-place-msoe": "msoe_safety",
+    "safe-place-mwc": "womens_center",
+}
+
+
+def _migrate_legacy_service_ids(session: Session) -> None:
+    """Update old resource and ticket IDs to their canonical API resource IDs."""
+    for legacy_id, canonical_id in LEGACY_RESOURCE_IDS.items():
+        legacy = session.get(Resource, legacy_id)
+        if legacy is not None:
+            canonical = session.get(Resource, canonical_id)
+            if canonical is None:
+                legacy.id = canonical_id
+            else:
+                session.delete(legacy)
+
+    legacy_tickets = session.scalars(select(Ticket)).all()
+    for ticket in legacy_tickets:
+        if ticket.suggested_service_id in LEGACY_RESOURCE_IDS:
+            ticket.suggested_service_id = LEGACY_RESOURCE_IDS[ticket.suggested_service_id]
+        elif ticket.suggested_service_id == "king-library":
+            ticket.suggested_service_id = "king_library"
+
+
 def seed_database(db_url: str | None = None) -> dict[str, int]:
     """Populate database with verified fixtures idempotently."""
     init_db(db_url)
@@ -427,6 +484,8 @@ def seed_database(db_url: str | None = None) -> dict[str, int]:
     tickets_added = 0
 
     try:
+        _migrate_legacy_service_ids(session)
+
         # Validate and insert Safe Places
         for item in SAFE_PLACES:
             _validate_milwaukee_coordinates(item["name"], item["latitude"], item["longitude"])
