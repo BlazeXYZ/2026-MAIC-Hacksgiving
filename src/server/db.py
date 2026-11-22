@@ -31,6 +31,7 @@ from sqlalchemy.orm import (
     mapped_column,
     sessionmaker,
 )
+from sqlalchemy.pool import StaticPool
 
 try:
     from src.server.core.config import settings
@@ -162,7 +163,15 @@ def init_db(url: str | None = None) -> None:
     is_sqlite = db_url.startswith("sqlite")
 
     connect_args = {"check_same_thread": False} if is_sqlite else {}
-    _engine = create_engine(db_url, connect_args=connect_args, pool_pre_ping=not is_sqlite)
+    pool_kwargs: dict[str, Any] = {}
+    if is_sqlite and ":memory:" in db_url:
+        pool_kwargs["poolclass"] = StaticPool
+    _engine = create_engine(
+        db_url,
+        connect_args=connect_args,
+        pool_pre_ping=not is_sqlite,
+        **pool_kwargs,
+    )
     _SessionLocal = sessionmaker(bind=_engine, autocommit=False, autoflush=False)
 
     Base.metadata.create_all(bind=_engine)

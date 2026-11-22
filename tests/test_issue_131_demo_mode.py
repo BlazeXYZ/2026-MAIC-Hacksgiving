@@ -14,7 +14,6 @@ from fastapi.testclient import TestClient
 
 from src.server.ai.hotspots import COORDINATOR_API_KEY
 from src.server.core.config import settings
-from src.server.db import init_db
 from src.server.intake import store
 from src.server.main import app
 
@@ -23,13 +22,13 @@ SYNTHETIC_PROD_KEY = "synth-coord-sec-555"
 
 def test_production_mode_does_not_seed_demo_tickets_and_has_no_active_alert() -> None:
     """In production mode with DEMO_MODE=False, startup leaves queue clean and alerts inactive."""
-    store._tickets.clear()
-    init_db("sqlite:///:memory:")
+    store.reset_state()
 
     with (
         patch.object(settings, "APP_ENV", "production"),
         patch.object(settings, "DEMO_MODE", False),
         patch.object(settings, "COORDINATOR_API_KEY", SYNTHETIC_PROD_KEY),
+        patch.object(settings, "DATABASE_URL", "sqlite:///:memory:"),
         TestClient(app) as client,
     ):
         # 1. No demo tickets in queue
@@ -52,12 +51,12 @@ def test_production_mode_does_not_seed_demo_tickets_and_has_no_active_alert() ->
 
 def test_demo_mode_seeds_tickets_and_marks_alert_simulated() -> None:
     """When DEMO_MODE is True, startup seeds tickets and priority alert is simulated."""
-    store._tickets.clear()
-    init_db("sqlite:///:memory:")
+    store.reset_state()
 
     with (
         patch.object(settings, "APP_ENV", "development"),
         patch.object(settings, "DEMO_MODE", True),
+        patch.object(settings, "DATABASE_URL", "sqlite:///:memory:"),
         TestClient(app) as client,
     ):
         # 1. Demo tickets are present
@@ -79,13 +78,13 @@ def test_demo_mode_seeds_tickets_and_marks_alert_simulated() -> None:
 
 def test_production_with_explicit_demo_mode_override() -> None:
     """Setting DEMO_MODE=True in production explicitly enables demo fixtures."""
-    store._tickets.clear()
-    init_db("sqlite:///:memory:")
+    store.reset_state()
 
     with (
         patch.object(settings, "APP_ENV", "production"),
         patch.object(settings, "DEMO_MODE", True),
         patch.object(settings, "COORDINATOR_API_KEY", SYNTHETIC_PROD_KEY),
+        patch.object(settings, "DATABASE_URL", "sqlite:///:memory:"),
         TestClient(app) as client,
     ):
         alert_resp = client.get("/api/alerts/priority")
