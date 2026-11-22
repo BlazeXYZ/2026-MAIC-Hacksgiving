@@ -411,6 +411,15 @@ For deploying on a single cloud VPS (e.g., AWS EC2, DigitalOcean Droplet, Linode
 
 ### 4. Mobile App Production Release (Android & iOS)
 
+Demo builds are a shell around the website. The phone asks for an IPv4 address and a port, saves them on the device, and opens that hub full screen. Tap **Server** to pick a different address. From the repo root:
+
+```bash
+bash scripts/mobile/build-android.sh   # dist/mobile/ComForceMKE-arm64.apk
+bash scripts/mobile/build-ios.sh       # macOS only; dist/mobile/ComForceMKE-unsigned.ipa
+```
+
+The **Mobile apps** GitHub Actions workflow builds the same two files. The APK is an arm64 debug build you can sideload. The IPA is unsigned arm64 and needs a re-sign before it will install on an iPhone.
+
 To post the Capacitor mobile application to public app stores:
 
 #### Google Play Store (Android)
