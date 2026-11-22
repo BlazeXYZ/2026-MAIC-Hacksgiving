@@ -200,3 +200,10 @@ variable "local_port" {
     error_message = "local_port must be between 1024 and 65535."
   }
 }
+
+variable "coordinator_api_key" {
+  description = "Coordinator API key for protected coordinator and admin routes. Set in terraform.tfvars or deployment secrets."
+  type        = string
+  sensitive   = true
+  default     = null
+}

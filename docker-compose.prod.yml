@@ -1,0 +1,13 @@
+services:
+  db:
+    ports: !reset []
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the deployment environment}
+
+  api:
+    command: ["uvicorn", "src.server.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    volumes: !reset []
+    environment:
+      APP_ENV: production
+      DEBUG: "False"
+      DATABASE_URL: postgresql+psycopg://comforce:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in the deployment environment}@db:5432/comforce

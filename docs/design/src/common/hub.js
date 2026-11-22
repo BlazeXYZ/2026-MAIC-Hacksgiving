@@ -1,5 +1,5 @@
 /* Shared mockup behavior: real-map rendering, search sectors, scaling, and the interaction conventions
-   (data-take, data-tab, data-seg, data-tick, data-switch, data-once, data-layer-chip, data-go, data-join, data-exit). */
+   (data-take, data-tab, data-seg, data-tick, data-switch, data-once, data-layer-chip, data-go, data-join). */
 const HUB = (() => {
   const NS = 'http://www.w3.org/2000/svg';
   const el = (tag, attrs, parent) => { const n = document.createElementNS(NS, tag); for (const k in attrs) n.setAttribute(k, attrs[k]); if (parent) parent.appendChild(n); return n; };
@@ -163,18 +163,6 @@ const HUB = (() => {
     if (document.fonts) document.fonts.ready.then(() => fits.forEach(fit));
   }
 
-  /* ---- Quick Exit ---- */
-  function exit(app) {
-    if (!app || app.querySelector('[data-decoy]')) return;
-    const d = document.getElementById('decoy-tpl').content.firstElementChild.cloneNode(true);
-    if (app.dataset.app === 'desk') d.classList.add('desk-decoy');
-    app.appendChild(d);
-    app.querySelector('[data-live]').style.visibility = 'hidden';
-    let taps = 0, timer;
-    d.querySelector('[data-return]').addEventListener('click', () => { taps++; clearTimeout(timer); timer = setTimeout(() => taps = 0, 900); if (taps >= 3) restore(app); });
-  }
-  function restore(app) { app.querySelector('[data-decoy]')?.remove(); app.querySelector('[data-live]').style.visibility = ''; }
-
   function wire() {
     document.addEventListener('click', e => {
       const t = e.target;
@@ -212,13 +200,6 @@ const HUB = (() => {
       if (tog) { const [sel, cls] = tog.dataset.toggleClass.split('|'); const tgt = tog.closest(sel); const on = tgt.classList.toggle(cls); const lab = tog.querySelector('[data-label]'); if (lab && tog.dataset.on) { if (!tog.dataset.off) tog.dataset.off = lab.textContent; lab.textContent = on ? tog.dataset.on : tog.dataset.off; } return; }
       const go = t.closest('[data-go]');
       if (go) { const on = go.closest('[data-walk]').classList.toggle('walking'); const lab = go.querySelector('[data-label]'); if (!go.dataset.off) go.dataset.off = lab.textContent; lab.textContent = on ? go.dataset.on : go.dataset.off; return; }
-      const ex = t.closest('[data-exit]');
-      if (ex) exit(ex.closest('[data-app]'));
-    });
-    document.addEventListener('keydown', e => {
-      if (e.key !== 'Escape') return;
-      const apps = [...document.querySelectorAll('[data-app]')], anyLive = apps.some(a => !a.querySelector('[data-decoy]'));
-      apps.forEach(a => anyLive ? exit(a) : restore(a));
     });
   }
 

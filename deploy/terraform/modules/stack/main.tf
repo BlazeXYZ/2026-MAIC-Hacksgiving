@@ -27,3 +27,14 @@ resource "kubernetes_secret_v1" "db" {
     DATABASE_URL      = "postgresql+psycopg://${var.db_user}:${var.db_password}@db:5432/${var.db_name}"
   }
 }
+
+resource "kubernetes_secret_v1" "coordinator" {
+  metadata {
+    name      = "coordinator"
+    namespace = kubernetes_namespace_v1.app.metadata[0].name
+  }
+
+  data = {
+    COORDINATOR_API_KEY = coalesce(var.coordinator_api_key, var.environment == "prod" ? "" : "dev-coordinator-key")
+  }
+}
