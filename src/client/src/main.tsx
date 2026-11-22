@@ -6,6 +6,7 @@ import ServerGate from './native/ServerGate';
 import './styles/global.css';
 import './styles/layout.css';
 import './styles/mobile.css';
+import './styles/phone.css';
 
 function Root(): React.ReactElement {
   const params = new URLSearchParams(window.location.search);
