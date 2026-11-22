@@ -14,7 +14,7 @@ from typing import Any
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from src.server.db import Resource, Ticket, close_db, get_db, init_db
+from src.server.db import InventoryEntry, Resource, Ticket, close_db, get_db, init_db
 
 logger = logging.getLogger("comforce.seed")
 
@@ -518,6 +518,16 @@ def seed_database(db_url: str | None = None) -> dict[str, int]:
 
     try:
         _migrate_legacy_service_ids(session)
+        placeholder = session.scalar(
+            select(InventoryEntry).where(
+                InventoryEntry.id == "en-1",
+                InventoryEntry.item_id.is_(None),
+                InventoryEntry.label == "mystery thing",
+                InventoryEntry.via == "unmatched",
+            )
+        )
+        if placeholder is not None:
+            session.delete(placeholder)
 
         # Validate and insert Safe Places
         for item in SAFE_PLACES:
