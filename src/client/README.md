@@ -42,32 +42,22 @@ For fast local testing of touch interactions, mobile safe areas, and responsive 
    - **Safe area insets:** The sticky emergency alert banner and navigation respect top notch / Dynamic Island and bottom gesture pill bar (`viewport-fit=cover` and `env(safe-area-inset-*)`).
    - **Touch targets:** All buttons, community selector pills, and ticket claim actions have a minimum touch target of 44x44px.
 
-### 3. Native Platform Export
+### 3. Native shell
 
-#### Android
-Ensure Android Studio and Android SDK 33+ are installed:
+On a phone the app opens a connect screen. Type an IPv4 address and a port, then **Save and open**. That pair is stored on the device (Android SharedPreferences, iOS UserDefaults) and the web view loads `http://ip:port/`. A **Server** button on the remote page returns to the picker. In a desktop browser, open `http://localhost:3000/?shell=1` to preview the picker.
+
+### 4. Build pipeline
+
+From the repository root:
+
 ```bash
-# Add Android platform (first-time setup)
-npx cap add android
-
-# Sync assets and open in Android Studio
-npx cap sync android
-npm run cap:android
+bash scripts/mobile/build-android.sh
+bash scripts/mobile/build-ios.sh
 ```
-In Android Studio:
-- Select an active emulator or connected hardware device (with USB debugging enabled).
-- Click **Run 'app'** (`Shift+F10`).
 
-#### iOS (macOS only)
-Ensure Xcode and CocoaPods are installed:
-```bash
-# Add iOS platform (first-time setup)
-npx cap add ios
+- Android (Linux or macOS) writes `dist/mobile/ComForceMKE-arm64.apk`. It is a debug APK that contains only the arm64-v8a ABI. Install it on an arm64 phone with USB debugging or by copying the file over.
+- iOS needs macOS and Xcode. It writes `dist/mobile/ComForceMKE-unsigned.ipa` (arm64, unsigned). A device install needs a re-sign.
 
-# Sync assets and open in Xcode
-npx cap sync ios
-npm run cap:ios
-```
-In Xcode:
-- Select a simulator (e.g., iPhone 15 Pro).
-- Click **Play / Run** (`Cmd+R`).
+GitHub Actions workflow **Mobile apps** runs the same scripts and uploads both files. The script installs a local JDK 17 and Android SDK under `~/.cache/comforce-mobile` when the machine does not already have them.
+
+Android Studio and Xcode can still open the synced projects with `npm run cap:android` and `npm run cap:ios`.

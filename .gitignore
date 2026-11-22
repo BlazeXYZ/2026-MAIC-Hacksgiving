@@ -17,6 +17,7 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+!src/client/android/app/src/main/jniLibs/**/*.so
 .Python
 build/
 develop-eggs/
@@ -97,6 +98,21 @@ milvus_data/
 
 # Node / Web Frontend (if fullstack)
 node_modules/
+src/client/dist/
+dist/mobile/
+.tooling/
+.android-sdk/
+
+# Capacitor build products (the android/ and ios/ projects themselves stay)
+src/client/android/.gradle/
+src/client/android/local.properties
+src/client/android/captures/
+src/client/android/app/src/main/assets/public/
+src/client/ios/App/Pods/
+src/client/ios/App/App/public/
+src/client/ios/DerivedData/
+*.apk
+*.ipa
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*

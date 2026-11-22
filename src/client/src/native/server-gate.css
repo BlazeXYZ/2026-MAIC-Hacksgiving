@@ -1,0 +1,83 @@
+.gate {
+  min-height: 100vh;
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: calc(24px + env(safe-area-inset-top)) 20px calc(24px + env(safe-area-inset-bottom));
+  background: var(--paper);
+}
+
+.gate-card {
+  width: min(100%, 440px);
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  box-shadow: var(--sh);
+  padding: 28px 22px 22px;
+}
+
+.gate-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.gate-brand svg { width: 34px; height: 34px; flex: none; }
+.gate-brand b { font-weight: 800; font-stretch: 85%; font-size: 22px; letter-spacing: -.01em; }
+.gate-brand b span { color: var(--green); }
+
+.gate h1 {
+  font-weight: 800;
+  font-stretch: 85%;
+  font-size: clamp(28px, 8vw, 34px);
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+
+.gate h1 em {
+  font-family: var(--f-voice);
+  font-style: italic;
+  font-weight: 500;
+  font-stretch: 100%;
+  color: var(--green);
+}
+
+.gate-lead { margin: 10px 0 18px; color: var(--ink-2); font-size: 15px; }
+
+.gate form { display: grid; gap: 12px; }
+.gate label { display: grid; gap: 6px; font-size: 14px; font-weight: 700; color: var(--ink-2); }
+.gate input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 10px;
+  background: var(--card);
+  font-size: 16px;
+}
+.gate input[aria-invalid="true"] { border-color: var(--red); }
+
+.gate-error {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--red-wash);
+  color: var(--red-deep);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.gate-saved {
+  margin: 0 0 4px;
+  font-size: 14px;
+  color: var(--ink-2);
+}
+.gate-saved b { color: var(--ink); }
+
+.gate-actions { display: grid; gap: 8px; margin-top: 4px; }
+.gate-forget { justify-self: center; }
+
+.gate-opening { display: grid; justify-items: center; gap: 12px; text-align: center; }
+.gate-opening svg { width: 48px; height: 48px; }
+.gate-opening p { color: var(--ink-2); }

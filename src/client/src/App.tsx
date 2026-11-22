@@ -164,6 +164,15 @@ export default function App(): ReactElement {
     );
   }
 
+  function mobButton(tab: Tab, label: string, icon: IconName): ReactElement {
+    return (
+      <button type="button" aria-current={activeTab === tab ? 'page' : undefined} onClick={() => go(tab)}>
+        <Icon name={icon} />
+        <span>{label}</span>
+      </button>
+    );
+  }
+
   return (
     <div className="app">
       <header className={isStaff ? 'dnav staff' : 'dnav'}>
@@ -198,6 +207,13 @@ export default function App(): ReactElement {
             </>
           )}
         </nav>
+        <div className="dnav-mobile-actions">
+          {coordinatorKey ? (
+            <button type="button" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
+          ) : (
+            <button type="button" aria-current={activeTab === 'staff-sign-in' ? 'page' : undefined} onClick={() => go('staff-sign-in')}>Staff</button>
+          )}
+        </div>
       </header>
 
       <main className="dpage">
@@ -415,6 +431,28 @@ export default function App(): ReactElement {
         <span><b>ComForce MKE</b> · Community Task Force MKE · Milwaukee, WI</span>
         <span><b>Made in Milwaukee</b> · prototype, sample data</span>
       </footer>
+
+      <nav className="mob-nav" aria-label="Sections">
+        {isStaff ? (
+          <>
+            {mobButton('coordinator', 'Tonight', 'alert')}
+            {mobButton('coordinator-ops', 'Ops', 'pin')}
+            {mobButton('inventory-review', 'Stock', 'food')}
+            {mobButton('forum-review', 'Held', 'lock')}
+            <button type="button" onClick={() => go('home')}>
+              <Icon name="users" />
+              <span>Resident</span>
+            </button>
+          </>
+        ) : (
+          <>
+            {mobButton('home', 'Home', 'home')}
+            {mobButton('map', 'Map', 'pin')}
+            {mobButton('inventory', 'Inventory', 'food')}
+            {coordinatorKey ? mobButton('coordinator', 'Staff', 'lock') : null}
+          </>
+        )}
+      </nav>
     </div>
   );
 }

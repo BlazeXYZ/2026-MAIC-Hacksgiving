@@ -1,0 +1,42 @@
+/* Phone layout for panels that live outside the main page grid. */
+@media (max-width: 720px) {
+  html { scroll-padding-top: calc(72px + env(safe-area-inset-top)); scroll-padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+
+  .dpage .hub-page { max-width: none; margin: 0; padding: 0; }
+  .hubtabs, .forum { padding-left: 16px; padding-right: 16px; }
+  .forum-search { flex-basis: 100%; max-width: none; font-size: 16px; }
+  .seg button { min-height: 44px; }
+
+  input, select, textarea { font-size: 16px; }
+  .btn, .btn.sm { min-height: 44px; height: auto; }
+
+  .community-map-chip,
+  .community-map-tools button,
+  .search-sector-chip,
+  .search-status-btn,
+  .search-signup-btn,
+  .volunteer-modal-close {
+    min-height: 44px;
+  }
+
+  .search-sector-panel-content { grid-template-columns: minmax(0, 1fr); }
+  .search-grid-map-container,
+  .coordinator-map-container { height: min(420px, 58vh); }
+  .coordinator-map-header h3 { flex-wrap: wrap; }
+
+  .volunteer-modal,
+  .coordinator-modal {
+    max-height: calc(100dvh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    overflow: auto;
+  }
+  .volunteer-modal-footer { flex-wrap: wrap; }
+  .volunteer-modal-close { min-width: 44px; }
+
+  .leaflet-container { width: 100%; max-width: 100%; }
+  .leaflet-popup-content-wrapper { max-width: calc(100vw - 72px); }
+  .leaflet-popup-content { width: auto !important; max-width: calc(100vw - 96px); white-space: normal; }
+
+  .kpis { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .kpi b { font-size: clamp(28px, 8vw, 36px); }
+  .dist-rows span, .mod-h h2 { min-width: 0; }
+}
