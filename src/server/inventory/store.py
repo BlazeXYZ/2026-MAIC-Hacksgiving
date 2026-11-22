@@ -648,6 +648,7 @@ def add_entry(
             none_fit=none_fit,
         )
         _entries[entry.id] = entry
+        linked = rematch_unresolved() if alias_id is not None else 0
         session = _db_session()
         if session is not None:
             try:
@@ -673,14 +674,27 @@ def add_entry(
                         none_fit=entry.none_fit,
                     )
                 )
+                if linked:
+                    for other in _entries.values():
+                        if other.id == entry.id:
+                            continue
+                        row = session.get(InventoryEntry, other.id)
+                        if row is None:
+                            continue
+                        if (
+                            row.item_id != other.item_id
+                            or row.alias_id != other.alias_id
+                            or row.via != other.via
+                        ):
+                            row.item_id = other.item_id
+                            row.alias_id = other.alias_id
+                            row.via = other.via
                 session.commit()
             except Exception:
                 session.rollback()
                 raise
             finally:
                 session.close()
-        if alias_id is not None:
-            rematch_unresolved()
         return entry
 
 
