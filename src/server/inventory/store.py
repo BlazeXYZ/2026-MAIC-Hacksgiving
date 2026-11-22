@@ -230,15 +230,6 @@ def reload_from_db() -> None:
                     row.source,
                     _as_utc(row.created_at),
                 )
-            placeholder = session.query(InventoryEntry).filter(
-                InventoryEntry.id == "en-1",
-                InventoryEntry.item_id.is_(None),
-                InventoryEntry.label == "mystery thing",
-                InventoryEntry.via == "unmatched",
-            ).first()
-            if placeholder is not None:
-                session.delete(placeholder)
-                session.commit()
             for row in session.query(InventoryEntry).all():
                 candidates = tuple(
                     Candidate(candidate["item_id"], candidate.get("probability"))
