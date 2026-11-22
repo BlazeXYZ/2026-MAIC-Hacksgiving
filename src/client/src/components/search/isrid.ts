@@ -33,6 +33,14 @@ export interface IsridDistances {
   /** Number of cases behind the figures (null for placeholders). */
   n: number | null;
   source: IsridSource | null;
+  /** Shown under the legend, e.g. when one setting borrows another setting's figures. */
+  note?: string;
+}
+
+/** A sourced, category-specific search tip shown with the rings. */
+export interface IsridTip {
+  text: string;
+  source: IsridSource;
 }
 
 export interface IsridCategory {
@@ -40,6 +48,15 @@ export interface IsridCategory {
   label: string;
   placeholder: boolean;
   environments: Record<IsridEnvironment, IsridDistances>;
+  tip?: IsridTip;
+}
+
+const KM_PER_MILE = 1.609344;
+
+/** Convert a row published in miles to km (1 decimal), so the source's own numbers stay visible below. */
+function milesToKm(miles: Record<RingPercentile, number>): Record<RingPercentile, number> {
+  const round = (mi: number): number => Math.round(mi * KM_PER_MILE * 10) / 10;
+  return { 25: round(miles[25]), 50: round(miles[50]), 75: round(miles[75]), 95: round(miles[95]) };
 }
 
 const KOESTER_LPB_DEMENTIA: Omit<IsridSource, 'location'> = {
@@ -53,6 +70,15 @@ const KOESTER_2020_ASD_TD: Omit<IsridSource, 'location'> = {
     'Koester, R. J. (2020). Enhancements to Statistical Probability of Area Models based upon updated ISRID data collection for Autistic Spectrum Disorders and Typically Developing Children. Journal of Search & Rescue, 4(1). Table 3.',
   url: 'https://journalofsar.com/wp-content/uploads/2020/04/v4-8-Koester-ASD-vTD.pdf.pdf',
 };
+
+const IGT4SAR_KOESTER: Omit<IsridSource, 'location'> = {
+  citation:
+    'Koester, R. J. (2008). Lost Person Behavior. dbS Productions. Distance tables as reproduced in Ferguson, D. IGT4SAR (Integrated Geospatial Tools for Search and Rescue), IPP_EuclideanDistance2.py, whose header states the IPP distances are provided by Robert Koester.',
+  url: 'https://github.com/dferguso/IGT4SAR/blob/master/IPP_EuclideanDistance2.py',
+};
+
+const IGT4SAR_TEEN_LOCATION =
+  '"Child (13-15)", Temperate / flat row: 0.4 / 0.8 / 2.0 / 6.2 miles, converted to km';
 
 export const ISRID_CATEGORIES: IsridCategory[] = [
   {
@@ -107,15 +133,35 @@ export const ISRID_CATEGORIES: IsridCategory[] = [
     },
   },
   {
-    // PLACEHOLDER: we could not find a public, citable reproduction of the
-    // ISRID adolescent table. These round numbers are NOT ISRID data. Replace
-    // them with the published figures (with a source) before relying on them.
+    // ISRID's adolescent group is "Child (13-15)". We could not get the book's
+    // table directly, so these come from IGT4SAR, an open-source SAR toolbox
+    // whose ring script reproduces Koester's (2008) distance tables in miles.
+    // Spot check: its Dementia rows match the book's free Dementia chapter
+    // (Urban 0.2/0.7/2.0/7.8 mi = 0.3/1.1/3.2/12.6 km). It has no Urban row for
+    // 13-15 (it falls back to the Temperate/flat row), and no case counts.
     id: 'teen',
-    label: 'Teen (age 13-17)',
-    placeholder: true,
+    label: 'Teen (age 13-15)',
+    placeholder: false,
     environments: {
-      Urban: { km: { 25: 0.5, 50: 1, 75: 2, 95: 5 }, n: null, source: null },
-      Temperate: { km: { 25: 0.5, 50: 1, 75: 2, 95: 5 }, n: null, source: null },
+      Urban: {
+        km: milesToKm({ 25: 0.4, 50: 0.8, 75: 2.0, 95: 6.2 }),
+        n: null,
+        source: { ...IGT4SAR_KOESTER, location: `${IGT4SAR_TEEN_LOCATION} (no Urban row; Temperate / flat shown)` },
+        note: 'No urban figures are published for ages 13-15, so these are the Temperate (flat terrain) rings.',
+      },
+      Temperate: {
+        km: milesToKm({ 25: 0.4, 50: 0.8, 75: 2.0, 95: 6.2 }),
+        n: null,
+        source: { ...IGT4SAR_KOESTER, location: IGT4SAR_TEEN_LOCATION },
+      },
+    },
+    tip: {
+      text: 'In urban and suburban searches, 80% of missing 13-15 year olds were found in a structure. Check buildings, not just streets.',
+      source: {
+        citation: 'NEWSAR SAR Field Team Member training, Unit 3: Lost Person Behavior (2020), "Check Structures (Urban)", citing ISRID.',
+        url: 'http://aa3sd.net/newsar/sar_ftm_v1_0_0/presentations/speakers_notes/3_lost_person_behavior_notes.pdf',
+        location: 'slide 23',
+      },
     },
   },
 ];
