@@ -1,3 +1,4 @@
+import { apiFetch } from './transport';
 import {
   apiPaths,
   type PublicTicket,
@@ -27,7 +28,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(path, {
+    const res = await apiFetch(path, {
       ...init,
       signal: ctrl.signal,
       headers: { 'Content-Type': 'application/json', ...init?.headers },

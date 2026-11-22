@@ -1,3 +1,4 @@
+import { apiFetch } from '../api/transport';
 import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import type {
   AssignRequest,
@@ -161,7 +162,7 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
     params.set('sort_by', sortField);
     params.set('sort_order', sortOrder);
 
-    fetch(`/api/v1/coordinator/queue?${params.toString()}`, {
+    apiFetch(`/api/v1/coordinator/queue?${params.toString()}`, {
       signal: controller.signal,
       headers: coordinatorHeaders(accessKey),
     })
@@ -272,7 +273,7 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
     setSaveError('');
 
     try {
-      const response = await fetch(`/api/v1/coordinator/tickets/${encodeURIComponent(activeModalTicket.ticket_id)}/assign`, {
+      const response = await apiFetch(`/api/v1/coordinator/tickets/${encodeURIComponent(activeModalTicket.ticket_id)}/assign`, {
         method: 'PATCH',
         headers: coordinatorHeaders(accessKey, { 'Content-Type': 'application/json' }),
         body: JSON.stringify(payload),

@@ -1,3 +1,4 @@
+import { apiFetch } from './api/transport';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactElement } from 'react';
 import CommunityMap from './components/CommunityMap';
@@ -136,7 +137,7 @@ export default function App(): ReactElement {
 
   useEffect(() => {
     const ctrl = new AbortController();
-    fetch('/api/alerts/priority', { signal: ctrl.signal })
+    apiFetch('/api/alerts/priority', { signal: ctrl.signal })
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (data && data.active) {

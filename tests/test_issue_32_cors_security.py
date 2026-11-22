@@ -28,6 +28,7 @@ _ORIGINS = (
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "capacitor://localhost",
+    "https://localhost",
     "http://localhost",
 )
 
@@ -58,6 +59,21 @@ def test_preflight_rejects_other_origins():
         },
     )
     assert response.headers.get("access-control-allow-origin") != "https://evil.example"
+
+
+def test_native_coordinator_preflight_allows_staff_header() -> None:
+    for origin in ("https://localhost", "capacitor://localhost"):
+        response = client.options(
+            "/api/v1/coordinator/queue",
+            headers={
+                "Origin": origin,
+                "Access-Control-Request-Method": "GET",
+                "Access-Control-Request-Headers": "x-coordinator-key",
+            },
+        )
+        assert response.status_code == 200
+        assert response.headers["access-control-allow-origin"] == origin
+        assert "x-coordinator-key" in response.headers["access-control-allow-headers"].lower()
 
 
 def test_security_headers_allow_geolocation_for_this_origin():
