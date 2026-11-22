@@ -19,6 +19,11 @@
   <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-6 11-8 12-2-1-8-7-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></symbol>
   <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3z"/></symbol>
   <symbol id="i-msg" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></symbol>
+  <symbol id="i-desktop" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></symbol>
+  <symbol id="i-mobile" viewBox="0 0 24 24"><rect x="6" y="2" width="12" height="20" rx="2.5"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M21 8 12 3 3 8v8l9 5 9-5zM3 8l9 5 9-5M12 13v8"/></symbol>
+  <symbol id="i-dollar" viewBox="0 0 24 24"><path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></symbol>
   <symbol id="i-lamp" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5A6 6 0 1 0 7.5 11.5c.8.8 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/></symbol>
   <symbol id="skyline" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice"><path d="M0 120V98H36V120ZM36 120V80H80V120ZM80 120V86H104V120ZM104 120V98H134V120ZM134 120V98H152V120ZM152 120V80H196V120ZM196 120V80H220V120ZM220 120V92H250V120ZM250 120V98H274V120ZM274 120V102H310V120ZM310 120V86H328V120ZM328 120V106H358V120ZM358 120V92H388V120ZM388 120V80H412V120ZM412 120V80H430V120ZM430 120V98H474V120ZM474 120V102H498V120ZM498 120V92H534V120ZM534 120V86H570V120ZM570 120V102H600V120ZM600 120V80H630V120ZM630 120V92H654V120ZM654 120V106H698V120ZM698 120V92H716V120ZM716 120V80H752V120ZM752 120V106H796V120ZM796 120V98H832V120ZM832 120V106H850V120ZM850 120V102H868V120ZM868 120V102H886V120ZM886 120V80H904V120ZM904 120V106H928V120ZM928 120V86H972V120ZM972 120V92H996V120ZM996 120V98H1040V120ZM1040 120V86H1084V120ZM1084 120V92H1102V120ZM1102 120V80H1146V120ZM1146 120V92H1190V120ZM1190 120V102H1214V120ZM250 120V68H320V120ZM262 120V60H308V120ZM268 60L274 52L280 60ZM290 60L296 52L302 60ZM278 120V28H294V120ZM276 28L286 2L296 28ZM430 120V24H464V120ZM470 120V48H496V120ZM500 120V16H540V120ZM546 120V56H568V120ZM380 120V62H410V120ZM760 120V86H830V120ZM786 120V28H804V120ZM786 28L795 16L804 28ZM785 42a10 10 0 1 0 20 0a10 10 0 1 0-20 0ZM1010 120V106H1130V120ZM1068 106L1000 58L1004 54L1074 104ZM1072 106L1140 58L1136 54L1066 104ZM1066 106L1070 72L1074 106Z"/></symbol>
 </defs></svg>
@@ -26,54 +31,177 @@
 <!-- data-title is the text shown in every slide's footer. Add data-foot="none" to a slide to hide its footer. -->
 <main class="deck" data-title="MAIC Hacksgiving 2026">
 
-  <!-- 1 · Title -->
-  <section class="slide dark title-slide">
-    <span class="flag" data-step="1">MAIC Hacksgiving 2026</span>
-    <h1 class="display" data-step="2">Neighbors helping <em>neighbors</em>, faster.</h1>
-    <p class="lede" data-step="3">[One-sentence pitch: what ComForce MKE Hub is and who it serves.]</p>
-    <div class="byline" data-step="4">
-      <span><small>Team</small>[Team name]</span>
-      <span><small>Presented by</small>[Names]</span>
+  <!-- 1 · Title — just the name, full screen -->
+  <section class="slide dark title-slide" data-foot="none">
+    <div data-step="1" style="margin-top:220px;display:flex;justify-content:center">
+      <span style="display:inline-flex;align-items:flex-end;gap:24px">
+        <span style="display:flex;flex-direction:column;gap:5px;justify-content:flex-end">
+          <span style="font-weight:700;font-size:52px;letter-spacing:.12em;text-transform:uppercase;color:var(--stage-mute)">Comfort with</span>
+          <span style="font-weight:800;font-stretch:80%;font-size:148px;line-height:.9;letter-spacing:-.025em">ComForce</span>
+        </span>
+        <span style="font-weight:800;font-stretch:80%;font-size:228px;line-height:.82;letter-spacing:-.03em;color:var(--hivis)">MKE</span>
+      </span>
     </div>
     <svg class="city" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
   </section>
 
-  <!-- 2 · The problem: three big numbers -->
-  <section class="slide">
-    <p class="kicker" data-step="1">The problem</p>
-    <h2 class="title" data-step="2">[Headline that names the <em>problem</em>.]</h2>
-    <div class="cols c3">
-      <div class="card stat red" data-step="3"><b>[00]</b><span>[What this number means]</span><small>Source: [citation]</small></div>
-      <div class="card stat amber" data-step="4"><b>[00%]</b><span>[What this number means]</span><small>Source: [citation]</small></div>
-      <div class="card stat" data-step="5"><b>[0 hrs]</b><span>[What this number means]</span><small>Source: [citation]</small></div>
+  <!-- 2 · Title + cascading motto -->
+  <section class="slide dark title-slide">
+    <div data-step="1" style="margin-top:40px;display:flex;justify-content:center">
+      <span style="display:inline-flex;align-items:flex-end;gap:24px">
+        <span style="display:flex;flex-direction:column;gap:5px;justify-content:flex-end">
+          <span style="font-weight:700;font-size:52px;letter-spacing:.12em;text-transform:uppercase;color:var(--stage-mute)">Comfort with</span>
+          <span style="font-weight:800;font-stretch:80%;font-size:148px;line-height:.9;letter-spacing:-.025em">ComForce</span>
+        </span>
+        <span style="font-weight:800;font-stretch:80%;font-size:228px;line-height:.82;letter-spacing:-.03em;color:var(--hivis)">MKE</span>
+      </span>
+    </div>
+    <div style="margin-top:64px;display:flex;justify-content:center">
+      <div style="width:1140px;display:flex;flex-direction:column;gap:24px">
+        <p data-step="2" style="margin-left:90px;color:var(--stage-fg);font-family:var(--f-voice);font-style:italic;font-size:48px;letter-spacing:-.01em">Every need visible.</p>
+        <p data-step="3" style="margin-left:270px;color:var(--stage-fg);font-family:var(--f-voice);font-style:italic;font-size:48px;letter-spacing:-.01em">Every volunteer matched.</p>
+        <p data-step="4" style="margin-left:450px;color:var(--stage-fg);font-family:var(--f-voice);font-style:italic;font-size:48px;letter-spacing:-.01em">Every identity protected.</p>
+        <p data-step="5" style="margin-left:630px;color:var(--stage-fg);font-family:var(--f-voice);font-style:italic;font-size:48px;letter-spacing:-.01em">Every minute saved.</p>
+      </div>
+    </div>
+    <svg class="city" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
+  </section>
+
+  <!-- 3 · Our solution: a screenshot carousel. Forward/back step through the .car-item list first,
+       and only turn the page from the last (or first) item. Add, remove or reorder .car-item blocks freely.
+       Desktop items use .browser; mobile items use one or two .phone frames. -->
+  <section class="slide solution">
+    <div class="solution-head">
+      <p class="kicker" data-step="1">Our solution</p>
+    </div>
+    <h2 class="title" data-step="1" style="margin-top:12px;font-size:80px">One hub for every <em>neighbor</em>.</h2>
+    <div class="carousel" data-carousel data-step="2">
+<figure class="car-item">
+        <figcaption class="car-cap">
+          <div class="tags"><span class="tag device"><svg class="ic"><use href="#i-desktop"/></svg>Desktop</span><span class="tag urgent">Residents</span></div>
+          <h3>Urgent alerts come first.</h3>
+          <p>A missing-neighbor alert sits above everything else, with one tap to join the search. The three hubs, Domestic Safety, Missing Persons and Food Pantry, are right below.</p>
+        </figcaption>
+        <div class="car-stage">
+          <div class="browser"><div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">comforce.mke</span></div><img src="img/solution/desktop-home.webp" alt="Resident home page with a missing-person alert above the community hubs"></div>
+        </div>
+      </figure>
+
+      <figure class="car-item">
+        <figcaption class="car-cap">
+          <div class="tags"><span class="tag device"><svg class="ic"><use href="#i-mobile"/></svg>Mobile</span><span class="tag">Residents</span></div>
+          <h3>Ask for help in your own words.</h3>
+          <p>The phone app puts the four most common needs on the home screen. The help request works in English, Spanish and Hmong, and no account is needed.</p>
+        </figcaption>
+        <div class="car-stage">
+          <div class="phone"><img src="img/solution/mobile-home.webp" alt="Phone home screen greeting a neighbor, with the missing-person alert"></div>
+          <div class="phone"><img src="img/solution/mobile-ask.webp" alt="Phone help request asking what kind of help is needed"></div>
+        </div>
+      </figure>
+
+      <figure class="car-item">
+        <figcaption class="car-cap">
+          <div class="tags"><span class="tag device"><svg class="ic"><use href="#i-mobile"/></svg>Mobile</span><span class="tag ai">AI triage</span></div>
+          <h3>AI sorts it. A person handles it.</h3>
+          <p>Before sending, the resident sees how the request was understood and can fix it. They get a private code to check on it later.</p>
+          <p class="why"><svg class="ic"><use href="#i-lamp"/></svg>Anything urgent goes to a real person at ComForce right away.</p>
+        </figcaption>
+        <div class="car-stage">
+          <div class="phone"><img src="img/solution/mobile-triage.webp" alt="Review screen showing the AI's reading of the request: Today, Food"></div>
+          <div class="phone"><img src="img/solution/mobile-status.webp" alt="Request status screen: ComForce has your request, with a private request code"></div>
+        </div>
+      </figure>
+
+      <figure class="car-item">
+        <figcaption class="car-cap">
+          <div class="tags"><span class="tag device"><svg class="ic"><use href="#i-desktop"/></svg>Desktop</span><span class="tag">Domestic Safety</span></div>
+          <h3>Get somewhere safe.</h3>
+          <p>Verified safe places, food pantries and a lit walking corridor on one map. Filters show what's open now and what needs no ID.</p>
+        </figcaption>
+        <div class="car-stage">
+          <div class="browser"><div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">comforce.mke/map</span></div><img src="img/solution/desktop-map.webp" alt="Community map of Milwaukee with safe places, pantries and the lit campus corridor"></div>
+        </div>
+      </figure>
+
+      <figure class="car-item">
+        <figcaption class="car-cap">
+          <div class="tags"><span class="tag device"><svg class="ic"><use href="#i-desktop"/></svg>Desktop</span><span class="tag urgent">Missing Persons</span></div>
+          <h3>Search parties, sector by sector.</h3>
+          <p>Volunteers mark blocks as searching or cleared, so no street is walked twice. Distance rings from real case data show where to start.</p>
+        </figcaption>
+        <div class="car-stage">
+          <div class="browser"><div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">comforce.mke/hubs/missing-persons</span></div><img src="img/solution/desktop-search.webp" alt="Search grid map with cleared, searching and unsearched sectors and distance rings"></div>
+        </div>
+      </figure>
+
+      <figure class="car-item">
+        <figcaption class="car-cap">
+          <div class="tags"><span class="tag device"><svg class="ic"><use href="#i-desktop"/></svg>Desktop</span><span class="tag">Hub forums</span></div>
+          <h3>A private forum in every hub.</h3>
+          <p>Neighbors post under a pseudonym, and common questions get an answer automatically. Each hub also has its own tool, like the safe route or the search grid.</p>
+        </figcaption>
+        <div class="car-stage">
+          <div class="browser"><div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">comforce.mke/hubs/domestic-safety</span></div><img src="img/solution/desktop-forum.webp" alt="Domestic Safety hub forum with a pinned coordinator post and an automatic answer"></div>
+        </div>
+      </figure>
+
+      <figure class="car-item">
+        <figcaption class="car-cap">
+          <div class="tags"><span class="tag device"><svg class="ic"><use href="#i-mobile"/></svg>Mobile</span><span class="tag today">Volunteers</span></div>
+          <h3>Neighbors take a request.</h3>
+          <p>Volunteers claim nearby tasks, like packing pantry boxes or delivering groceries. They get the details privately and can hand a task back anytime.</p>
+        </figcaption>
+        <div class="car-stage">
+          <div class="phone"><img src="img/solution/mobile-requests.webp" alt="Help a neighbor screen listing nearby volunteer requests"></div>
+          <div class="phone"><img src="img/solution/mobile-map.webp" alt="Phone community map with safe places and pantries"></div>
+        </div>
+      </figure>
+
+      <figure class="car-item">
+        <figcaption class="car-cap">
+          <div class="tags"><span class="tag device"><svg class="ic"><use href="#i-desktop"/></svg>Desktop</span><span class="tag">Coordinators</span></div>
+          <h3>Tonight, across the district.</h3>
+          <p>Coordinators see every request sorted by urgency. They can filter by neighborhood and assign volunteers from one queue.</p>
+          <p class="why"><svg class="ic"><use href="#i-lamp"/></svg>AI sorts by urgency. The coordinator decides.</p>
+        </figcaption>
+        <div class="car-stage">
+          <div class="browser"><div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">comforce.mke/coordinator</span></div><img src="img/solution/desktop-coordinator.webp" alt="Coordinator dashboard with urgent counts, district filters and the request queue"></div>
+        </div>
+      </figure>
+
+      <figure class="car-item">
+        <figcaption class="car-cap">
+          <div class="tags"><span class="tag device"><svg class="ic"><use href="#i-desktop"/></svg>Desktop</span><span class="tag ai">Privacy</span></div>
+          <h3>Contact details never go public.</h3>
+          <p>A post with a phone number, address or email is held automatically. A coordinator publishes it with the details scrubbed out, or removes it.</p>
+        </figcaption>
+        <div class="car-stage">
+          <div class="browser"><div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">comforce.mke/coordinator/held</span></div><img src="img/solution/desktop-held.webp" alt="Held forum posts queue showing a post held for including a phone number"></div>
+        </div>
+      </figure>
     </div>
   </section>
 
-  <!-- 3 · Who it's for: text on the left, a request ticket on the right -->
+  <!-- 4b · Why it's safe to use: three differentiators -->
   <section class="slide">
-    <div class="split">
-      <div>
-        <p class="kicker" data-step="1">Who it's for</p>
-        <h2 class="title" data-step="2">[A person, a <em>block</em>, a need.]</h2>
-        <p class="lede" data-step="3">[Describe the people the Hub serves and the moment they reach for it.]</p>
+    <p class="kicker" data-step="1">What we learned &amp; what we built</p>
+    <h2 class="title" data-step="2">Help people can <em>trust</em> enough to ask for.</h2>
+    <ul class="list" data-step="3" style="margin-top:48px;font-size:32px">
+      <li><b>User needs:</b> scattered forms and phone lines <b>slow down help</b>, and fear of <b>exposing personal details</b> keeps people from asking, so residents need <b>anonymity</b>.</li>
+      <li><b>Coordinator needs:</b> staff need <b>accountable access</b> to tickets, moderation and inventory.</li>
+    </ul>
+    <div class="cols c3" style="margin-top:44px;gap:40px">
+      <div class="card" style="min-height:380px" data-step="3">
+        <div class="card-h" style="font-size:36px;padding:24px 32px">No mandatory account</div>
+        <div class="card-b" style="padding:30px"><ul class="list" style="font-size:32px;gap:24px"><li>No sign-up or password</li><li>Anonymous handles</li><li>Help starts instantly</li></ul></div>
       </div>
-      <div style="display:grid;gap:28px">
-        <article class="ticket" data-step="3">
-          <div class="ticket-main">
-            <div style="display:flex;gap:10px"><span class="tag urgent">Urgent</span><span class="tag ai">AI matched</span></div>
-            <h3>[Example request title]</h3>
-            <p class="why"><svg class="ic"><use href="#i-lamp"/></svg>[Why the AI surfaced this request for you.]</p>
-          </div>
-          <div class="stub"><svg class="ic"><use href="#i-arrow"/></svg>Take it<small>[0.4 mi]</small></div>
-        </article>
-        <article class="ticket taken" data-step="4">
-          <div class="ticket-main">
-            <div style="display:flex;gap:10px"><span class="tag today">Today</span></div>
-            <h3>[Second example request]</h3>
-            <p class="why"><svg class="ic"><use href="#i-lamp"/></svg>[Why it matched.]</p>
-          </div>
-          <div class="stub"><svg class="ic"><use href="#i-check"/></svg>Taken<small>[by you]</small></div>
-        </article>
+      <div class="card" style="min-height:380px" data-step="4">
+        <div class="card-h" style="font-size:36px;padding:24px 32px">PII scrubbing</div>
+        <div class="card-b" style="padding:30px"><ul class="list" style="font-size:32px;gap:24px"><li>Phones, addresses, emails removed</li><li>Applied before storage and AI</li></ul></div>
+      </div>
+      <div class="card" style="min-height:380px" data-step="5">
+        <div class="card-h" style="font-size:36px;padding:24px 32px">Separate coordinators</div>
+        <div class="card-b" style="padding:30px"><ul class="list" style="font-size:32px;gap:24px"><li>Key-protected workspace</li><li>Held posts stay private</li><li>DV shelters hidden from public inventory</li></ul></div>
       </div>
     </div>
   </section>
@@ -91,43 +219,136 @@
     <div class="tip" data-step="4" style="margin-top:40px"><svg class="ic"><use href="#i-shield"/></svg><span><b>Privacy by default:</b> [one line on how personal details are protected.]</span></div>
   </section>
 
-  <!-- 5 · Demo: screenshot in browser chrome. Swap the placeholder div for <img class="shot" src="..." alt="..."> -->
+  <!-- 5 · Trust & safety: jev moderation, PII scrubbing, human review -->
   <section class="slide">
-    <div class="split" style="grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:72px">
-      <div>
-        <p class="kicker" data-step="1">Demo</p>
-        <h2 class="title" data-step="2">[What the <em>screen</em> shows.]</h2>
-        <ul class="list" data-step="3" style="margin-top:40px">
-          <li><b>[Feature]:</b> [why it matters]</li>
-          <li><b>[Feature]:</b> [why it matters]</li>
-          <li><b>[Feature]:</b> [why it matters]</li>
+    <p class="kicker" data-step="1">Trust &amp; safety</p>
+    <h2 class="title" data-step="2">[The AI <em>flags it</em>. A human <em>decides it</em>.]</h2>
+    <div class="cols c3" data-step="3" style="margin-top:72px;gap:64px">
+      <section>
+        <h3 style="font-weight:800;font-stretch:88%;font-size:36px">① Local checks</h3>
+        <ul class="list" style="margin-top:28px;font-size:28px;gap:22px">
+          <li>Phone, address, email, SSN</li>
+          <li>Known abuse wording</li>
+          <li>Held = count only, never content</li>
+          <li>Author told why, in plain words</li>
         </ul>
+      </section>
+      <section>
+        <h3 style="font-weight:800;font-stretch:88%;font-size:36px">② Jev second opinion</h3>
+        <ul class="list" style="margin-top:28px;font-size:28px;gap:22px">
+          <li>Four abuse categories scored</li>
+          <li>≥ 0.5 probability → held</li>
+          <li>Held text never sent to the model</li>
+          <li>No key or failure changes the outcome</li>
+        </ul>
+      </section>
+      <section>
+        <h3 style="font-weight:800;font-stretch:88%;font-size:36px">③ Human review</h3>
+        <ul class="list" style="margin-top:28px;font-size:28px;gap:22px">
+          <li>Coordinator reads every hold</li>
+          <li>Publish scrubbed, edit, or remove</li>
+          <li>Missing-person tips: always held</li>
+          <li>Nothing goes public on AI alone</li>
+        </ul>
+      </section>
+    </div>
+    <div class="cols c2" data-step="4" style="margin-top:72px;gap:48px">
+      <div class="tip"><svg class="ic"><use href="#i-shield"/></svg><span><b>PII never reaches a model</b> — <code>scrub_pii()</code>, coordinator-only <code>[REDACTED]</code>, 400 chars max to Jev.</span></div>
+      <div class="tip"><svg class="ic"><use href="#i-check"/></svg><span><b>Crisis wording is never abuse</b> — it gets a 24/7 hotline answer, not a hold.</span></div>
+    </div>
+  </section>
+
+  <!-- 6 · AI limits: what it never decides, what it never sees, what it never improvises.
+       Styles below are scoped to .ai-limits so they only affect this slide. -->
+  <section class="slide ai-limits">
+    <style>
+      .ai-limits .cols{margin-top:88px}
+      .ai-limits .card-h{font-size:36px;padding:28px 40px}
+      .ai-limits .card-h::before{display:none}
+      .ai-limits .card-h .ic{width:40px;height:40px;color:var(--green)}
+      .ai-limits .card-b{padding:68px 40px 76px}
+      .ai-limits .list{gap:60px;font-size:36px;line-height:1.3;color:var(--ink-2)}
+      .ai-limits .list li{text-wrap:balance}
+      .ai-limits .list b{color:var(--ink)}
+      .ai-limits .tip{margin-top:72px;padding:32px 40px;font-size:34px}
+      .ai-limits .tip{align-items:center;white-space:nowrap}
+      .ai-limits .tip .ic{width:36px;height:36px;margin-top:0}
+      /* bullets rise in one by one after their card */
+      .ai-limits .list li{opacity:0;transform:translateY(12px);transition:opacity .45s var(--ease),transform .5s var(--ease)}
+      .ai-limits.is-active .list li{opacity:1;transform:none;transition-delay:calc(var(--d) + var(--i,0) * .14s)}
+      .ai-limits .list li:nth-child(2){--i:1}
+      @media (prefers-reduced-motion:reduce){.ai-limits .list li{transition:opacity .2s linear!important;transform:none!important}}
+      @media print{.ai-limits .list li{opacity:1;transform:none}}
+    </style>
+    <p class="kicker" data-step="1">AI limits</p>
+    <h2 class="title" data-step="2">The AI flags. <em>People decide.</em></h2>
+    <div class="cols c3">
+      <div class="card" data-step="3" style="--d:.5s">
+        <div class="card-h"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="7" r="4"/><path d="M4 21v-1a6 6 0 0 1 6-6h4a6 6 0 0 1 6 6v1"/></svg>It never decides</div>
+        <div class="card-b"><ul class="list">
+          <li>Only <b>holds</b> risky posts</li>
+          <li>Can't <b>publish or delete</b></li>
+        </ul></div>
       </div>
-      <figure class="browser" data-step="4">
-        <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">comforce.mke/hub</span></div>
-        <div class="shot placeholder">[Screenshot 1600 × 1000]</div>
-      </figure>
+      <div class="card" data-step="4" style="--d:.7s">
+        <div class="card-h"><svg class="ic" viewBox="0 0 24 24"><path d="M9.9 4.2A10 10 0 0 1 12 4c5 0 9 4.5 10 8a13 13 0 0 1-2.2 3.6M6.6 6.6A13 13 0 0 0 2 12c1 3.5 5 8 10 8a10 10 0 0 0 5.4-1.6M9.9 9.9a3 3 0 0 0 4.2 4.2M2 2l20 20"/></svg>It sees very little</div>
+        <div class="card-b"><ul class="list">
+          <li><b>Scrubs</b> contact info first</li>
+          <li><b>Never logs</b> messages</li>
+        </ul></div>
+      </div>
+      <div class="card" data-step="5" style="--d:.9s">
+        <div class="card-h"><svg class="ic" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8zM14 2v6h6M8 13h8M8 17h5"/></svg>It never improvises</div>
+        <div class="card-b"><ul class="list">
+          <li>Crisis posts &rarr; <b>24/7 line</b></li>
+          <li>Questions &rarr; <b>set replies</b></li>
+        </ul></div>
+      </div>
     </div>
+    <div class="tip" data-step="5"><svg class="ic"><use href="#i-check"/></svg><span><b>Coordinators stay in control:</b> they publish, edit or remove every held post.</span></div>
   </section>
 
-  <!-- 6 · Pull quote in the AI's voice (Newsreader italic) -->
-  <section class="slide dark">
-    <div class="body" style="justify-content:center">
-      <blockquote class="quote" data-step="1">[A quote from a user, a partner or the AI explaining itself.]</blockquote>
-      <p class="attrib" data-step="2">[Name]<small>[Role, organization]</small></p>
-    </div>
-  </section>
+  <!-- 7 · Mobile demo (issue #205): the five demo steps on the left, a phone carousel of the recorded
+       walkthrough on the right. Forward/back step through the screenshots before the deck turns the page.
 
-  <!-- 7 · Impact / what's next: three columns -->
-  <section class="slide">
-    <p class="kicker" data-step="1">Impact &amp; next steps</p>
-    <h2 class="title" data-step="2">[What we built, and <em>where it goes</em>.]</h2>
-    <div class="review">
-      <section data-step="3"><h3>[Built]</h3><p>[What works today in the prototype.]</p></section>
-      <section data-step="4"><h3>[Learned]</h3><p>[What testing or research taught us.]</p></section>
-      <section data-step="5"><h3>[Next]</h3><p>[What we would build with more time.]</p></section>
+       Speaker notes (Hayden · mobile demo walkthrough):
+       - A Milwaukee resident opens Food Pantry & Mutual Aid, uses the guided form to ask for grocery pickup help,
+         reviews the summary, and receives an anonymous tracking code.
+       - The resident also submits a related public hub post. Jev's demo moderation result flags a possible deposit
+         scam and holds the post for review. Staff sees it in Held posts, then switches to the private request queue
+         to assign the resident's ticket.
+       - A demo notification takes the volunteer to the grocery delivery task. Claiming it reveals the ComForce relay.
+         The carousel shows a demo staff connection.
+       - The Milwaukee map shows pantries, hours, and directions. The Missing Persons hub then shows a demo rally near
+         27th & Wisconsin. The volunteer selects sector D1 on the search grid and signs up.
+       Source (at ec5332a): src/client/src/components/HelpSurvey.tsx · src/server/forums/jev.py ·
+       src/client/src/screens/CoordinatorDashboard.tsx · src/client/src/components/VolunteerTickets.tsx ·
+       src/client/src/components/CommunityMap.tsx · src/client/src/components/search/SearchGridMap.tsx -->
+  <section class="slide dark demo-walk">
+    <div class="split">
+      <div>
+        <p class="kicker" data-step="1">Mobile demo</p>
+        <h2 class="title" data-step="1">A help request in <em>Milwaukee</em>.</h2>
+        <ol class="steps-list" data-step="2">
+          <li><b>Open a community hub</b><span>Start in Food Pantry &amp; Mutual Aid.</span></li>
+          <li><b>Ask for help</b><span>Send a private request and save the tracking code.</span></li>
+          <li><b>Jev checks a hub post</b><span>A demo verdict holds the related public post for staff review.</span></li>
+          <li><b>Connect with ComForce staff</b><span>A demo alert leads a volunteer to a demo task and the staff relay.</span></li>
+          <li><b>Find a way to take part nearby</b><span>Explore Milwaukee&rsquo;s resource map and join a demo search near 27th &amp; Wisconsin.</span></li>
+        </ol>
+      </div>
+      <div class="carousel phones" data-carousel data-step="3">
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-1.jpg" alt="Food Pantry &amp; Mutual Aid selected in the phone layout."></div><figcaption><b>Open the food pantry hub</b>Food Pantry &amp; Mutual Aid selected in the phone layout.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-2.jpg" alt="The guided form summarizes the resident’s grocery pickup request before sending."></div><figcaption><b>Review a private request</b>The guided form summarizes the resident&rsquo;s grocery pickup request before sending.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-3.jpg" alt="The confirmation screen shows an anonymous request code."></div><figcaption><b>Save the tracking code</b>The confirmation screen shows an anonymous request code.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-4.jpg" alt="A demo Jev verdict flags a possible deposit scam. The post is held for staff review."></div><figcaption><b>Jev flags a public post</b>A demo Jev verdict flags a possible deposit scam. The post is held for staff review.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-5.jpg" alt="The coordinator uses the dispatch queue to assign the private request."></div><figcaption><b>Staff assigns the request</b>The coordinator uses the dispatch queue to assign the private request.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-6.jpg" alt="A demo notification points the volunteer to a demo grocery delivery task."></div><figcaption><b>The volunteer gets an alert</b>A demo notification points the volunteer to a demo grocery delivery task.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-7.jpg" alt="Claiming the task unlocks a demo connection through the ComForce relay."></div><figcaption><b>The volunteer connects to staff</b>Claiming the task unlocks a demo connection through the ComForce relay.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-8.jpg" alt="A pantry pin shows hours, an address, and walk-in information."></div><figcaption><b>Find resources on the Milwaukee map</b>A pantry pin shows hours, an address, and walk-in information.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-9.jpg" alt="The selected search sector shows the volunteer on its roster."></div><figcaption><b>Join a nearby demo search</b>The selected search sector shows the volunteer on its roster.</figcaption></figure>
+      </div>
     </div>
-    <div class="segs" data-step="5" style="margin-top:56px;max-width:640px"><i class="done"></i><i class="done"></i><i class="on"></i><i></i><i></i></div>
   </section>
 
   <!-- 8 · Why ComForce wins -->
