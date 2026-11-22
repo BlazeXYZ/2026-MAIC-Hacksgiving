@@ -2,6 +2,8 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import { Car, Check, Coffee, Copy, LocateFixed, MessageCircle, MoreHorizontal, Shield, Utensils } from 'lucide-react';
 import type { SurveyAccepted, SurveyRequest, TriageResult } from '../contracts/intake';
 import { previewTriage, submitSurvey, type Sampled } from '../api/intake';
+import { postEntry } from '../api/inventory';
+import { inventoryTextForNeed } from './inventory/sync';
 import {
   DEFAULT_ORIGIN,
   loadHelpOptions,
@@ -36,7 +38,11 @@ type OptionsState =
   | { kind: 'loading' }
   | { kind: 'ready'; options: HelpOption[]; sample: boolean };
 
-export default function HelpSurvey() {
+interface HelpSurveyProps {
+  onViewInventoryPlace?: (placeId: string) => void;
+}
+
+export default function HelpSurvey({ onViewInventoryPlace }: HelpSurveyProps = {}) {
   const { survey, t } = useSurvey();
   const [step, setStep] = useState<Step>('choose');
   const [needId, setNeedId] = useState<NeedId | null>(null);
@@ -146,7 +152,21 @@ export default function HelpSurvey() {
     setSending(true);
     setError(null);
     try {
-      setAccepted(await submitSurvey(request, triage));
+      const result = await submitSurvey(request, triage);
+      setAccepted(result);
+      if (choice && !result.sample) {
+        const inventoryText = needId ? inventoryTextForNeed(needId, note) : null;
+        if (inventoryText) {
+          void postEntry({
+            location_id: choice.id,
+            kind: 'need',
+            quantity: 1,
+            text: inventoryText.slice(0, 200),
+          }).catch(() => {
+            // The help request has still been sent; inventory matching is best-effort.
+          });
+        }
+      }
       setStep('sent');
     } catch {
       setError('submit');
@@ -232,6 +252,11 @@ export default function HelpSurvey() {
             )
           )}
           {choice && <PlaceLinks option={choice} />}
+          {choice && onViewInventoryPlace && (
+            <button className="help-survey-action secondary" type="button" onClick={() => onViewInventoryPlace(choice.id)}>
+              {t('intake.viewInventory')}
+            </button>
+          )}
           {accepted.sample && <p className="help-survey-note">{t('intake.sampleRequest')}</p>}
           <button className="help-survey-action" type="button" onClick={startOver}>
             {t('status.new')}
