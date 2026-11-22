@@ -30,7 +30,7 @@
     if (slide.dataset.foot === 'none') return;
     const foot = document.createElement('footer');
     foot.className = 'slide-foot';
-    foot.innerHTML = `<span class="logo">${logo}<b>ComForce <span>MKE</span> Hub</b></span>`
+    foot.innerHTML = `<span class="logo">${logo}<b>Comfort with <span>ComForce</span></b></span>`
       + `<span>${deckTitle}</span><span class="num">${String(i + 1).padStart(2, '0')} / ${String(total).padStart(2, '0')}</span>`;
     slide.append(foot);
   });

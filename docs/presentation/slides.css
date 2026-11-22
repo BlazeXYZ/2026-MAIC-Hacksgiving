@@ -1,4 +1,4 @@
-/* ComForce MKE Hub: slide deck stylesheet.
+/* Comfort with ComForce: slide deck stylesheet.
    Built from docs/design/ComForce-MKE-Hub-PROD-mockup.html. It uses the same tokens, the two typefaces
    (Bricolage for the interface, Newsreader for headlines and the AI's voice), the chain-link fence,
    the hi-vis highlighter and the printed-card drop shadow.
@@ -261,7 +261,7 @@ h1,h2,h3,h4,p,ul,ol,blockquote,figure{margin:0}
 .progress i.done{background:var(--green-2)}
 .progress i.on{background:var(--hivis)}
 
-/* ---------- slide 8: Why ComForce ---------- */
+/* ---------- slide 7: Why Comfort with ComForce wins ---------- */
 .edge-stack{display:flex;flex-direction:column;gap:0;margin-top:48px;flex:1;min-height:0}
 .edge-row{display:flex;align-items:center;gap:28px;flex:1;padding:0 8px;border-bottom:1px solid var(--line)}
 .edge-row:last-child{border-bottom:none}
