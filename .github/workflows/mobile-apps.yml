@@ -2,6 +2,11 @@ name: Mobile apps
 
 on:
   workflow_dispatch:
+    inputs:
+      ios_simulator_smoke:
+        description: Run the iOS Simulator HTTPS walkthrough
+        type: boolean
+        default: false
   push:
     branches:
       - feat/mobile-shell
@@ -11,6 +16,19 @@ on:
       - ".github/workflows/mobile-apps.yml"
 
 jobs:
+  ios-simulator-smoke:
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.ios_simulator_smoke }}
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: src/client/package-lock.json
+      - run: bash scripts/mobile/smoke-ios.sh
+
   android-apk:
     name: Android arm64 APK
     runs-on: ubuntu-latest
