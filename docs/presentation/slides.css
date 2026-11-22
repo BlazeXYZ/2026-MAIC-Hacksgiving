@@ -87,6 +87,17 @@ h1,h2,h3,h4,p,ul,ol,blockquote,figure{margin:0}
 .slide-foot{display:flex;align-items:center;gap:24px;height:104px;margin-top:auto;border-top:1px solid var(--line);font-size:20px;font-weight:600;color:var(--ink-3)}
 .slide-foot .num{margin-left:auto;font-variant-numeric:tabular-nums}
 
+/* ---------- QR badge, top right of every slide ---------- */
+/* A printed-card chip so the same badge reads on both paper and dark-green slides:
+   green modules on the site paper, framed like the .card components. */
+.qr{position:absolute;top:48px;right:64px;z-index:2;display:flex;flex-direction:column;align-items:center;gap:12px;
+  padding:18px 20px 14px;background:var(--card);border:1px solid var(--card-edge);border-radius:var(--r);
+  box-shadow:var(--drop);text-decoration:none;color:var(--ink-2)}
+.qr:hover{border-color:var(--green)}
+.qr svg{width:136px;height:136px;display:block;shape-rendering:crispEdges}
+.qr span{font-size:17px;font-weight:700;letter-spacing:.01em;white-space:nowrap}
+.qr span::before{content:"";display:inline-block;width:8px;height:8px;margin-right:8px;border-radius:2px;background:var(--green);vertical-align:1px}
+
 /* ---------- printed cards ---------- */
 .card{background:var(--card);border:1px solid var(--card-edge);border-radius:var(--r);box-shadow:var(--drop)}
 .card-h{display:flex;align-items:center;gap:14px;padding:20px 32px;background-color:#EEF4EB;background-image:var(--fence-light);border-bottom:1px solid var(--line);border-radius:var(--r) var(--r) 0 0;font-weight:700;font-size:26px}
