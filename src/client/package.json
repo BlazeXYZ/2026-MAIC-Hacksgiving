@@ -7,21 +7,29 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
+    "test": "node --test tests/*.test.ts",
     "cap:sync": "cap sync",
     "cap:android": "cap open android",
-    "cap:ios": "cap open ios"
+    "cap:ios": "cap open ios",
+    "mobile:android": "bash ../../scripts/mobile/build-android.sh",
+    "mobile:ios": "bash ../../scripts/mobile/build-ios.sh"
   },
   "dependencies": {
     "@capacitor/app": "^6.0.0",
     "@capacitor/core": "^6.0.0",
     "@capacitor/haptics": "^6.0.0",
+    "@capacitor/preferences": "^6.0.0",
+    "@capacitor/splash-screen": "^6.0.0",
+    "@capacitor/status-bar": "^6.0.0",
     "leaflet": "1.9.4",
     "lucide-react": "^0.359.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
+    "@capacitor/android": "^6.0.0",
     "@capacitor/cli": "^6.0.0",
+    "@capacitor/ios": "^6.0.0",
     "@types/leaflet": "^1.9.20",
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",

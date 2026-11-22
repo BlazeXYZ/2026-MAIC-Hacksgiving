@@ -1,0 +1,124 @@
+.isrid-panel {
+  padding: 0.75rem 1.25rem;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+
+.isrid-panel-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.isrid-panel-title {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  color: var(--ink);
+}
+
+.isrid-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.1rem 0.45rem;
+  border-radius: 4px;
+  background: var(--sunk);
+  color: var(--ink-2);
+}
+
+.isrid-badge--placeholder {
+  background: var(--red-wash);
+  color: var(--red-deep);
+}
+
+.isrid-panel-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.isrid-panel-controls label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 600;
+}
+
+.isrid-panel-controls select {
+  font: inherit;
+  padding: 0.2rem 0.35rem;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--ink);
+}
+
+.isrid-zoom-btn {
+  font: inherit;
+  font-weight: 600;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--line-2);
+  border-radius: 4px;
+  background: var(--card);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.isrid-zoom-btn:hover {
+  background: var(--paper);
+}
+
+.isrid-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1rem;
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+}
+
+.isrid-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.isrid-legend-ring {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid;
+}
+
+.isrid-legend-ring--dashed {
+  border-style: dashed;
+}
+
+.isrid-legend-n {
+  color: var(--ink-3);
+}
+
+.isrid-caveat {
+  margin: 0.6rem 0 0;
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  background: var(--amber-wash);
+  color: var(--amber-ink);
+}
+
+.isrid-source {
+  margin: 0.4rem 0 0;
+  font-size: 0.7rem;
+  color: var(--ink-3);
+}
+
+.isrid-source a {
+  color: inherit;
+}

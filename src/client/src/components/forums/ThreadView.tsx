@@ -6,6 +6,11 @@ import { Icon } from '../ui/Icon';
 import { byline, replyTree, timeAgo } from './util';
 import type { ReplyNode } from './util';
 
+/** Copy from issue #161, shown on every lead thread. Mirrors `rules.LEAD_TIP_NOTICE`. */
+const LEAD_NOTICE = 'Tips are reviewed before anyone sees them.';
+const LEAD_NOTICE_911 = 'If you see the person now, call 911.';
+const SECTOR_PATTERN = /^[A-Z][0-9]{1,2}$/;
+
 interface Props {
   threadId: string;
   handle: string | null;
@@ -33,6 +38,7 @@ export default function ThreadView({
   const [sending, setSending] = useState(false);
   const [sendError, setSendError] = useState<string | null>(null);
   const [held, setHeld] = useState<string | null>(null);
+  const [sector, setSector] = useState('');
 
   const load = useCallback(async (): Promise<void> => {
     try {
@@ -59,20 +65,38 @@ export default function ThreadView({
 
   async function send(event: FormEvent): Promise<void> {
     event.preventDefault();
+    const isLead = Boolean(thread?.case_id);
     if (!draft.trim()) {
-      setSendError('Write a reply first.');
+      setSendError(isLead ? 'Write your tip first.' : 'Write a reply first.');
+      return;
+    }
+    const sectorId = isLead ? sector.trim().toUpperCase() : '';
+    if (sectorId && !SECTOR_PATTERN.test(sectorId)) {
+      setSendError('A sector is a letter and a number, like C2. Leave it blank if you are not sure.');
       return;
     }
     setSending(true);
     setSendError(null);
     setHeld(null);
     try {
-      const posted = await createReply(threadId, draft.trim(), replyTo?.id ?? null, handle, coordinatorKey);
+      const posted = await createReply(
+        threadId,
+        draft.trim(),
+        replyTo?.id ?? null,
+        handle,
+        coordinatorKey,
+        sectorId || null,
+      );
       if (!coordinatorKey) onHandle(posted.handle);
       setDraft('');
+      setSector('');
       setReplyTo(null);
       if (posted.status === 'held') {
-        setHeld(`We held your reply. ${posted.held_reason ?? ''}`);
+        setHeld(
+          isLead
+            ? `Thank you. A coordinator will review your tip before anyone sees it. ${LEAD_NOTICE_911}`
+            : `We held your reply. ${posted.held_reason ?? ''}`,
+        );
       } else {
         await load();
       }
@@ -109,6 +133,8 @@ export default function ThreadView({
   }
 
   const tree = replyTree(thread.replies);
+  const isLead = Boolean(thread.case_id);
+  const locked = Boolean(thread.locked);
 
   return (
     <div className="forum">
@@ -143,8 +169,18 @@ export default function ThreadView({
         </div>
       </article>
 
+      {isLead && !locked && (
+        <p className="forum-notice held forum-lead-notice" role="note">
+          <Icon name="lock" />
+          <span>
+            <b>{LEAD_NOTICE}</b> {LEAD_NOTICE_911}
+          </span>
+        </p>
+      )}
+
       <h4 className="forum-count">
-        {thread.replies.length} {thread.replies.length === 1 ? 'reply' : 'replies'}
+        {thread.replies.length} {isLead ? 'verified ' : ''}
+        {thread.replies.length === 1 ? (isLead ? 'lead' : 'reply') : isLead ? 'leads' : 'replies'}
       </h4>
       {tree.length > 0 && (
         <ul className="forum-replies">
@@ -167,6 +203,11 @@ export default function ThreadView({
         </p>
       )}
 
+      {locked ? (
+        <p className="meta forum-empty forum-locked">
+          <Icon name="lock" /> This case is closed. The lead thread is locked and takes no new tips.
+        </p>
+      ) : (
       <form className="forum-compose" onSubmit={(e) => void send(e)}>
         {replyTo && (
           <p className="forum-replying">
@@ -176,15 +217,32 @@ export default function ThreadView({
             </button>
           </p>
         )}
-        <label htmlFor="forum-reply">Your reply</label>
+        <label htmlFor="forum-reply">{isLead && !coordinatorKey ? 'Your tip' : 'Your reply'}</label>
         <textarea
           id="forum-reply"
           value={draft}
           maxLength={1000}
           rows={3}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="Corners and times only, never a house number."
+          placeholder={
+            isLead
+              ? 'What you saw, the nearest corner or landmark, and when. Never a house number.'
+              : 'Corners and times only, never a house number.'
+          }
         />
+        {isLead && !coordinatorKey && (
+          <>
+            <label htmlFor="forum-sector">Search grid sector (optional)</label>
+            <input
+              id="forum-sector"
+              className="forum-sector"
+              value={sector}
+              maxLength={3}
+              onChange={(e) => setSector(e.target.value)}
+              placeholder="e.g. C2"
+            />
+          </>
+        )}
         {sendError && (
           <p className="forum-error" role="alert">
             {sendError}
@@ -192,13 +250,18 @@ export default function ThreadView({
         )}
         <div className="forum-actions">
           <button type="submit" className="btn primary sm" disabled={sending}>
-            {sending ? 'Posting…' : 'Reply'}
+            {sending ? 'Sending…' : isLead && !coordinatorKey ? 'Send tip for review' : 'Reply'}
           </button>
           <span className="meta">
-            {coordinatorKey ? 'Posting as ComForce coordinator.' : `You post as ${handle ?? 'a pseudonym'}.`}
+            {coordinatorKey
+              ? 'Posting as ComForce coordinator.'
+              : isLead
+                ? `You send this as ${handle ?? 'a pseudonym'}. Only a coordinator sees it until it is verified.`
+                : `You post as ${handle ?? 'a pseudonym'}.`}
           </span>
         </div>
       </form>
+      )}
     </div>
   );
 }
@@ -220,6 +283,8 @@ function ReplyItem({
       <div className="top">
         <b>{byline(reply.author, reply.role)}</b>
         <span>· {timeAgo(reply.created_at)}</span>
+        {reply.flair && <span className={`forum-flair ${reply.flair.toLowerCase()}`}>{reply.flair}</span>}
+        {reply.sector && <span className="forum-flair">Sector {reply.sector}</span>}
       </div>
       <p>{reply.body}</p>
       <div className="acts">
