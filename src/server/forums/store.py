@@ -235,11 +235,16 @@ def create_thread(
     handle: str | None = None,
     *,
     coordinator: bool = False,
+    model_hold: str | None = None,
 ) -> Thread:
-    """Post a thread. It is held instead of published when `hold_reason` objects."""
+    """Post a thread. It is held instead of published when `hold_reason` objects.
+
+    `model_hold` is the decision model's second opinion, already awaited by the
+    caller; the local checks win when they hold, and a coordinator post never does.
+    """
     _require_hub(hub_id)
     title, body = title.strip(), body.strip()
-    reason = None if coordinator else hold_reason(f"{title}\n{body}")
+    reason = None if coordinator else (hold_reason(f"{title}\n{body}") or model_hold)
     author, role = _author(handle, coordinator)
     thread = Thread(
         id=_new_id("thread"),
@@ -267,11 +272,14 @@ def create_reply(
     *,
     coordinator: bool = False,
     sector: str | None = None,
+    model_hold: str | None = None,
 ) -> Reply:
     """Reply to a public thread, or to a public reply on it.
 
     On a case's lead thread every neighbor reply is a tip and is held, whatever
-    `hold_reason` says. A coordinator's own reply goes up directly.
+    `hold_reason` says. A coordinator's own reply goes up directly. For a plain
+    neighbor reply `model_hold` is the decision model's second opinion, already
+    awaited by the caller; the local checks win when they hold.
     """
     body = body.strip()
     author, role = _author(handle, coordinator)
@@ -286,7 +294,7 @@ def create_reply(
         elif is_tip:
             reason = lead_tip_reason(body)
         else:
-            reason = hold_reason(body)
+            reason = hold_reason(body) or model_hold
         if parent_id is not None and not any(
             r.id == parent_id and r.status == "published" for r in thread.replies
         ):

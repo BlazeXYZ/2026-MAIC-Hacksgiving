@@ -18,16 +18,13 @@ function timeOf(iso: string | undefined): string {
 export function StatusTimeline({ status, events }: { status: TicketStatus; events: TimelineEvent[] }) {
   const { t } = useSurvey();
   const current = STAGES.indexOf(status);
-  // Sending is instant, so "pending" already has step 1 done and is waiting on a volunteer.
-  // "assigned" is waiting on the trip; "in_progress" is the trip itself.
-  const nowIndex = status === 'in_progress' ? current : current + 1;
   return (
     <ol className="tl" aria-label="Progress">
       {STAGES.map((stage, i) => {
-        const state = status === 'resolved' || i < nowIndex ? 'done' : i === nowIndex ? 'now' : 'later';
+        const state = status === 'resolved' || i < current ? 'done' : i === current ? 'now' : 'later';
         const at = events.find((e) => e.status === stage)?.at;
         return (
-          <li key={stage} className={state} aria-current={state === 'now' ? 'step' : undefined}>
+          <li key={stage} className={state} aria-current={i === current ? 'step' : undefined}>
             <span className="dot" aria-hidden="true">
               {state === 'done' && <Check />}
             </span>

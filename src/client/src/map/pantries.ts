@@ -1,3 +1,4 @@
+import { apiFetch } from '../api/transport';
 /** Verified emergency food pantries for the community map (issue #13). */
 
 import type { Pantry } from '../contracts/resources';
@@ -100,7 +101,7 @@ export async function fetchPantries(
   const query = params.toString();
   const url = query ? `${PANTRIES_PATH}?${query}` : PANTRIES_PATH;
 
-  const response = await fetch(url, { signal, headers: { Accept: 'application/json' } });
+  const response = await apiFetch(url, { signal, headers: { Accept: 'application/json' } });
   if (!response.ok) throw new Error(`Pantries request failed with ${response.status}`);
   const body: unknown = await response.json();
   if (!Array.isArray(body) || !body.every(isPantry)) {

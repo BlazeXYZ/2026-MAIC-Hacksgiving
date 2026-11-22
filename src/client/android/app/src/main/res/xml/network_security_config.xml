@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!-- The shell opens the saved server over HTTP, including Tailscale CGNAT addresses. -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

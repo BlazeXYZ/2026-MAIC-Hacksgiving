@@ -1,3 +1,4 @@
+import { apiFetch } from './transport';
 import type {
   AliasView,
   CatalogItem,
@@ -47,7 +48,7 @@ async function call<T>(path: string, { method = 'GET', body, key }: CallOptions 
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (body !== undefined) headers['Content-Type'] = 'application/json';
     if (key) headers['X-Coordinator-Key'] = key;
-    const res = await fetch(`${BASE}${path}`, {
+    const res = await apiFetch(`${BASE}${path}`, {
       method,
       headers,
       body: body === undefined ? undefined : JSON.stringify(body),

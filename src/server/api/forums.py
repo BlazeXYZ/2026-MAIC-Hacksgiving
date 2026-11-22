@@ -26,7 +26,7 @@ from src.server.ai.hotspots import (
     require_coordinator,
 )
 from src.server.forums import store
-from src.server.forums.rules import HUB_IDS
+from src.server.forums.rules import HUB_IDS, model_hold
 
 router = APIRouter(prefix="/api/v1/forums", tags=["forums"])
 admin = APIRouter(
@@ -288,18 +288,21 @@ def list_threads(
 
 
 @router.post("/hubs/{hub_id}/threads", response_model=ThreadPosted, status_code=201)
-def create_thread(
+async def create_thread(
     hub_id: str,
     body: ThreadCreate,
     x_coordinator_key: str | None = Header(default=None, alias="X-Coordinator-Key"),
 ) -> ThreadPosted:
+    coordinator = _is_coordinator(x_coordinator_key)
     try:
+        model_reason = None if coordinator else await model_hold(f"{body.title}\n{body.body}")
         thread = store.create_thread(
             hub_id,
             body.title,
             body.body,
             body.handle,
-            coordinator=_is_coordinator(x_coordinator_key),
+            coordinator=coordinator,
+            model_hold=model_reason,
         )
     except store.ForumError as err:
         _fail(err)
@@ -322,19 +325,22 @@ def get_thread(thread_id: str) -> ThreadDetail:
 @router.post(
     "/threads/{thread_id}/replies", response_model=ReplyPosted, status_code=201
 )
-def create_reply(
+async def create_reply(
     thread_id: str,
     body: ReplyCreate,
     x_coordinator_key: str | None = Header(default=None, alias="X-Coordinator-Key"),
 ) -> ReplyPosted:
+    coordinator = _is_coordinator(x_coordinator_key)
     try:
+        model_reason = None if coordinator else await model_hold(body.body)
         reply = store.create_reply(
             thread_id,
             body.body,
             body.parent_id,
             body.handle,
-            coordinator=_is_coordinator(x_coordinator_key),
+            coordinator=coordinator,
             sector=body.sector,
+            model_hold=model_reason,
         )
     except store.ForumError as err:
         _fail(err)

@@ -1,3 +1,4 @@
+import { apiFetch } from '../api/transport';
 import { useEffect, useRef, useState } from 'react';
 import './VolunteerTickets.css';
 
@@ -52,7 +53,7 @@ export default function VolunteerTickets() {
 
     async function loadTickets() {
       try {
-        const response = await fetch('/api/tickets', { signal: controller.signal });
+        const response = await apiFetch('/api/tickets', { signal: controller.signal });
         if (!response.ok) {
           throw new Error('Ticket list request failed');
         }
@@ -93,7 +94,7 @@ export default function VolunteerTickets() {
     )) ?? null);
 
     try {
-      const response = await fetch(`/api/tickets/${ticket.id}/${action}`, {
+      const response = await apiFetch(`/api/tickets/${ticket.id}/${action}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ key }),

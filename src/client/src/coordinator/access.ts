@@ -1,3 +1,4 @@
+import { apiFetch } from '../api/transport';
 /**
  * Coordinator access. The key is typed in by staff and held in React memory only,
  * so it never ships in the bundle and a reload or tab close drops it.
@@ -24,7 +25,7 @@ export class CoordinatorAccessError extends Error {
 /** Asks the server whether `accessKey` opens coordinator endpoints. */
 export async function verifyCoordinatorKey(accessKey: string, signal?: AbortSignal): Promise<CoordinatorSignInResult> {
   try {
-    const response = await fetch(VERIFY_PATH, {
+    const response = await apiFetch(VERIFY_PATH, {
       signal,
       headers: coordinatorHeaders(accessKey, { Accept: 'application/json' }),
     });

@@ -41,6 +41,7 @@ The demo stores claims in memory. Restarting the server resets the board.
 Each hub (`domestic-safety`, `missing-persons`, `food-pantry`) has threads and replies, seeded with synthetic posts from `forums/seed.py`. There are no accounts: every post goes up under a pseudonym from `forums/store.HANDLES`, and the response returns it so the client can keep using it for the session.
 
 - **Held posts.** A post with a home address, phone number, email, or SSN (`ai/pii.py`), a line like "I live at", or wording the abuse classifier flags (`ai/moderation.py`) is held. It stays off the public list and the author gets `held_reason`. Hub listings only show `held_count`, never the text.
+- **Model second opinion.** A post that passes the local checks is also classified by Jev (`forums/jev.py`, the same TypeSafe System One decision model as the inventory): an abuse category at 0.5 probability or higher holds it with the same `held_reason`. No key, mock mode, or a failed call changes nothing — the local outcome stands, and locally held text is never sent.
 - **Automatic answers.** Common questions in each hub get a canned answer, and crisis wording in any hub gets the 24/7 line.
 - **Staff posts.** A post sent with a valid `X-Coordinator-Key` is labeled `ComForce coordinator` and skips the hold.
 
