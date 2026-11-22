@@ -1,11 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { BadgeCheck, EyeOff, PhoneOff, ShieldCheck, UserRound } from 'lucide-react';
 import { useSurvey } from '../../state/survey';
 import './privacy.css';
 
 /**
  * Shield badge that opens the privacy explainer (#16). Used on the request form and the status screen.
- * Uses the native <dialog> so focus trapping, Esc-to-close and the backdrop come from the browser.
+ * The native dialog traps focus and provides a backdrop.
  */
 export function PrivacyBadge() {
   const { t } = useSurvey();
@@ -15,7 +15,6 @@ export function PrivacyBadge() {
       <button type="button" className="privacy-badge" onClick={() => setOpen(true)} aria-haspopup="dialog">
         <ShieldCheck aria-hidden="true" />
         <span>{t('private.badge')}</span>
-        <span className="visually-hidden">: {t('private.how')}</span>
       </button>
       <PrivacyModal open={open} onClose={() => setOpen(false)} />
     </>
@@ -32,6 +31,7 @@ const POINTS = [
 export function PrivacyModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useSurvey();
   const ref = useRef<HTMLDialogElement>(null);
+  const titleId = useId();
 
   useEffect(() => {
     const d = ref.current;
@@ -44,7 +44,7 @@ export function PrivacyModal({ open, onClose }: { open: boolean; onClose: () => 
     <dialog
       ref={ref}
       className="privacy-modal"
-      aria-labelledby="privacy-title"
+      aria-labelledby={titleId}
       onClose={onClose}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose(); // click on the backdrop
@@ -52,7 +52,7 @@ export function PrivacyModal({ open, onClose }: { open: boolean; onClose: () => 
     >
       <div className="privacy-body">
         <ShieldCheck className="privacy-mark" aria-hidden="true" />
-        <h2 id="privacy-title" className="title">
+        <h2 id={titleId} className="title">
           {t('modal.title')}
         </h2>
         <p className="privacy-lede">{t('modal.lede')}</p>

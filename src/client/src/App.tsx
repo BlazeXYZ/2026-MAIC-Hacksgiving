@@ -14,7 +14,7 @@ import NearbyInventoryRequests from './components/inventory/NearbyInventoryReque
 import InventoryReview from './components/inventory/review/InventoryReview';
 import HubForum from './components/forums/HubForum';
 import ForumReview from './components/forums/ForumReview';
-import { COMFORCE_HOTLINE } from './components/shell/EmergencyBar';
+import { EmergencyBar } from './components/shell/EmergencyBar';
 import { Icon, LogoMark } from './components/ui/Icon';
 import type { IconName } from './components/ui/Icon';
 import { useIsPhone } from './hooks/useIsPhone';
@@ -232,48 +232,51 @@ export default function App(): ReactElement {
 
   return (
     <div className={phoneShell ? 'app phone' : 'app'}>
-      {phoneShell ? (
-        <header className="ptop">
-          <button type="button" className="logo" onClick={() => go('home')} aria-label="ComForce MKE home">
+      <header className="intake-chrome">
+        {phoneShell ? (
+          <div className="ptop">
+            <button type="button" className="logo" onClick={() => go('home')} aria-label="ComForce MKE home">
+              <LogoMark />
+              <b>ComForce <span>MKE</span></b>
+            </button>
+          </div>
+        ) : (
+        <div className={isStaff ? 'dnav staff' : 'dnav'}>
+          <button type="button" className="logo" onClick={() => go(isStaff ? 'coordinator' : 'home')} aria-label="ComForce MKE home">
             <LogoMark />
             <b>ComForce <span>MKE</span></b>
           </button>
-        </header>
-      ) : (
-      <header className={isStaff ? 'dnav staff' : 'dnav'}>
-        <button type="button" className="logo" onClick={() => go(isStaff ? 'coordinator' : 'home')} aria-label="ComForce MKE home">
-          <LogoMark />
-          <b>ComForce <span>MKE</span></b>
-        </button>
-        {isStaff && <span className="ws">Coordinator</span>}
-        <nav aria-label="Main navigation">
-          {isStaff ? (
-            <>
-              {navButton('coordinator', 'Tonight')}
-              {navButton('coordinator-ops', 'Ops map')}
-              {navButton('inventory-review', 'Inventory')}
-              {navButton('forum-review', 'Held posts')}
-              <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
-              <button type="button" className="switch" onClick={() => go('home')}>Resident view</button>
-            </>
-          ) : (
-            <>
-              {navButton('home', 'Home')}
-              {navButton('map', 'Map')}
-              {navButton('inventory', 'Inventory')}
-              {coordinatorKey ? (
-                <>
-                  <button type="button" className="switch" onClick={() => go('coordinator')}>Coordinator</button>
-                  <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
-                </>
-              ) : (
-                <button type="button" className="switch" onClick={() => go('staff-sign-in')}>Staff sign in</button>
-              )}
-            </>
-          )}
-        </nav>
+          {isStaff && <span className="ws">Coordinator</span>}
+          <nav aria-label="Main navigation">
+            {isStaff ? (
+              <>
+                {navButton('coordinator', 'Tonight')}
+                {navButton('coordinator-ops', 'Ops map')}
+                {navButton('inventory-review', 'Inventory')}
+                {navButton('forum-review', 'Held posts')}
+                <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
+                <button type="button" className="switch" onClick={() => go('home')}>Resident view</button>
+              </>
+            ) : (
+              <>
+                {navButton('home', 'Home')}
+                {navButton('map', 'Map')}
+                {navButton('inventory', 'Inventory')}
+                {coordinatorKey ? (
+                  <>
+                    <button type="button" className="switch" onClick={() => go('coordinator')}>Coordinator</button>
+                    <button type="button" className="switch" onClick={() => { setCoordinatorKey(null); go('home'); }}>Sign out</button>
+                  </>
+                ) : (
+                  <button type="button" className="switch" onClick={() => go('staff-sign-in')}>Staff sign in</button>
+                )}
+              </>
+            )}
+          </nav>
+        </div>
+        )}
+        {!isStaff && <EmergencyBar />}
       </header>
-      )}
 
       <main className="dpage">
         {phoneShell && activeTab === 'home' && (
@@ -311,12 +314,6 @@ export default function App(): ReactElement {
                 <Icon name="search" />
                 <span><b>Join a search</b><small>Cover a sector</small></span>
               </button>
-            </div>
-            <div className="sos">
-              <Icon name="phone" />
-              <span>
-                In danger? Call <a href="tel:911">911</a> · 24/7 line <a href={COMFORCE_HOTLINE.tel}>{COMFORCE_HOTLINE.display}</a>
-              </span>
             </div>
           </section>
         )}
@@ -429,7 +426,7 @@ export default function App(): ReactElement {
           )}
 
           {askingForHelp && !phoneShell && (
-            <section className="mod" ref={surveyRef} aria-label="Ask for help" style={{ marginBottom: 24, scrollMarginTop: 96 }}>
+            <section className="mod" ref={surveyRef} aria-label="Ask for help" style={{ marginBottom: 24, scrollMarginTop: 168 }}>
               <div className="mod-h">
                 <h2>Ask for help</h2>
                 <button type="button" className="more" onClick={() => setAskingForHelp(false)}>Close</button>
@@ -441,7 +438,7 @@ export default function App(): ReactElement {
           )}
 
           <div className="g12 stretch">
-            <section className="mod c7" ref={hubRef} aria-labelledby="hubs-title" style={{ scrollMarginTop: 96 }}>
+            <section className="mod c7" ref={hubRef} aria-labelledby="hubs-title" style={{ scrollMarginTop: 168 }}>
               <div className="mod-h">
                 <h2 id="hubs-title">Your hubs</h2>
                 <span className="count">{COMMUNITIES.length} active</span>
@@ -573,12 +570,6 @@ export default function App(): ReactElement {
                   <span><b>Join a search</b><small>Help cover a sector with other neighbors</small></span>
                   <Icon name="chev" className="ic chev" />
                 </button>
-              </div>
-              <div className="sos">
-                <Icon name="phone" />
-                <span>
-                  In danger? Call <a href="tel:911">911</a> · 24/7 line <a href={COMFORCE_HOTLINE.tel}>{COMFORCE_HOTLINE.display}</a>
-                </span>
               </div>
             </section>
             )}

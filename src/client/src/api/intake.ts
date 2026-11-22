@@ -18,7 +18,7 @@ import { translate, type Language } from '../i18n/strings';
 
 const TIMEOUT_MS = 8000;
 
-/** Not in PR #50 yet: a triage preview that does not create a ticket. Until it exists, `previewTriage` uses the local guess. */
+/** Preview the server triage result without creating a ticket. */
 const TRIAGE_PREVIEW_PATH = '/api/v1/intake/triage';
 
 export type Sampled<T> = T & { sample?: boolean };
