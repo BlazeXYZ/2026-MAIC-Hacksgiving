@@ -91,22 +91,18 @@
     <div class="tip" data-step="4" style="margin-top:40px"><svg class="ic"><use href="#i-shield"/></svg><span><b>Privacy by default:</b> [one line on how personal details are protected.]</span></div>
   </section>
 
-  <!-- 5 · Demo: screenshot in browser chrome. Swap the placeholder div for <img class="shot" src="..." alt="..."> -->
+  <!-- 5 · Trust & safety: jev moderation, PII scrubbing, human review -->
   <section class="slide">
-    <div class="split" style="grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:72px">
-      <div>
-        <p class="kicker" data-step="1">Demo</p>
-        <h2 class="title" data-step="2">[What the <em>screen</em> shows.]</h2>
-        <ul class="list" data-step="3" style="margin-top:40px">
-          <li><b>[Feature]:</b> [why it matters]</li>
-          <li><b>[Feature]:</b> [why it matters]</li>
-          <li><b>[Feature]:</b> [why it matters]</li>
-        </ul>
-      </div>
-      <figure class="browser" data-step="4">
-        <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">comforce.mke/hub</span></div>
-        <div class="shot placeholder">[Screenshot 1600 × 1000]</div>
-      </figure>
+    <p class="kicker" data-step="1">Trust &amp; safety</p>
+    <h2 class="title" data-step="2">[Three gates between a post and the <em>public board</em>.]</h2>
+    <div class="card steps" data-step="3" style="grid-template-columns:repeat(3,minmax(0,1fr));margin-top:56px">
+      <div class="step done"><span class="n">1</span><h3>Local checks</h3><p>Pattern rules catch phone numbers, home addresses, emails and SSNs, plus known abuse wording. Held text never reaches the public list — the board shows a count, not the content — and the author gets a plain-language reason.</p></div>
+      <div class="step on"><span class="n">2</span><h3>Jev second opinion</h3><p>The Jev decision model scores four abuse categories against "fine for the public thread"; anything at 0.5 probability or higher is held. Locally held text is never sent, and no key or failure changes the local outcome.</p></div>
+      <div class="step"><span class="n">3</span><h3>Human review</h3><p>A coordinator reads every held post with its reason, then publishes it scrubbed, edits it, or removes it. Missing-persons tips are always held first, so a bad sighting can't send volunteers to the wrong place.</p></div>
+    </div>
+    <div class="cols c2" data-step="4" style="margin-top:40px;gap:40px">
+      <div class="tip"><svg class="ic"><use href="#i-shield"/></svg><span><b>PII never reaches a model:</b> <code>scrub_pii()</code> swaps contact details for a coordinator-only <code>[REDACTED]</code> placeholder, and only scrubbed, 400-character text goes to Jev.</span></div>
+      <div class="tip"><svg class="ic"><use href="#i-check"/></svg><span><b>Human in the loop, always:</b> no post goes public on an AI verdict alone — and crisis wording is never treated as abuse; it gets a 24/7 hotline answer instead.</span></div>
     </div>
   </section>
 
