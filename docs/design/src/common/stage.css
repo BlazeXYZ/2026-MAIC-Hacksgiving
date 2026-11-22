@@ -1,4 +1,4 @@
-/* Shared stage chrome: page wrapper, device frames, scaling, Quick Exit decoy. Colors come from each version's tokens. */
+/* Shared stage chrome: page wrapper, device frames, scaling, prototype. Colors come from each version's tokens. */
 [hidden]{display:none!important}
 *{box-sizing:border-box}
 body{background:var(--stage);color:var(--stage-fg);font-family:var(--stage-font)}

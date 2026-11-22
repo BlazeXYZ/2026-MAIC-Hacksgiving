@@ -300,7 +300,6 @@ SEED_THREADS: tuple[SeedThread, ...] = (
         pinned=True,
         steps=[
             "Do not post your address, your workplace, or anyone else's full name.",
-            "Quick Exit is on every screen. On a computer, press Esc.",
             "In danger right now, call 911. ComForce answers 24/7 at 414-395-0552.",
         ],
     ),
@@ -327,16 +326,5 @@ SEED_THREADS: tuple[SeedThread, ...] = (
                 helpful=4,
             ),
         ],
-    ),
-    _thread(
-        "domestic-exit",
-        "domestic-safety",
-        "Denise",
-        "coordinator",
-        "Practice Quick Exit once, before you need it",
-        "Tap the red Exit button or press Esc. The screen turns into a food delivery page. Practice once so "
-        "it is muscle memory.",
-        300,
-        helpful=11,
     ),
 )
