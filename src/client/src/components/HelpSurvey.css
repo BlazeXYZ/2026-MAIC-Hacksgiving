@@ -103,29 +103,17 @@
   overflow-wrap: anywhere;
 }
 
-.help-survey-action {
+.help-survey-actions {
   margin-top: 1rem;
-  padding: 0.65rem 1rem;
-  font: inherit;
-  font-weight: 600;
-  color: #fff;
-  background: var(--green);
-  border: 0;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.help-survey-action:disabled {
-  color: var(--ink-2);
-  background: var(--line);
-  cursor: default;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
 }
 
 .help-survey-entry { margin-bottom: 1.5rem; padding: 1rem; border-radius: 8px; background: var(--card); border: 1px solid var(--line-2); }
 .help-survey-entry summary { cursor: pointer; min-height: 44px; padding-block: 0.6rem; color: var(--green); font-weight: 700; }
 .help-survey-entry[open] .help-survey { margin-top: 0.75rem; }
 
-.help-survey-action.secondary { color: #0f766e; background: #fff; border: 1px solid #0f766e; }
 .help-survey-code { font-family: ui-monospace, monospace; font-size: 1.15em; letter-spacing: 0.04em; }
 .help-survey-error { color: #b91c1c; font-weight: 600; }
 .help-survey-note { color: #475569; font-size: 0.9rem; }

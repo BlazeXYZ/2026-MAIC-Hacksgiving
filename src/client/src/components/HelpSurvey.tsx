@@ -253,18 +253,20 @@ export default function HelpSurvey({ onCheckStatus, onViewInventoryPlace }: Help
             )
           )}
           {choice && <PlaceLinks option={choice} />}
-          {choice && onViewInventoryPlace && (
-            <button className="help-survey-action secondary" type="button" onClick={() => onViewInventoryPlace(choice.id)}>
-              {t('intake.viewInventory')}
+          <div className="help-survey-actions">
+            {choice && onViewInventoryPlace && (
+              <button className="btn" type="button" onClick={() => onViewInventoryPlace(choice.id)}>
+                {t('intake.viewInventory')}
+              </button>
+            )}
+            <button className="btn primary" type="button" onClick={() => onCheckStatus(accepted.token)}>
+              {t('status.open')}
             </button>
-          )}
+            <button className="btn" type="button" onClick={startOver}>
+              {t('status.new')}
+            </button>
+          </div>
           {accepted.sample && <p className="help-survey-note">{t('intake.sampleRequest')}</p>}
-          <button className="help-survey-action" type="button" onClick={() => onCheckStatus(accepted.token)}>
-            {t('status.open')}
-          </button>{' '}
-          <button className="help-survey-action secondary" type="button" onClick={startOver}>
-            {t('status.new')}
-          </button>
         </section>
       )}
 
@@ -359,12 +361,14 @@ export default function HelpSurvey({ onCheckStatus, onViewInventoryPlace }: Help
               )}
             </>
           )}
-          <button className="help-survey-action secondary" type="button" onClick={() => setStep('describe')}>
-            {t('intake.describeInstead')}
-          </button>{' '}
-          <button className="help-survey-action secondary" type="button" onClick={back}>
-            {t('intake.back')}
-          </button>
+          <div className="help-survey-actions">
+            <button className="btn" type="button" onClick={() => setStep('describe')}>
+              {t('intake.describeInstead')}
+            </button>
+            <button className="btn" type="button" onClick={back}>
+              {t('intake.back')}
+            </button>
+          </div>
         </section>
       )}
 
@@ -397,12 +401,14 @@ export default function HelpSurvey({ onCheckStatus, onViewInventoryPlace }: Help
           <p id={noteCounterId} className="counter help-survey-counter" aria-live="polite">
             {t('other.count', { n: note.length, max: FREE_TEXT_MAX })}
           </p>
-          <button className="help-survey-action" type="submit" disabled={freeTextProblem(note, true) !== null}>
-            {t('intake.next')}
-          </button>{' '}
-          <button className="help-survey-action secondary" type="button" onClick={() => setStep(needId === 'other' ? 'choose' : 'pick')}>
-            {t('intake.back')}
-          </button>
+          <div className="help-survey-actions">
+            <button className="btn primary" type="submit" disabled={freeTextProblem(note, true) !== null}>
+              {t('intake.next')}
+            </button>
+            <button className="btn" type="button" onClick={() => setStep(needId === 'other' ? 'choose' : 'pick')}>
+              {t('intake.back')}
+            </button>
+          </div>
         </form>
       )}
 
@@ -437,9 +443,11 @@ export default function HelpSurvey({ onCheckStatus, onViewInventoryPlace }: Help
             <p>{t('district.help')}</p>
             <DistrictPicker />
           </details>
-          <button className="help-survey-action" type="submit" disabled={!needId}>
-            {t('intake.next')}
-          </button>
+          <div className="help-survey-actions">
+            <button className="btn primary" type="submit" disabled={!needId}>
+              {t('intake.next')}
+            </button>
+          </div>
         </form>
       )}
     </section>
