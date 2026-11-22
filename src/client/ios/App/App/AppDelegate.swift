@@ -48,13 +48,13 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             return
         }
 
-        var config = UIButton.Configuration.filled()
-        config.title = "Server"
-        config.baseBackgroundColor = UIColor(red: 15.0 / 255.0, green: 107.0 / 255.0, blue: 58.0 / 255.0, alpha: 0.94)
-        config.baseForegroundColor = .white
-        config.cornerStyle = .capsule
-        config.contentInsets = NSDirectionalEdgeInsets(top: 8, leading: 14, bottom: 8, trailing: 14)
-        let button = UIButton(configuration: config)
+        let button = UIButton(type: .system)
+        button.setTitle("Server", for: .normal)
+        button.titleLabel?.font = .systemFont(ofSize: 15, weight: .bold)
+        button.backgroundColor = UIColor(red: 15.0 / 255.0, green: 107.0 / 255.0, blue: 58.0 / 255.0, alpha: 0.94)
+        button.setTitleColor(.white, for: .normal)
+        button.layer.cornerRadius = 18
+        button.contentEdgeInsets = UIEdgeInsets(top: 8, left: 14, bottom: 8, right: 14)
         button.translatesAutoresizingMaskIntoConstraints = false
         button.accessibilityLabel = "Change server"
         host.addSubview(button)
@@ -63,9 +63,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             button.trailingAnchor.constraint(equalTo: host.safeAreaLayoutGuide.trailingAnchor, constant: -10),
             button.heightAnchor.constraint(greaterThanOrEqualToConstant: 44)
         ])
-        button.addAction(UIAction { [weak self] _ in
-            self?.openPicker()
-        }, for: .touchUpInside)
+        button.addTarget(self, action: #selector(serverTapped), for: .touchUpInside)
 
         let localPrefix = controller.bridge?.config.localURL.absoluteString ?? "capacitor://localhost"
         urlObservation = webView.observe(\.url, options: [.initial, .new]) { [weak button] view, _ in
@@ -73,6 +71,10 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
             button?.isHidden = current.isEmpty || current.hasPrefix(localPrefix)
         }
         serverButton = button
+    }
+
+    @objc private func serverTapped() {
+        openPicker()
     }
 
     private func openPicker() {
