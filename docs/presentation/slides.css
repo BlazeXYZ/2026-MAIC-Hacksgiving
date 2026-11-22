@@ -197,6 +197,24 @@ h1,h2,h3,h4,p,ul,ol,blockquote,figure{margin:0}
 .hint.show{opacity:1}
 .hint kbd{font:700 12px var(--f);background:var(--hivis);color:var(--ink);border-radius:5px;padding:3px 7px}
 
+/* ---------- slide 8: Why ComForce ---------- */
+.edge-stack{display:flex;flex-direction:column;gap:0;margin-top:48px;flex:1;min-height:0}
+.edge-row{display:flex;align-items:center;gap:28px;flex:1;padding:0 8px;border-bottom:1px solid var(--line)}
+.edge-row:last-child{border-bottom:none}
+.edge-row .edge-ic{width:64px;height:64px;border-radius:16px;display:grid;place-items:center;flex:none}
+.edge-row .edge-ic .ic{width:34px;height:34px}
+.edge-ic.g{background:#074D28;color:#fff}
+.edge-ic.a{background:#7A4F00;color:#fff}
+.edge-ic.h{background:#1B6B40;color:#fff}
+.edge-ic.r{background:#8B1A15;color:#fff}
+.edge-row h3{margin:0;font-weight:800;font-stretch:88%;font-size:44px;line-height:1.1;letter-spacing:-.01em}
+.edge-row h3 span{font-weight:500;font-size:30px;color:var(--ink-2);display:block;margin-top:2px;font-stretch:100%;letter-spacing:0}
+.cta-strip{display:flex;align-items:center;gap:16px;margin-top:auto;padding:18px 28px;border-radius:14px;background:linear-gradient(135deg,var(--green-wash),var(--tip));font-size:28px;font-weight:700;color:var(--ink)}
+.cta-strip .ic{width:30px;height:30px;color:var(--green);flex:none}
+.cta-strip em{font-family:var(--f-voice);font-weight:500;color:var(--green)}
+.slide.is-active [data-step="6"]{transition-delay:.62s}
+.slide.is-active [data-step="7"]{transition-delay:.72s}
+
 @media (prefers-reduced-motion:reduce){
   .slide,.slide.is-active,.slide [data-step]{transition:opacity .2s linear!important;transform:none!important}
 }
