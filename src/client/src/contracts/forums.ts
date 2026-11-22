@@ -17,6 +17,10 @@ export interface ReplyView {
   created_at: string;
   parent_id: string | null;
   helpful: number;
+  /** `Verified` on a lead tip a coordinator published. */
+  flair?: string | null;
+  /** Search grid sector a lead tip names, like C2. */
+  sector?: string | null;
 }
 
 export interface ThreadSummary {
@@ -34,6 +38,10 @@ export interface ThreadSummary {
   answer: string | null;
   helpful: number;
   reply_count: number;
+  /** Set on a missing-person case's lead thread. Every reply is held for review. */
+  case_id?: string | null;
+  /** A resolved case's lead thread takes no replies. */
+  locked?: boolean;
 }
 
 export interface ThreadDetail extends ThreadSummary {
@@ -73,9 +81,36 @@ export interface HeldPost {
   body: string;
   held_reason: string;
   created_at: string;
+  /** Set when this is a tip on a case lead thread. Only these can be kept private. */
+  case_id?: string | null;
+  sector?: string | null;
 }
 
-export type ReviewAction = 'publish' | 'remove';
+/** A lead tip a coordinator kept private. Only ever sent to coordinators. */
+export interface PrivateTip {
+  id: string;
+  case_id: string;
+  thread_id: string;
+  thread_title: string;
+  author: string;
+  body: string;
+  sector: string | null;
+  created_at: string;
+}
+
+export type CaseStatus = 'active' | 'resolved';
+
+export interface MissingPersonCase {
+  id: string;
+  display_name: string;
+  last_known_point: string;
+  status: CaseStatus;
+  thread_id: string;
+  created_at: string;
+  resolved_at: string | null;
+}
+
+export type ReviewAction = 'publish' | 'keep_private' | 'remove';
 
 export interface ReviewResult {
   id: string;

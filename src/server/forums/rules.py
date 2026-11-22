@@ -39,6 +39,24 @@ MODERATION_REASON = (
     "A coordinator will read it before it goes up, to keep the hub safe for everyone."
 )
 
+#: Shown on a lead-thread composer and after every tip is sent.
+LEAD_TIP_NOTICE = "Tips are reviewed before anyone sees them. If you see the person now, call 911."
+
+LEAD_TIP_REASON = (
+    "Every tip on a case is held. A coordinator checks it before anyone sees it, so an "
+    "unverified sighting does not send volunteers to the wrong place."
+)
+
+
+def lead_tip_reason(text: str) -> str:
+    """Why a lead-thread tip is held. Always held; a corner or landmark is fine.
+
+    The usual check still runs so the coordinator sees what else it found, but it
+    never rejects a tip outright.
+    """
+    extra = hold_reason(text)
+    return f"{LEAD_TIP_REASON} Also: {extra}" if extra else LEAD_TIP_REASON
+
 _FOOD_ANSWER = (
     "Open pantries are on the Map tab with an open-now filter. A coordinator can turn this into a "
     "private request so your address never goes on the thread."

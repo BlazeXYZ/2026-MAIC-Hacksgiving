@@ -2,6 +2,8 @@ import { COORDINATOR_KEY_HEADER } from '../coordinator/access';
 import type {
   ForumHubId,
   HeldPost,
+  MissingPersonCase,
+  PrivateTip,
   ReplyPosted,
   ReviewAction,
   ReviewResult,
@@ -95,12 +97,33 @@ export function createReply(
   parentId: string | null,
   handle: string | null,
   key: string | null,
+  sector: string | null = null,
 ): Promise<ReplyPosted> {
   return call<ReplyPosted>(`/threads/${encodeURIComponent(threadId)}/replies`, {
     method: 'POST',
-    body: { body, parent_id: parentId, handle },
+    body: sector ? { body, parent_id: parentId, handle, sector } : { body, parent_id: parentId, handle },
     key,
   });
+}
+
+export function listCases(): Promise<MissingPersonCase[]> {
+  return call<MissingPersonCase[]>('/cases');
+}
+
+export function openCase(key: string, displayName: string, lastKnownPoint: string): Promise<MissingPersonCase> {
+  return call<MissingPersonCase>('/admin/cases', {
+    method: 'POST',
+    body: { display_name: displayName, last_known_point: lastKnownPoint },
+    key,
+  });
+}
+
+export function resolveCase(key: string, caseId: string): Promise<MissingPersonCase> {
+  return call<MissingPersonCase>(`/admin/cases/${encodeURIComponent(caseId)}/resolve`, { method: 'POST', key });
+}
+
+export function listPrivateTips(key: string): Promise<PrivateTip[]> {
+  return call<PrivateTip[]>('/admin/private-tips', { key });
 }
 
 export function markHelpful(kind: 'thread' | 'reply', id: string, on: boolean): Promise<{ helpful: number }> {
