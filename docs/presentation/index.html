@@ -305,16 +305,47 @@
     <div class="tip" data-step="5"><svg class="ic"><use href="#i-check"/></svg><span><b>Coordinators stay in control:</b> they publish, edit or remove every held post.</span></div>
   </section>
 
-  <!-- 7 · Impact / what's next: three columns -->
-  <section class="slide">
-    <p class="kicker" data-step="1">Impact &amp; next steps</p>
-    <h2 class="title" data-step="2">[What we built, and <em>where it goes</em>.]</h2>
-    <div class="review">
-      <section data-step="3"><h3>[Built]</h3><p>[What works today in the prototype.]</p></section>
-      <section data-step="4"><h3>[Learned]</h3><p>[What testing or research taught us.]</p></section>
-      <section data-step="5"><h3>[Next]</h3><p>[What we would build with more time.]</p></section>
+  <!-- 7 · Mobile demo (issue #205): the five demo steps on the left, a phone carousel of the recorded
+       walkthrough on the right. Forward/back step through the screenshots before the deck turns the page.
+
+       Speaker notes (Hayden · mobile demo walkthrough):
+       - A Milwaukee resident opens Food Pantry & Mutual Aid, uses the guided form to ask for grocery pickup help,
+         reviews the summary, and receives an anonymous tracking code.
+       - The resident also submits a related public hub post. Jev's demo moderation result flags a possible deposit
+         scam and holds the post for review. Staff sees it in Held posts, then switches to the private request queue
+         to assign the resident's ticket.
+       - A demo notification takes the volunteer to the grocery delivery task. Claiming it reveals the ComForce relay.
+         The carousel shows a demo staff connection.
+       - The Milwaukee map shows pantries, hours, and directions. The Missing Persons hub then shows a demo rally near
+         27th & Wisconsin. The volunteer selects sector D1 on the search grid and signs up.
+       Source (at ec5332a): src/client/src/components/HelpSurvey.tsx · src/server/forums/jev.py ·
+       src/client/src/screens/CoordinatorDashboard.tsx · src/client/src/components/VolunteerTickets.tsx ·
+       src/client/src/components/CommunityMap.tsx · src/client/src/components/search/SearchGridMap.tsx -->
+  <section class="slide dark demo-walk">
+    <div class="split">
+      <div>
+        <p class="kicker" data-step="1">Mobile demo</p>
+        <h2 class="title" data-step="1">A help request in <em>Milwaukee</em>.</h2>
+        <ol class="steps-list" data-step="2">
+          <li><b>Open a community hub</b><span>Start in Food Pantry &amp; Mutual Aid.</span></li>
+          <li><b>Ask for help</b><span>Send a private request and save the tracking code.</span></li>
+          <li><b>Jev checks a hub post</b><span>A demo verdict holds the related public post for staff review.</span></li>
+          <li><b>Connect with ComForce staff</b><span>A demo alert leads a volunteer to a demo task and the staff relay.</span></li>
+          <li><b>Find a way to take part nearby</b><span>Explore Milwaukee&rsquo;s resource map and join a demo search near 27th &amp; Wisconsin.</span></li>
+        </ol>
+      </div>
+      <div class="carousel phones" data-carousel data-step="3">
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-1.jpg" alt="Food Pantry &amp; Mutual Aid selected in the phone layout."></div><figcaption><b>Open the food pantry hub</b>Food Pantry &amp; Mutual Aid selected in the phone layout.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-2.jpg" alt="The guided form summarizes the resident’s grocery pickup request before sending."></div><figcaption><b>Review a private request</b>The guided form summarizes the resident&rsquo;s grocery pickup request before sending.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-3.jpg" alt="The confirmation screen shows an anonymous request code."></div><figcaption><b>Save the tracking code</b>The confirmation screen shows an anonymous request code.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-4.jpg" alt="A demo Jev verdict flags a possible deposit scam. The post is held for staff review."></div><figcaption><b>Jev flags a public post</b>A demo Jev verdict flags a possible deposit scam. The post is held for staff review.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-5.jpg" alt="The coordinator uses the dispatch queue to assign the private request."></div><figcaption><b>Staff assigns the request</b>The coordinator uses the dispatch queue to assign the private request.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-6.jpg" alt="A demo notification points the volunteer to a demo grocery delivery task."></div><figcaption><b>The volunteer gets an alert</b>A demo notification points the volunteer to a demo grocery delivery task.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-7.jpg" alt="Claiming the task unlocks a demo connection through the ComForce relay."></div><figcaption><b>The volunteer connects to staff</b>Claiming the task unlocks a demo connection through the ComForce relay.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-8.jpg" alt="A pantry pin shows hours, an address, and walk-in information."></div><figcaption><b>Find resources on the Milwaukee map</b>A pantry pin shows hours, an address, and walk-in information.</figcaption></figure>
+        <figure class="car-item"><div class="phone"><img src="img/demo/step-9.jpg" alt="The selected search sector shows the volunteer on its roster."></div><figcaption><b>Join a nearby demo search</b>The selected search sector shows the volunteer on its roster.</figcaption></figure>
+      </div>
     </div>
-    <div class="segs" data-step="5" style="margin-top:56px;max-width:640px"><i class="done"></i><i class="done"></i><i class="on"></i><i></i><i></i></div>
   </section>
 
   <!-- 8 · Close -->
