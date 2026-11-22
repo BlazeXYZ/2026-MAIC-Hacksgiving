@@ -25,6 +25,10 @@
 .inv-group h3 { font-size: 16px; font-weight: 700; display: flex; gap: 8px; align-items: baseline; }
 .inv-group h3 .count { color: var(--ink-3); font-weight: 600; font-size: 14px; }
 .inv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+/* a bare list filling a whole card: hairline-divided rows, matching .needs and .dist-rows */
+.inv-list.card { gap: 0; padding: 8px 0; }
+.inv-list.card > li { padding: 8px 20px; align-items: center; }
+.inv-list.card > li + li { border-top: 1px solid var(--line); }
 .inv-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; justify-content: space-between; }
 .inv-list li > span:first-child { flex: 1 1 auto; min-width: 0; }
 
