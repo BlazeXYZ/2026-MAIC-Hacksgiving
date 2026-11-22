@@ -8,6 +8,7 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 
 ## Quick Links
 
+- [Infrastructure situation](docs/infrastructure.md) — no cloud cluster is running; `baby deploy up dev` is the local kind path
 - [Kubernetes setup](deploy/KUBERNETES.md) — dev, qa, and prod on a local kind cluster or EKS
 - [Project Ideas & Brainstorming](IDEAS.md)
 - [Contributing & Style Guide](CONTRIBUTING.md)
@@ -47,7 +48,7 @@ Our partner for this year is **ComforceMKE** (Community Task Force MKE). As the 
 - **Summary:** A combined web and mobile application (exported through Capacitor) that makes connecting with ComforceMKE initiatives interactive and responsive instead of just filling out static web forms.
 - **Client Stack:** React, TypeScript, Vite, Capacitor (iOS and Android export), OpenStreetMap, Tailwind CSS
 - **Server Stack:** Python 3.10+, FastAPI, PostgreSQL, `uv` package manager, Uvicorn
-- **Deploy:** Docker Compose locally. Terraform keeps dev, qa, and prod in separate state. Each one can run as a local Kubernetes cluster or, when you choose an account, on AWS EKS.
+- **Deploy:** Docker Compose locally. Terraform keeps dev, qa, and prod in separate state. Each one can run as a local Kubernetes cluster or, when you choose an account, on AWS EKS. No AWS apply has been run. The laptop path is [docs/infrastructure.md](docs/infrastructure.md).
 - **AI Models:** Transformer-based need heatmaps, small classifier for content moderation and triage, and LLM recommendations
 
 ---

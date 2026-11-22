@@ -8,7 +8,7 @@ The same three processes run everywhere: PostgreSQL (`db`), FastAPI (`api`), and
 | Dev, qa, or prod on a laptop | That environment's Terraform root, with `target = "local"` |
 | Dev, qa, or prod on AWS | The same root, with `target = "aws"` |
 
-Dev, qa, and prod are separate Terraform roots. Each has its own state, kind or EKS cluster, and namespace. Applying dev does not create qa or prod. A cluster you already have still works with `target = "existing"`. The step-by-step is [KUBERNETES.md](KUBERNETES.md).
+Dev, qa, and prod are separate Terraform roots. Each has its own state, kind or EKS cluster, and namespace. Applying dev does not create qa or prod. A cluster you already have still works with `target = "existing"`. The step-by-step is [KUBERNETES.md](KUBERNETES.md). What is actually running, and what `baby deploy up dev` does, is [../docs/infrastructure.md](../docs/infrastructure.md). On 21 November 2026 that was a local `comforce-dev` kind cluster only. The AWS target is code that has not been applied.
 
 ## Local Docker
 
