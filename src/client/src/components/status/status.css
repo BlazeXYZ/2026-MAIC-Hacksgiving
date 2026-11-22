@@ -1,3 +1,7 @@
+.request-status { max-width: 42rem; margin: 24px auto 0; }
+.request-status-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start; gap: 12px; }
+.request-status .card-pad { padding: 16px; }
+
 .tl { list-style: none; margin: 0; padding: 20px; display: grid; }
 .tl li { position: relative; display: grid; grid-template-columns: 24px minmax(0, 1fr) auto; gap: 12px; padding-bottom: 20px; font-size: 15px; }
 .tl li:last-child { padding-bottom: 0; }

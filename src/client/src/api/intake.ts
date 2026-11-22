@@ -200,7 +200,7 @@ export async function getTicket(token: string): Promise<TicketLookup> {
     const ticket = await request<PublicTicket>(`${apiPaths.ticket}/${encodeURIComponent(clean)}`);
     return { kind: 'found', ticket };
   } catch (err) {
-    if (serverMissing(err)) return { kind: 'not-found' };
-    throw err; // 429 and other refusals go to the screen as errors
+    if (err instanceof ApiError && err.status === 404) return { kind: 'not-found' };
+    throw err;
   }
 }
