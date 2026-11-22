@@ -8,6 +8,7 @@ from sqlalchemy import select
 
 from src.server.db import Resource, Ticket, close_db, get_db
 from src.server.seed import (
+    DEMO_EXTRA_TICKETS,
     FOOD_PANTRIES,
     MILWAUKEE_LAT_MAX,
     MILWAUKEE_LAT_MIN,
@@ -16,6 +17,7 @@ from src.server.seed import (
     SAFE_PLACES,
     SAMPLE_TICKETS,
     seed_database,
+    seed_demo_extras,
 )
 
 TEST_SEED_DB_FILE = Path("test_seed.db")
@@ -85,3 +87,71 @@ def test_sample_tickets_span_urgency_tiers() -> None:
     assert "urgent" in urgencies
     assert "today" in urgencies
     assert "this_week" in urgencies
+
+
+def test_seeded_tickets_have_unique_ids_and_initial_timelines() -> None:
+    """Seeded tickets should be addressable and have presentable timelines."""
+    seed_database(TEST_SEED_DB_URL)
+    seed_demo_extras(TEST_SEED_DB_URL)
+
+    session = next(get_db())
+    try:
+        tickets = session.scalars(select(Ticket)).all()
+    finally:
+        session.close()
+
+    ticket_ids = [ticket.ticket_id for ticket in tickets]
+    assert len(ticket_ids) == len(set(ticket_ids))
+    assert all(ticket_id is not None for ticket_id in ticket_ids)
+    assert all(
+        len(ticket_id or "") == 32
+        and all(character in "0123456789abcdef" for character in (ticket_id or ""))
+        for ticket_id in ticket_ids
+    )
+
+    seeded_tickets = {
+        ticket.token: ticket
+        for ticket in tickets
+        if ticket.token in {
+            item["token"]
+            for item in SAMPLE_TICKETS + DEMO_EXTRA_TICKETS
+        }
+    }
+    assert set(seeded_tickets) == {
+        item["token"]
+        for item in SAMPLE_TICKETS + DEMO_EXTRA_TICKETS
+    }
+    for ticket in seeded_tickets.values():
+        assert ticket.timeline
+        assert ticket.timeline[0]["status"] == ticket.status
+
+
+def test_seed_repair_populates_missing_ticket_fields() -> None:
+    """A rerun repairs tickets created by older seed behavior."""
+    seed_database(TEST_SEED_DB_URL)
+
+    session = next(get_db())
+    try:
+        ticket = session.scalar(
+            select(Ticket).where(Ticket.token == SAMPLE_TICKETS[0]["token"])
+        )
+        assert ticket is not None
+        ticket.ticket_id = None
+        ticket.timeline = []
+        session.commit()
+    finally:
+        session.close()
+
+    assert seed_database(TEST_SEED_DB_URL)["tickets_added"] == 0
+
+    session = next(get_db())
+    try:
+        ticket = session.scalar(
+            select(Ticket).where(Ticket.token == SAMPLE_TICKETS[0]["token"])
+        )
+    finally:
+        session.close()
+
+    assert ticket is not None
+    assert ticket.ticket_id == SAMPLE_TICKETS[0]["ticket_id"]
+    assert ticket.timeline
