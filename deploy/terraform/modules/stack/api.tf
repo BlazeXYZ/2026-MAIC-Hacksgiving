@@ -63,6 +63,16 @@ resource "kubernetes_deployment_v1" "api" {
           }
 
           env {
+            name = "COORDINATOR_API_KEY"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret_v1.coordinator.metadata[0].name
+                key  = "COORDINATOR_API_KEY"
+              }
+            }
+          }
+
+          env {
             name = "DATABASE_URL"
             value_from {
               secret_key_ref {

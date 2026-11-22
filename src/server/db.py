@@ -12,6 +12,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import (
+    JSON,
     Boolean,
     DateTime,
     Float,
@@ -19,6 +20,7 @@ from sqlalchemy import (
     String,
     Text,
     create_engine,
+    inspect,
     text,
 )
 from sqlalchemy.orm import (
@@ -29,6 +31,7 @@ from sqlalchemy.orm import (
     mapped_column,
     sessionmaker,
 )
+from sqlalchemy.pool import StaticPool
 
 try:
     from src.server.core.config import settings
@@ -48,6 +51,9 @@ class Ticket(Base):
     __tablename__ = "tickets"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    ticket_id: Mapped[str | None] = mapped_column(
+        String(80), unique=True, index=True, nullable=True
+    )
     token: Mapped[str] = mapped_column(String(80), unique=True, index=True, nullable=False)
     status: Mapped[str] = mapped_column(String(40), default="pending", nullable=False)
     urgency: Mapped[str] = mapped_column(String(40), default="today", nullable=False)
@@ -59,6 +65,11 @@ class Ticket(Base):
     assigned_volunteer_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
     assigned_volunteer_alias: Mapped[str | None] = mapped_column(String(80), nullable=True)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    timeline: Mapped[list[dict[str, str]]] = mapped_column(
+        JSON,
+        default=list,
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(timezone.utc),
@@ -110,8 +121,87 @@ class VolunteerAction(Base):
     )
 
 
+class InventoryItem(Base):
+    """Catalog item shared by all inventory API replicas."""
+
+    __tablename__ = "inventory_items"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+
+
+class InventoryAlias(Base):
+    """Coordinator-reviewed wording for a catalog item."""
+
+    __tablename__ = "inventory_aliases"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    text: Mapped[str] = mapped_column(String(200), nullable=False)
+    item_id: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    source: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
+class InventoryEntry(Base):
+    """Persistent stock, need, or offer entry."""
+
+    __tablename__ = "inventory_entries"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    location_id: Mapped[str] = mapped_column(String(80), nullable=False, index=True)
+    kind: Mapped[str] = mapped_column(String(20), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    label: Mapped[str] = mapped_column(String(500), nullable=False)
+    item_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    alias_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    via: Mapped[str] = mapped_column(String(40), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    closed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    candidates: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list, nullable=False)
+    none_fit: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
+class InventoryHandoff(Base):
+    """Persistent audit record of stock passed to another place or need."""
+
+    __tablename__ = "inventory_handoffs"
+
+    id: Mapped[str] = mapped_column(String(80), primary_key=True)
+    item_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    from_location_id: Mapped[str] = mapped_column(String(80), nullable=False)
+    to_location_id: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    remaining: Mapped[int] = mapped_column(Integer, nullable=False)
+    need_remaining: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+
+
 _engine: Any = None
 _SessionLocal: sessionmaker[Session] | None = None
+
+
+def _ensure_ticket_columns() -> None:
+    """Add ticket fields to databases created before resident timelines were persisted."""
+    assert _engine is not None
+    inspector = inspect(_engine)
+    columns = {column["name"] for column in inspector.get_columns("tickets")}
+    with _engine.begin() as connection:
+        if "ticket_id" not in columns:
+            if connection.dialect.name == "sqlite":
+                connection.execute(text("ALTER TABLE tickets ADD COLUMN ticket_id VARCHAR(80)"))
+            else:
+                connection.execute(text("ALTER TABLE tickets ADD COLUMN IF NOT EXISTS ticket_id VARCHAR(80)"))
+        if "timeline" not in columns:
+            if connection.dialect.name == "sqlite":
+                connection.execute(text("ALTER TABLE tickets ADD COLUMN timeline JSON"))
+            else:
+                connection.execute(text("ALTER TABLE tickets ADD COLUMN IF NOT EXISTS timeline JSON"))
+        connection.execute(text(
+            "CREATE UNIQUE INDEX IF NOT EXISTS ix_tickets_ticket_id "
+            "ON tickets (ticket_id)"
+        ))
 
 
 def resolve_database_url(url: str | None = None) -> str:
@@ -130,10 +220,25 @@ def init_db(url: str | None = None) -> None:
     is_sqlite = db_url.startswith("sqlite")
 
     connect_args = {"check_same_thread": False} if is_sqlite else {}
-    _engine = create_engine(db_url, connect_args=connect_args, pool_pre_ping=not is_sqlite)
+    pool_kwargs: dict[str, Any] = {}
+    if is_sqlite and ":memory:" in db_url:
+        pool_kwargs["poolclass"] = StaticPool
+    _engine = create_engine(
+        db_url,
+        connect_args=connect_args,
+        pool_pre_ping=not is_sqlite,
+        **pool_kwargs,
+    )
     _SessionLocal = sessionmaker(bind=_engine, autocommit=False, autoflush=False)
 
     Base.metadata.create_all(bind=_engine)
+    _ensure_ticket_columns()
+    try:
+        from src.server.inventory import store as inventory_store
+
+        inventory_store.reload_from_db()
+    except ModuleNotFoundError:
+        pass
     logger.info("Database initialized successfully with URL pattern: %s", db_url.split("@")[-1])
 
 
@@ -147,6 +252,13 @@ def get_db() -> Generator[Session, None, None]:
         yield session
     finally:
         session.close()
+
+
+def create_db_session() -> Session | None:
+    """Create a session when database persistence is initialized."""
+    if _SessionLocal is None:
+        return None
+    return _SessionLocal()
 
 
 def check_db() -> tuple[bool, str | None]:
