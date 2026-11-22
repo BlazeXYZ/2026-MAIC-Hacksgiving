@@ -1,0 +1,210 @@
+/* ComForce MKE Hub: slide deck stylesheet.
+   Built from docs/design/ComForce-MKE-Hub-PROD-mockup.html. It uses the same tokens, the two typefaces
+   (Bricolage for the interface, Newsreader for headlines and the AI's voice), the chain-link fence,
+   the hi-vis highlighter and the printed-card drop shadow.
+   Every slide is drawn on a fixed 1920x1080 canvas, and slides.js scales it to fit the window. */
+
+:root{
+  /* stage (dark green) */
+  --stage:#0C3A24; --stage-fg:#EEF3EC; --stage-mute:#A9C2B1; --stage-line:rgba(238,243,236,.16);
+  /* paper (light) */
+  --paper:#E6ECE3; --card:#FDFDF9; --sunk:#E4EAE0; --line:#D2DBCD; --line-2:#B5C1B0; --card-edge:#C9D4C4;
+  --ink:#16201B; --ink-2:#45524A; --ink-3:#6C776F;
+  --green:#0F6B3A; --green-2:#2E9A5C; --green-wash:#E4F0E6; --green-ink:#174A2C; --green-drop:#0A3D22;
+  --red:#D8322B; --red-deep:#A61D19; --red-wash:#FCEAE7;
+  --amber:#B7790B; --amber-wash:#FBF1DA; --amber-ink:#6E4A06;
+  --hivis:#E4F23A; --tip:#F5F8D6; --tip-ink:#3E4410;
+  --f:"Bricolage Grotesque",system-ui,sans-serif; --f-voice:"Newsreader",Georgia,serif;
+  --r:16px;
+  --drop:0 4px 0 rgba(15,74,40,.13);
+  --fence-base:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 0L24 24M24 0L0 24M-4 4L4 -4M20 28L28 20M-4 20L4 28M20 -4L28 4' stroke='%230F6B3A' stroke-opacity='.06' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+  --fence-light:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 0L24 24M24 0L0 24M-4 4L4 -4M20 28L28 20M-4 20L4 28M20 -4L28 4' stroke='%230F6B3A' stroke-opacity='.11' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+  --fence-dark:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24'%3E%3Cpath d='M0 0L24 24M24 0L0 24M-4 4L4 -4M20 28L28 20M-4 20L4 28M20 -4L28 4' stroke='%23fff' stroke-opacity='.13' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
+  --scale:1;
+  --ease:cubic-bezier(.2,.7,.2,1);
+  color-scheme:light;
+}
+
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{overflow:hidden;background:#06180F;font-family:var(--f);color:var(--ink);-webkit-font-smoothing:antialiased}
+h1,h2,h3,h4,p,ul,ol,blockquote,figure{margin:0}
+:focus-visible{outline:3px solid var(--hivis);outline-offset:2px}
+.ic{width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+
+/* ---------- the canvas ---------- */
+.deck{position:absolute;left:50%;top:50%;width:1920px;height:1080px;margin:-540px 0 0 -960px;transform:scale(var(--scale));overflow:hidden;background:var(--paper)}
+.slide{position:absolute;inset:0;display:flex;flex-direction:column;padding:96px 128px 0;background-color:var(--paper);background-image:var(--fence-base);
+  opacity:0;visibility:hidden;transform:translateX(80px);
+  transition:opacity .5s var(--ease),transform .6s var(--ease),visibility 0s linear .6s}
+.slide.is-past{transform:translateX(-80px)}
+.slide.is-active{opacity:1;visibility:visible;transform:none;transition:opacity .5s var(--ease),transform .6s var(--ease),visibility 0s}
+/* a patch of stronger fence at the top of light slides, fading out before the content gets busy */
+.slide::before{content:"";position:absolute;left:0;right:0;top:0;height:420px;z-index:0;background:var(--fence-light);-webkit-mask-image:linear-gradient(#000,transparent);mask-image:linear-gradient(#000,transparent);pointer-events:none}
+.slide>*{position:relative;z-index:1}
+
+/* children of the active slide rise in one after another */
+.slide [data-step]{opacity:0;transform:translateY(18px);transition:opacity .5s var(--ease),transform .6s var(--ease)}
+.slide.is-active [data-step]{opacity:1;transform:none}
+.slide.is-active [data-step="1"]{transition-delay:.12s}
+.slide.is-active [data-step="2"]{transition-delay:.22s}
+.slide.is-active [data-step="3"]{transition-delay:.32s}
+.slide.is-active [data-step="4"]{transition-delay:.42s}
+.slide.is-active [data-step="5"]{transition-delay:.52s}
+
+/* dark green slides (title, section breaks, close) */
+.slide.dark{background-color:var(--stage);background-image:var(--fence-dark);color:var(--stage-fg)}
+.slide.dark::before{display:none}
+.slide.dark .kicker{color:var(--stage-mute)}
+.slide.dark .lede{color:var(--stage-fg)}
+.slide.dark .slide-foot{color:var(--stage-mute);border-top-color:var(--stage-line)}
+.slide.dark .slide-foot .logo{color:var(--stage-fg)}
+.slide.dark .slide-foot .logo b span{color:var(--hivis)}
+
+/* ---------- shared type ---------- */
+.flag{display:inline-flex;align-self:flex-start;background:var(--paper);color:var(--green);font-weight:800;font-size:20px;letter-spacing:.14em;text-transform:uppercase;padding:12px 36px 12px 18px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 50%,calc(100% - 18px) 100%,0 100%)}
+.kicker{font-size:20px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+.kicker::before{content:"";display:inline-block;width:12px;height:12px;margin-right:14px;border-radius:3px;background:var(--green);vertical-align:2px}
+.slide.dark .kicker::before{background:var(--hivis)}
+.display{font-weight:800;font-stretch:80%;font-size:168px;line-height:.9;letter-spacing:-.025em;text-wrap:balance}
+.title{margin-top:20px;font-weight:800;font-stretch:80%;font-size:96px;line-height:.95;letter-spacing:-.02em;text-wrap:balance}
+.display em,.title em{font-family:var(--f-voice);font-weight:500;font-stretch:100%;letter-spacing:-.03em;color:var(--green)}
+.slide.dark .display em,.slide.dark .title em{color:var(--hivis)}
+.lede{margin-top:32px;max-width:30em;font-size:32px;line-height:1.4;color:var(--ink-2)}
+.voice{font-family:var(--f-voice)}
+.why{display:flex;gap:12px;font-family:var(--f-voice);font-style:italic;font-size:26px;line-height:1.4;color:var(--ink-2)}
+.why .ic{width:24px;height:24px;margin-top:6px;color:var(--green)}
+.hl{background:linear-gradient(transparent 60%,var(--hivis) 60% 92%,transparent 92%)}
+.slide.dark .hl{color:var(--ink)}
+.body{flex:1;min-height:0;display:flex;flex-direction:column}
+.spacer{flex:1}
+
+/* ---------- logo + footer on every slide ---------- */
+.logo{display:flex;align-items:center;gap:12px;color:var(--ink)}
+.logo svg{width:36px;height:36px;flex:none}
+.logo b{font-weight:800;font-stretch:85%;font-size:24px;letter-spacing:-.01em;white-space:nowrap}
+.logo b span{color:var(--green)}
+.slide-foot{display:flex;align-items:center;gap:24px;height:104px;margin-top:auto;border-top:1px solid var(--line);font-size:20px;font-weight:600;color:var(--ink-3)}
+.slide-foot .num{margin-left:auto;font-variant-numeric:tabular-nums}
+
+/* ---------- printed cards ---------- */
+.card{background:var(--card);border:1px solid var(--card-edge);border-radius:var(--r);box-shadow:var(--drop)}
+.card-h{display:flex;align-items:center;gap:14px;padding:20px 32px;background-color:#EEF4EB;background-image:var(--fence-light);border-bottom:1px solid var(--line);border-radius:var(--r) var(--r) 0 0;font-weight:700;font-size:26px}
+.card-h::before{content:"";width:12px;height:12px;border-radius:3px;background:var(--green)}
+.card-b{padding:28px 32px 32px;font-size:24px;line-height:1.45;color:var(--ink-2)}
+.slide.dark .card{color:var(--ink)}
+
+.tag{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 14px;border-radius:8px;font-size:18px;font-weight:700;white-space:nowrap;background:var(--sunk);color:var(--ink-2)}
+.tag::before{content:"";width:8px;height:8px;border-radius:50%;background:currentColor}
+.tag.urgent{background:var(--red-wash);color:var(--red-deep)}
+.tag.today{background:var(--amber-wash);color:var(--amber-ink)}
+.tag.ai{background:var(--green-wash);color:var(--green-ink)}
+.tag.ai::before{display:none}
+
+.tip{display:flex;gap:16px;align-items:flex-start;padding:20px 24px;border-radius:12px;background:var(--tip);color:var(--tip-ink);font-size:22px;line-height:1.45}
+.tip .ic{width:26px;height:26px;margin-top:2px}
+
+/* ---------- layouts ---------- */
+.cols{display:grid;gap:48px;margin-top:56px}
+.cols.c2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.cols.c3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.cols.c4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.split{flex:1;min-height:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:96px;align-items:center;padding-bottom:48px}
+
+/* title slide */
+.slide.title-slide{padding-top:120px}
+.title-slide .display{margin-top:48px;max-width:12em}
+.title-slide .lede{color:var(--stage-mute)}
+.title-slide .byline{display:flex;gap:40px;margin-top:56px;font-size:24px;font-weight:600}
+.title-slide .byline span{display:flex;flex-direction:column;gap:4px}
+.title-slide .byline small{font-size:16px;letter-spacing:.12em;text-transform:uppercase;color:var(--stage-mute)}
+/* Milwaukee skyline, lightly, along the bottom of dark slides */
+.city{position:absolute!important;left:0;right:0;bottom:0;width:100%;height:150px;fill:rgba(0,0,0,.22);pointer-events:none;z-index:0!important}
+
+/* big numbers */
+.stat{padding:36px 36px 32px;display:flex;flex-direction:column;gap:12px}
+.stat b{font-weight:800;font-stretch:80%;font-size:120px;line-height:.9;letter-spacing:-.03em;color:var(--green);font-variant-numeric:tabular-nums}
+.stat.red b{color:var(--red)}
+.stat.amber b{color:var(--amber)}
+.stat span{font-size:24px;line-height:1.35;color:var(--ink-2)}
+.stat small{margin-top:auto;font-size:16px;color:var(--ink-3)}
+
+/* numbered steps */
+.steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));margin-top:64px}
+.step{display:flex;flex-direction:column;gap:16px;padding:36px 32px 40px}
+.step+.step{border-left:1px solid var(--line)}
+.step .n{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line-2);font-weight:800;font-size:24px;background:var(--card)}
+.step.done .n{background:var(--green);border-color:var(--green);color:#fff}
+.step.on .n{background:var(--hivis);border-color:#B9C42A;color:var(--ink)}
+.step h3{font-weight:700;font-size:30px;line-height:1.15}
+.step p{font-size:22px;line-height:1.45;color:var(--ink-2)}
+.segs{display:flex;gap:6px}
+.segs i{flex:1;height:12px;border-radius:3px;background:var(--sunk)}
+.segs i.done{background:var(--green)}
+.segs i.on{background:var(--hivis);box-shadow:inset 0 0 0 1px #B9C42A}
+
+/* ticket: the request card with a tear-off stub */
+.ticket{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 150px;background:var(--card);border:1px solid var(--card-edge);border-radius:var(--r);box-shadow:var(--drop)}
+.ticket-main{padding:28px 32px;display:grid;gap:12px;min-width:0}
+.ticket-main h3{font-weight:700;font-size:30px;line-height:1.2}
+.ticket-main .why{font-size:22px}
+.stub{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;border-left:3px dashed var(--line-2);background-image:var(--fence-light);border-radius:0 var(--r) var(--r) 0;color:var(--green);font-weight:700;font-size:22px}
+.stub small{font-size:16px;font-weight:600;color:var(--ink-3)}
+.stub .ic{width:34px;height:34px}
+.stub::before,.stub::after{content:"";position:absolute;left:-14px;width:24px;height:24px;border-radius:50%;background:var(--paper);border:1px solid var(--card-edge)}
+.stub::before{top:-13px;clip-path:inset(50% 0 0 0)}
+.stub::after{bottom:-13px;clip-path:inset(0 0 50% 0)}
+.ticket.taken{border-color:var(--green)}
+.ticket.taken .stub{background-color:var(--green);background-image:var(--fence-dark);color:#fff;border-left-color:var(--green)}
+.ticket.taken .stub small{color:#CBE5D3}
+
+/* screenshot frame (desktop browser chrome from the mockup) */
+.browser{border-radius:20px;overflow:hidden;background:#1B1F1D;box-shadow:0 40px 80px -30px rgba(0,0,0,.55)}
+.browser-bar{display:flex;align-items:center;height:52px;padding:0 20px;color:#A9B5AD}
+.browser-bar .dots{display:flex;gap:9px;width:64px}
+.browser-bar .dots i{width:14px;height:14px;border-radius:50%;background:#3A443E}
+.browser-bar .url{flex:1;max-width:560px;margin:0 auto;height:32px;border-radius:9px;background:#2A302C;display:flex;align-items:center;justify-content:center;font:15px ui-monospace,Menlo,monospace}
+.shot{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;object-position:top;background:var(--paper) var(--fence-light)}
+.shot.placeholder{display:grid;place-items:center;color:var(--ink-3);font-size:24px;font-weight:600}
+
+/* pull quote in the AI's voice */
+.quote{max-width:24em;font-family:var(--f-voice);font-style:italic;font-weight:400;font-size:72px;line-height:1.15;letter-spacing:-.015em;text-wrap:balance}
+.quote::before{content:"\201C";display:block;height:.55em;font-size:2.2em;line-height:1;color:var(--hivis);font-style:normal}
+.slide:not(.dark) .quote::before{color:var(--green)}
+.attrib{margin-top:40px;font-size:24px;font-weight:700}
+.attrib small{display:block;margin-top:4px;font-weight:500;color:var(--ink-3)}
+.slide.dark .attrib small{color:var(--stage-mute)}
+
+/* bullets with hi-vis markers */
+.list{display:grid;gap:20px;padding-left:32px;font-size:28px;line-height:1.4}
+.list li::marker{color:var(--green)}
+.slide.dark .list li::marker{color:var(--hivis)}
+.list b{font-weight:700}
+.review{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:48px;margin-top:64px}
+.review section{border-top:5px solid var(--hivis);padding-top:24px}
+.review h3{margin-bottom:12px;font-weight:800;font-stretch:88%;font-size:32px}
+.review p{font-size:24px;line-height:1.45;color:var(--stage-mute)}
+.slide:not(.dark) .review section{border-top-color:var(--green)}
+.slide:not(.dark) .review p{color:var(--ink-2)}
+
+/* ---------- deck chrome ---------- */
+/* progress: the mockup's segmented bar, done = green, current = hi-vis */
+.progress{position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;gap:4px;padding:0 4px 4px}
+.progress i{flex:1;height:6px;border-radius:2px;background:rgba(108,119,111,.25);transition:background .3s}
+.progress i.done{background:var(--green-2)}
+.progress i.on{background:var(--hivis)}
+.hint{position:fixed;right:16px;bottom:16px;z-index:30;display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:rgba(12,58,36,.9);color:var(--stage-fg);font:600 13px var(--f);opacity:0;transition:opacity .4s;pointer-events:none}
+.hint.show{opacity:1}
+.hint kbd{font:700 12px var(--f);background:var(--hivis);color:var(--ink);border-radius:5px;padding:3px 7px}
+
+@media (prefers-reduced-motion:reduce){
+  .slide,.slide.is-active,.slide [data-step]{transition:opacity .2s linear!important;transform:none!important}
+}
+@media print{
+  @page{size:1920px 1080px;margin:0}
+  body{overflow:visible;background:none}
+  .deck{position:static;margin:0;transform:none;height:auto;overflow:visible}
+  .slide{position:relative;height:1080px;opacity:1;visibility:visible;transform:none;break-after:page}
+  .slide [data-step]{opacity:1;transform:none}
+  .progress,.hint{display:none}
+}

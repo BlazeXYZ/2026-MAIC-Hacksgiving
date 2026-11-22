@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ComForce MKE Hub</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='16' y='1.5' width='20.5' height='20.5' rx='2' transform='rotate(45 16 1.5)' fill='%230F6B3A'/%3E%3Cpath d='M10.5 10.5l11 11M21.5 10.5l-11 11' stroke='%23FCFCF9' stroke-width='3.2' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400..600&display=swap">
+<link rel="stylesheet" href="slides.css">
+</head>
+<body>
+
+<!-- Shared icons and the Milwaukee skyline, taken from the PROD mockup. Use with <svg class="ic"><use href="#i-check"/></svg>. -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-6 11-8 12-2-1-8-7-8-12a8 8 0 0 1 16 0z"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-8 9-4.5-1.5-8-4-8-9V6l8-3 8 3z"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22z"/></symbol>
+  <symbol id="i-lamp" viewBox="0 0 24 24"><path d="M15 14c.2-1 .7-1.7 1.5-2.5A6 6 0 1 0 7.5 11.5c.8.8 1.3 1.5 1.5 2.5M9 18h6M10 22h4"/></symbol>
+  <symbol id="skyline" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice"><path d="M0 120V98H36V120ZM36 120V80H80V120ZM80 120V86H104V120ZM104 120V98H134V120ZM134 120V98H152V120ZM152 120V80H196V120ZM196 120V80H220V120ZM220 120V92H250V120ZM250 120V98H274V120ZM274 120V102H310V120ZM310 120V86H328V120ZM328 120V106H358V120ZM358 120V92H388V120ZM388 120V80H412V120ZM412 120V80H430V120ZM430 120V98H474V120ZM474 120V102H498V120ZM498 120V92H534V120ZM534 120V86H570V120ZM570 120V102H600V120ZM600 120V80H630V120ZM630 120V92H654V120ZM654 120V106H698V120ZM698 120V92H716V120ZM716 120V80H752V120ZM752 120V106H796V120ZM796 120V98H832V120ZM832 120V106H850V120ZM850 120V102H868V120ZM868 120V102H886V120ZM886 120V80H904V120ZM904 120V106H928V120ZM928 120V86H972V120ZM972 120V92H996V120ZM996 120V98H1040V120ZM1040 120V86H1084V120ZM1084 120V92H1102V120ZM1102 120V80H1146V120ZM1146 120V92H1190V120ZM1190 120V102H1214V120ZM250 120V68H320V120ZM262 120V60H308V120ZM268 60L274 52L280 60ZM290 60L296 52L302 60ZM278 120V28H294V120ZM276 28L286 2L296 28ZM430 120V24H464V120ZM470 120V48H496V120ZM500 120V16H540V120ZM546 120V56H568V120ZM380 120V62H410V120ZM760 120V86H830V120ZM786 120V28H804V120ZM786 28L795 16L804 28ZM785 42a10 10 0 1 0 20 0a10 10 0 1 0-20 0ZM1010 120V106H1130V120ZM1068 106L1000 58L1004 54L1074 104ZM1072 106L1140 58L1136 54L1066 104ZM1066 106L1070 72L1074 106Z"/></symbol>
+</defs></svg>
+
+<!-- data-title is the text shown in every slide's footer. Add data-foot="none" to a slide to hide its footer. -->
+<main class="deck" data-title="MAIC Hacksgiving 2026">
+
+  <!-- 1 · Title -->
+  <section class="slide dark title-slide">
+    <span class="flag" data-step="1">MAIC Hacksgiving 2026</span>
+    <h1 class="display" data-step="2">Neighbors helping <em>neighbors</em>, faster.</h1>
+    <p class="lede" data-step="3">[One-sentence pitch: what ComForce MKE Hub is and who it serves.]</p>
+    <div class="byline" data-step="4">
+      <span><small>Team</small>[Team name]</span>
+      <span><small>Presented by</small>[Names]</span>
+    </div>
+    <svg class="city" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
+  </section>
+
+  <!-- 2 · The problem: three big numbers -->
+  <section class="slide">
+    <p class="kicker" data-step="1">The problem</p>
+    <h2 class="title" data-step="2">[Headline that names the <em>problem</em>.]</h2>
+    <div class="cols c3">
+      <div class="card stat red" data-step="3"><b>[00]</b><span>[What this number means]</span><small>Source: [citation]</small></div>
+      <div class="card stat amber" data-step="4"><b>[00%]</b><span>[What this number means]</span><small>Source: [citation]</small></div>
+      <div class="card stat" data-step="5"><b>[0 hrs]</b><span>[What this number means]</span><small>Source: [citation]</small></div>
+    </div>
+  </section>
+
+  <!-- 3 · Who it's for: text on the left, a request ticket on the right -->
+  <section class="slide">
+    <div class="split">
+      <div>
+        <p class="kicker" data-step="1">Who it's for</p>
+        <h2 class="title" data-step="2">[A person, a <em>block</em>, a need.]</h2>
+        <p class="lede" data-step="3">[Describe the people the Hub serves and the moment they reach for it.]</p>
+      </div>
+      <div style="display:grid;gap:28px">
+        <article class="ticket" data-step="3">
+          <div class="ticket-main">
+            <div style="display:flex;gap:10px"><span class="tag urgent">Urgent</span><span class="tag ai">AI matched</span></div>
+            <h3>[Example request title]</h3>
+            <p class="why"><svg class="ic"><use href="#i-lamp"/></svg>[Why the AI surfaced this request for you.]</p>
+          </div>
+          <div class="stub"><svg class="ic"><use href="#i-arrow"/></svg>Take it<small>[0.4 mi]</small></div>
+        </article>
+        <article class="ticket taken" data-step="4">
+          <div class="ticket-main">
+            <div style="display:flex;gap:10px"><span class="tag today">Today</span></div>
+            <h3>[Second example request]</h3>
+            <p class="why"><svg class="ic"><use href="#i-lamp"/></svg>[Why it matched.]</p>
+          </div>
+          <div class="stub"><svg class="ic"><use href="#i-check"/></svg>Taken<small>[by you]</small></div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 · How it works: four steps -->
+  <section class="slide">
+    <p class="kicker" data-step="1">How it works</p>
+    <h2 class="title" data-step="2">[From request to <em>resolved</em> in four steps.]</h2>
+    <div class="card steps" data-step="3">
+      <div class="step done"><span class="n">1</span><h3>[Step one]</h3><p>[What happens and who does it.]</p></div>
+      <div class="step done"><span class="n">2</span><h3>[Step two]</h3><p>[What happens and who does it.]</p></div>
+      <div class="step on"><span class="n">3</span><h3>[Step three]</h3><p>[What happens and who does it.]</p></div>
+      <div class="step"><span class="n">4</span><h3>[Step four]</h3><p>[What happens and who does it.]</p></div>
+    </div>
+    <div class="tip" data-step="4" style="margin-top:40px"><svg class="ic"><use href="#i-shield"/></svg><span><b>Privacy by default:</b> [one line on how personal details are protected.]</span></div>
+  </section>
+
+  <!-- 5 · Demo: screenshot in browser chrome. Swap the placeholder div for <img class="shot" src="..." alt="..."> -->
+  <section class="slide">
+    <div class="split" style="grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:72px">
+      <div>
+        <p class="kicker" data-step="1">Demo</p>
+        <h2 class="title" data-step="2">[What the <em>screen</em> shows.]</h2>
+        <ul class="list" data-step="3" style="margin-top:40px">
+          <li><b>[Feature]:</b> [why it matters]</li>
+          <li><b>[Feature]:</b> [why it matters]</li>
+          <li><b>[Feature]:</b> [why it matters]</li>
+        </ul>
+      </div>
+      <figure class="browser" data-step="4">
+        <div class="browser-bar"><span class="dots"><i></i><i></i><i></i></span><span class="url">comforce.mke/hub</span></div>
+        <div class="shot placeholder">[Screenshot 1600 × 1000]</div>
+      </figure>
+    </div>
+  </section>
+
+  <!-- 6 · Pull quote in the AI's voice (Newsreader italic) -->
+  <section class="slide dark">
+    <div class="body" style="justify-content:center">
+      <blockquote class="quote" data-step="1">[A quote from a user, a partner or the AI explaining itself.]</blockquote>
+      <p class="attrib" data-step="2">[Name]<small>[Role, organization]</small></p>
+    </div>
+  </section>
+
+  <!-- 7 · Impact / what's next: three columns -->
+  <section class="slide">
+    <p class="kicker" data-step="1">Impact &amp; next steps</p>
+    <h2 class="title" data-step="2">[What we built, and <em>where it goes</em>.]</h2>
+    <div class="review">
+      <section data-step="3"><h3>[Built]</h3><p>[What works today in the prototype.]</p></section>
+      <section data-step="4"><h3>[Learned]</h3><p>[What testing or research taught us.]</p></section>
+      <section data-step="5"><h3>[Next]</h3><p>[What we would build with more time.]</p></section>
+    </div>
+    <div class="segs" data-step="5" style="margin-top:56px;max-width:640px"><i class="done"></i><i class="done"></i><i class="on"></i><i></i><i></i></div>
+  </section>
+
+  <!-- 8 · Close -->
+  <section class="slide dark title-slide">
+    <span class="flag" data-step="1">Thank you</span>
+    <h2 class="display" data-step="2">Questions? <em>Let's talk.</em></h2>
+    <p class="lede" data-step="3">[Repo link, demo link or contact for the team.]</p>
+    <svg class="city" viewBox="0 0 1200 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><use href="#skyline"/></svg>
+  </section>
+
+</main>
+
+<script src="slides.js"></script>
+</body>
+</html>
