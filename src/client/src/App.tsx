@@ -8,6 +8,7 @@ import UrgentAlertBanner, { type MissingPersonAlert } from './components/alerts/
 import CoordinatorMap from './components/coordinator/CoordinatorMap';
 import CoordinatorSignIn from './components/coordinator/CoordinatorSignIn';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
+import { StatusScreen } from './screens/StatusScreen';
 import InventoryHub from './components/inventory/InventoryHub';
 import NearbyInventoryRequests from './components/inventory/NearbyInventoryRequests';
 import InventoryReview from './components/inventory/review/InventoryReview';
@@ -23,6 +24,7 @@ type Tab =
   | 'home'
   | 'map'
   | 'inventory'
+  | 'request-status'
   | 'coordinator'
   | 'coordinator-ops'
   | 'inventory-review'
@@ -39,6 +41,7 @@ const PHONE_TAB_FOR: Partial<Record<Tab, Tab>> = {
   home: 'home',
   map: 'map',
   ask: 'ask',
+  'request-status': 'ask',
   requests: 'requests',
   me: 'me',
   inventory: 'me',
@@ -118,6 +121,7 @@ export default function App(): ReactElement {
   const [selectedCommunity, setSelectedCommunity] = useState<HubId>('domestic-safety');
   const [activeTab, setActiveTab] = useState<Tab>('home');
   const [askingForHelp, setAskingForHelp] = useState<boolean>(false);
+  const [requestCode, setRequestCode] = useState<string | null>(null);
   const [inventoryAction, setInventoryAction] = useState<'request' | 'give' | 'remove' | null>(null);
   const [inventoryPlaceId, setInventoryPlaceId] = useState<string | null>(null);
   // Held in memory only: a reload signs staff out.
@@ -155,8 +159,10 @@ export default function App(): ReactElement {
   }, []);
 
   useEffect(() => {
-    if (askingForHelp) surveyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, [askingForHelp]);
+    if (askingForHelp && activeTab === 'home') {
+      surveyRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [activeTab, askingForHelp]);
 
   const active = COMMUNITIES.find((c) => c.id === selectedCommunity) ?? COMMUNITIES[0];
   const isStaff = coordinatorKey !== null && STAFF_TABS.has(activeTab);
@@ -173,6 +179,18 @@ export default function App(): ReactElement {
     setHubView(view);
     setActiveTab('home');
     requestAnimationFrame(() => hubRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }));
+  }
+
+  function openRequestStatus(code: string | null = null): void {
+    setRequestCode(code);
+    if (code) setAskingForHelp(false);
+    go('request-status');
+  }
+
+  function openRequestedPlaceInventory(placeId: string): void {
+    setInventoryPlaceId(placeId);
+    setInventoryAction('request');
+    go('inventory');
   }
 
   function navButton(tab: Tab, label: string): ReactElement {
@@ -262,6 +280,7 @@ export default function App(): ReactElement {
           <section className="ph-greet" aria-labelledby="ph-greet-title">
             <span className="kicker">{weekday} {partOfDay(now)} · Milwaukee</span>
             <h1 id="ph-greet-title">Good {partOfDay(now)}, <span className="hl">neighbor</span>.</h1>
+            <button type="button" className="btn sm" onClick={() => openRequestStatus()}>Check on a request</button>
           </section>
         )}
 
@@ -307,11 +326,7 @@ export default function App(): ReactElement {
             <div className="mod-h"><h2 id="ask-title">Ask for help</h2></div>
             <p className="mod-sub">Say it however you like. Anything urgent goes to a real person at ComForce right away.</p>
             <div className="mod-b">
-              <HelpSurvey onViewInventoryPlace={(placeId) => {
-                setInventoryPlaceId(placeId);
-                setInventoryAction('request');
-                go('inventory');
-              }} />
+              <HelpSurvey onCheckStatus={openRequestStatus} onViewInventoryPlace={openRequestedPlaceInventory} />
             </div>
           </section>
         )}
@@ -372,6 +387,19 @@ export default function App(): ReactElement {
           />
         )}
 
+        {activeTab === 'request-status' && (
+          <StatusScreen
+            initialCode={requestCode}
+            onNewRequest={() => {
+              if (phoneShell) go('ask');
+              else {
+                setAskingForHelp(true);
+                go('home');
+              }
+            }}
+          />
+        )}
+
         {(activeTab === 'staff-sign-in' || (STAFF_TABS.has(activeTab) && !coordinatorKey)) && (
           <CoordinatorSignIn onSignIn={(key) => { setCoordinatorKey(key); go(activeTab === 'staff-sign-in' ? 'coordinator' : activeTab); }} />
         )}
@@ -407,11 +435,7 @@ export default function App(): ReactElement {
                 <button type="button" className="more" onClick={() => setAskingForHelp(false)}>Close</button>
               </div>
               <div className="mod-b">
-                <HelpSurvey onViewInventoryPlace={(placeId) => {
-                  setInventoryPlaceId(placeId);
-                  setInventoryAction('request');
-                  go('inventory');
-                }} />
+                <HelpSurvey onCheckStatus={openRequestStatus} onViewInventoryPlace={openRequestedPlaceInventory} />
               </div>
             </section>
           )}
@@ -527,6 +551,11 @@ export default function App(): ReactElement {
                 <button type="button" className="primary" onClick={() => setAskingForHelp(true)}>
                   <span className="sq"><Icon name="plus" /></span>
                   <span><b>Ask for help</b><small>Food, a ride, a check-in</small></span>
+                  <Icon name="chev" className="ic chev" />
+                </button>
+                <button type="button" onClick={() => openRequestStatus()}>
+                  <span className="sq"><Icon name="check" /></span>
+                  <span><b>Check on a request</b><small>Look it up with your request code</small></span>
                   <Icon name="chev" className="ic chev" />
                 </button>
                 <button type="button" onClick={() => go('map')}>
