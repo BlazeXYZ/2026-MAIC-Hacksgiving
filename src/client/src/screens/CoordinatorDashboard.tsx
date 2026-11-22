@@ -1,6 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import type {
+  AssignRequest,
   CoordinatorTicket,
+  QueueCounts,
+  QueuePage,
   TicketStatus,
   ServiceCategory,
 } from '../contracts/coordinator';
@@ -89,11 +92,26 @@ const CATEGORY_LABELS: Record<ServiceCategory, string> = {
   other: 'General Support',
 };
 
+const NEXT_STATUS: Partial<Record<TicketStatus, { value: TicketStatus; label: string }>> = {
+  pending: { value: 'assigned', label: 'Assigned' },
+  assigned: { value: 'in_progress', label: 'In progress' },
+  in_progress: { value: 'resolved', label: 'Resolved' },
+};
+
+const SAVE_FAILURE = 'We couldn’t confirm this update. Check the request or try again.';
+const SAVE_ERRORS: Partial<Record<number, string>> = {
+  401: 'Your staff access has expired. Sign out and sign back in.',
+  403: 'Your coordinator key was rejected. Sign out and sign back in.',
+  404: 'This request is no longer available in the queue.',
+  409: 'This update conflicts with the current assignment or status. Check the latest request before retrying.',
+  422: 'Check the volunteer ID and dispatch notes, then try again.',
+};
+const SAVE_TIMEOUT_MS = 10_000;
+
 export default function CoordinatorDashboard({ accessKey }: { accessKey: string }) {
   const [tickets, setTickets] = useState<CoordinatorTicket[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [districtFilter, setDistrictFilter] = useState<string>('all');
   const [urgencyFilter, setUrgencyFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -101,13 +119,9 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
   const [currentPage, setCurrentPage] = useState<number>(1);
   const pageSize = 20;
   const [totalMatching, setTotalMatching] = useState<number>(0);
-  const [serverCounts, setServerCounts] = useState<{
-    total_urgent: number;
-    total_pending: number;
-    total_open?: number;
-    total_matching?: number;
-    district_counts?: Record<string, { total: number; urgent: number }>;
-  } | null>(null);
+  const [serverCounts, setServerCounts] = useState<QueueCounts | null>(null);
+  const [queueVersion, setQueueVersion] = useState(0);
+  const queueRequest = useRef<AbortController | null>(null);
 
   // Sorting state (criteria: sorting by time and urgency)
   const [sortField, setSortField] = useState<'time' | 'urgency'>('urgency');
@@ -115,9 +129,11 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
 
   // Single-row assign/edit modal
   const [activeModalTicket, setActiveModalTicket] = useState<CoordinatorTicket | null>(null);
-  const [assignVolunteerId, setAssignVolunteerId] = useState<string>('v-dispatch-01');
-  const [assignStatus, setAssignStatus] = useState<TicketStatus>('assigned');
+  const [assignVolunteerId, setAssignVolunteerId] = useState<string>('');
   const [assignNotes, setAssignNotes] = useState<string>('');
+  const [saveError, setSaveError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const nextStatus = activeModalTicket ? NEXT_STATUS[activeModalTicket.status] : undefined;
 
   const updateDistrict = (d: string) => { setDistrictFilter(d); setCurrentPage(1); };
   const updateUrgency = (u: string) => { setUrgencyFilter(u); setCurrentPage(1); };
@@ -131,6 +147,7 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
 
   useEffect(() => {
     const controller = new AbortController();
+    queueRequest.current = controller;
     setIsLoading(true);
     setLoadError(null);
 
@@ -148,39 +165,31 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
       signal: controller.signal,
       headers: coordinatorHeaders(accessKey),
     })
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Server responded with ${res.status}`);
-        }
-        const total = res.headers.get('X-Total-Count');
-        if (total !== null) setTotalMatching(parseInt(total, 10) || 0);
-        return res.json();
-      })
-      .then((data) => {
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Server responded with ${res.status}`);
+        const data: QueuePage = await res.json();
+        if (controller.signal.aborted) return;
+        if (!Array.isArray(data?.tickets)) throw new Error('Unexpected queue response');
+        const headerTotal = Number.parseInt(res.headers.get('X-Total-Count') ?? '', 10);
+        const total = data.counts?.total_matching ?? (Number.isNaN(headerTotal) ? data.tickets.length : headerTotal);
+        setTickets(data.tickets);
+        setServerCounts(data.counts ?? null);
+        setTotalMatching(total);
         setIsLoading(false);
-        setLoadError(null);
-        if (data?.tickets && Array.isArray(data.tickets)) {
-          setTickets(data.tickets);
-        } else {
-          setTickets([]);
-        }
-        if (data?.counts) {
-          setServerCounts(data.counts);
-          if (data.counts.total_matching !== undefined) {
-            setTotalMatching(data.counts.total_matching);
-          }
-        }
+        const lastPage = Math.max(1, Math.ceil(total / pageSize));
+        if (currentPage > lastPage) setCurrentPage(lastPage);
       })
       .catch((err) => {
         if (controller.signal.aborted) return;
         setIsLoading(false);
         setLoadError(err?.message || 'Failed to load queue');
         setTickets([]);
+        setServerCounts(null);
         setTotalMatching(0);
       });
 
     return () => controller.abort();
-  }, [accessKey, currentPage, pageSize, districtFilter, urgencyFilter, statusFilter, searchTerm, sortField, sortOrder]);
+  }, [accessKey, currentPage, pageSize, districtFilter, urgencyFilter, statusFilter, searchTerm, sortField, sortOrder, queueVersion]);
 
   // District summary counts for badges
   const districtCounts = useMemo(() => {
@@ -221,9 +230,6 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
     };
   }, [tickets, serverCounts]);
 
-  // Displayed tickets are returned sorted and paged by server
-  const displayedTickets = tickets;
-
   const toggleSort = (field: 'time' | 'urgency') => {
     if (sortField === field) {
       setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'));
@@ -233,79 +239,66 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
     }
   };
 
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      setSelectedIds(new Set(displayedTickets.map((t) => t.ticket_id)));
-    } else {
-      setSelectedIds(new Set());
-    }
-  };
-
-  const toggleSelectRow = (id: string) => {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
-
-  // Batch status update
-  const handleBatchStatusUpdate = (newStatus: TicketStatus) => {
-    setTickets((prev) =>
-      prev.map((t) => (selectedIds.has(t.ticket_id) ? { ...t, status: newStatus } : t))
-    );
-    setSelectedIds(new Set());
-  };
-
-  // Batch prioritize
-  const handleBatchPrioritize = () => {
-    setTickets((prev) =>
-      prev.map((t) => (selectedIds.has(t.ticket_id) ? { ...t, urgency: 'urgent' } : t))
-    );
-    setSelectedIds(new Set());
+  const refreshQueue = () => {
+    queueRequest.current?.abort();
+    setQueueVersion((version) => version + 1);
   };
 
   // Single row quick action
   const openAssignModal = (ticket: CoordinatorTicket) => {
     setActiveModalTicket(ticket);
-    setAssignVolunteerId(ticket.volunteer_id || 'v-mke-volunteer');
-    setAssignStatus(ticket.status === 'pending' ? 'assigned' : ticket.status);
-    setAssignNotes(ticket.notes || '');
+    setAssignVolunteerId(ticket.volunteer_id ?? '');
+    setAssignNotes(ticket.notes ?? '');
+    setSaveError('');
   };
 
-  const handleSaveAssignment = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeModalTicket) return;
+  const closeAssignModal = () => {
+    if (!saving) setActiveModalTicket(null);
+  };
 
-    const updated: CoordinatorTicket = {
-      ...activeModalTicket,
-      volunteer_id: assignVolunteerId,
-      volunteer_alias: assignVolunteerId.replace('v-', 'Relay-').toUpperCase(),
-      status: assignStatus,
-      notes: assignNotes,
+  const handleSaveAssignment = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const volunteerId = assignVolunteerId.trim();
+    if (saving || !activeModalTicket || !nextStatus || !volunteerId) return;
+
+    const payload: AssignRequest = {
+      volunteer_id: volunteerId,
+      status: nextStatus.value,
+      notes: assignNotes.trim() || undefined,
     };
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), SAVE_TIMEOUT_MS);
+    setSaving(true);
+    setSaveError('');
 
-    setTickets((prev) =>
-      prev.map((t) => (t.ticket_id === activeModalTicket.ticket_id ? updated : t))
-    );
-
-    // Call API in background
     try {
-      await fetch(`/api/v1/coordinator/tickets/${activeModalTicket.ticket_id}/assign`, {
+      const response = await fetch(`/api/v1/coordinator/tickets/${encodeURIComponent(activeModalTicket.ticket_id)}/assign`, {
         method: 'PATCH',
         headers: coordinatorHeaders(accessKey, { 'Content-Type': 'application/json' }),
-        body: JSON.stringify({
-          volunteer_id: assignVolunteerId,
-          status: assignStatus,
-          notes: assignNotes || undefined,
-        }),
+        body: JSON.stringify(payload),
+        signal: controller.signal,
       });
-    } catch {
-      // Keep optimistic update
-    }
+      if (!response.ok) {
+        setSaveError(SAVE_ERRORS[response.status] ?? SAVE_FAILURE);
+        if (response.status === 404 || response.status === 409) refreshQueue();
+        return;
+      }
 
-    setActiveModalTicket(null);
+      const saved: CoordinatorTicket = await response.json();
+      if (saved?.ticket_id !== activeModalTicket.ticket_id) {
+        setSaveError(SAVE_FAILURE);
+        return;
+      }
+
+      refreshQueue();
+      setTickets((current) => current.map((ticket) => ticket.ticket_id === saved.ticket_id ? saved : ticket));
+      setActiveModalTicket(null);
+    } catch {
+      setSaveError(SAVE_FAILURE);
+    } finally {
+      window.clearTimeout(timeout);
+      setSaving(false);
+    }
   };
 
   const formatTime = (iso: string) => {
@@ -376,7 +369,7 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
         ))}
       </section>
 
-      {/* Controls & Batch Action Bar */}
+      {/* Queue filters */}
       <div className="coordinator-toolbar">
         <div className="coordinator-search-filters">
           <input
@@ -411,40 +404,6 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
             <option value="resolved">Resolved</option>
           </select>
         </div>
-
-        {selectedIds.size > 0 && (
-          <div className="coordinator-batch-bar" role="group" aria-label="Batch Actions">
-            <strong>{selectedIds.size} selected</strong>
-            <button
-              type="button"
-              className="coordinator-batch-btn"
-              onClick={() => handleBatchStatusUpdate('assigned')}
-            >
-              Mark Assigned
-            </button>
-            <button
-              type="button"
-              className="coordinator-batch-btn"
-              onClick={() => handleBatchStatusUpdate('in_progress')}
-            >
-              Mark In Progress
-            </button>
-            <button
-              type="button"
-              className="coordinator-batch-btn"
-              onClick={handleBatchPrioritize}
-            >
-              Prioritize (Urgent)
-            </button>
-            <button
-              type="button"
-              className="coordinator-batch-btn"
-              onClick={() => setSelectedIds(new Set())}
-            >
-              Clear
-            </button>
-          </div>
-        )}
       </div>
 
       {/* Table: Responsive data table */}
@@ -452,14 +411,6 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
         <table className="coordinator-table" aria-label="Incoming request dispatch table">
           <thead>
             <tr>
-              <th style={{ width: '40px' }}>
-                <input
-                  type="checkbox"
-                  aria-label="Select all rows"
-                  checked={displayedTickets.length > 0 && selectedIds.size === displayedTickets.length}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                />
-              </th>
               <th
                 className="coordinator-sortable-header"
                 onClick={() => toggleSort('time')}
@@ -484,86 +435,60 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
           <tbody>
             {isLoading ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--ink-3)' }}>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--ink-3)' }}>
                   Loading queue tickets…
                 </td>
               </tr>
             ) : loadError ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--red, #ef4444)' }}>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--red, #ef4444)' }}>
                   {loadError}. Queue is currently unavailable.
                 </td>
               </tr>
-            ) : displayedTickets.length === 0 ? (
+            ) : tickets.length === 0 ? (
               <tr>
-                <td colSpan={8} style={{ textAlign: 'center', padding: '2rem', color: 'var(--ink-3)' }}>
-                  No requests match the current filters. Live queue is empty.
+                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem', color: 'var(--ink-3)' }}>
+                  No requests match the current filters.
                 </td>
               </tr>
             ) : (
-              displayedTickets.map((t) => {
-                const isSelected = selectedIds.has(t.ticket_id);
-                return (
-                  <tr key={t.ticket_id} className={isSelected ? 'coordinator-row--selected' : ''}>
-                    <td>
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleSelectRow(t.ticket_id)}
-                        aria-label={`Select ticket ${t.ticket_id}`}
-                      />
-                    </td>
-                    <td>
-                      <strong>{formatTime(t.created_at)}</strong>
-                    </td>
-                    <td>{t.district || 'Unassigned'}</td>
-                    <td>{CATEGORY_LABELS[t.category] || t.category}</td>
-                    <td>
-                      <span className={`coordinator-urgency-badge coordinator-urgency--${t.urgency}`}>
-                        {t.urgency.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td>
-                      <span className={`coordinator-status-badge coordinator-status--${t.status}`}>
-                        {t.status.replace('_', ' ')}
-                      </span>
-                    </td>
-                    <td>
-                      {t.volunteer_alias ? (
-                        <span style={{ fontWeight: 600, color: 'var(--police)' }}>{t.volunteer_alias}</span>
-                      ) : (
-                        <span style={{ color: 'var(--ink-3)', fontStyle: 'italic' }}>Unassigned</span>
-                      )}
-                    </td>
-                    <td>
-                      <div className="coordinator-actions-cell">
-                        <button
-                          type="button"
-                          className="coordinator-action-btn coordinator-action-btn--primary"
-                          onClick={() => openAssignModal(t)}
-                        >
-                          {t.volunteer_id ? 'Reassign' : 'Assign'}
-                        </button>
-                        <button
-                          type="button"
-                          className="coordinator-action-btn"
-                          onClick={() => {
-                            setTickets((prev) =>
-                              prev.map((item) =>
-                                item.ticket_id === t.ticket_id
-                                  ? { ...item, urgency: item.urgency === 'urgent' ? 'today' : 'urgent' }
-                                  : item
-                              )
-                            );
-                          }}
-                        >
-                          {t.urgency === 'urgent' ? 'De-escalate' : 'Prioritize'}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })
+              tickets.map((t) => (
+                <tr key={t.ticket_id}>
+                  <td>
+                    <strong>{formatTime(t.created_at)}</strong>
+                  </td>
+                  <td>{t.district || 'Unassigned'}</td>
+                  <td>{CATEGORY_LABELS[t.category] || t.category}</td>
+                  <td>
+                    <span className={`coordinator-urgency-badge coordinator-urgency--${t.urgency}`}>
+                      {t.urgency.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td>
+                    <span className={`coordinator-status-badge coordinator-status--${t.status}`}>
+                      {t.status.replace('_', ' ')}
+                    </span>
+                  </td>
+                  <td>
+                    {t.volunteer_alias ? (
+                      <span style={{ fontWeight: 600, color: 'var(--police)' }}>{t.volunteer_alias}</span>
+                    ) : (
+                      <span style={{ color: 'var(--ink-3)', fontStyle: 'italic' }}>Unassigned</span>
+                    )}
+                  </td>
+                  <td>
+                    {NEXT_STATUS[t.status] && (
+                      <button
+                        type="button"
+                        className="coordinator-action-btn coordinator-action-btn--primary"
+                        onClick={() => openAssignModal(t)}
+                      >
+                        {t.status === 'pending' ? 'Assign' : 'Update status'}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))
             )}
           </tbody>
         </table>
@@ -605,12 +530,11 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
         </div>
       </div>
 
-      {/* Assign / Edit Modal */}
-      {activeModalTicket && (
+      {activeModalTicket && nextStatus && (
         <div
           className="coordinator-modal-backdrop"
           role="presentation"
-          onClick={() => setActiveModalTicket(null)}
+          onClick={closeAssignModal}
         >
           <div
             className="coordinator-modal"
@@ -624,36 +548,29 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
               {activeModalTicket.summary}
             </p>
 
-            <form onSubmit={handleSaveAssignment} className="coordinator-modal-form">
+            <form onSubmit={handleSaveAssignment} className="coordinator-modal-form" aria-busy={saving}>
               <label>
-                Volunteer Identifier / Call Sign:
+                Volunteer ID or call sign
                 <input
                   type="text"
                   required
+                  maxLength={80}
+                  disabled={saving}
+                  readOnly={Boolean(activeModalTicket.volunteer_id)}
                   value={assignVolunteerId}
                   onChange={(e) => setAssignVolunteerId(e.target.value)}
                   className="coordinator-search-input"
                 />
               </label>
 
-              <label>
-                Status Progression:
-                <select
-                  value={assignStatus}
-                  onChange={(e) => setAssignStatus(e.target.value as TicketStatus)}
-                  className="coordinator-select"
-                >
-                  <option value="pending">Pending</option>
-                  <option value="assigned">Assigned</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="resolved">Resolved</option>
-                </select>
-              </label>
+              <p className="meta">Status after saving <strong>{nextStatus.label}</strong></p>
 
               <label>
-                Dispatch Notes (Scrubbed for PII):
+                Dispatch notes
                 <textarea
                   rows={3}
+                  maxLength={500}
+                  disabled={saving}
                   value={assignNotes}
                   onChange={(e) => setAssignNotes(e.target.value)}
                   className="coordinator-search-input"
@@ -662,19 +579,23 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
                 />
               </label>
 
+              {saveError && <p className="coordinator-save-error" role="alert">{saveError}</p>}
+
               <div className="coordinator-modal-actions">
                 <button
                   type="button"
                   className="coordinator-action-btn"
-                  onClick={() => setActiveModalTicket(null)}
+                  disabled={saving}
+                  onClick={closeAssignModal}
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   className="coordinator-action-btn coordinator-action-btn--primary"
+                  disabled={saving || !assignVolunteerId.trim()}
                 >
-                  Update Ticket
+                  {saving ? 'Saving…' : 'Update ticket'}
                 </button>
               </div>
             </form>
