@@ -325,11 +325,7 @@ export default function CoordinatorDashboard({ accessKey }: { accessKey: string 
           <h1 id="coordinator-title">Tonight, across the district</h1>
           <p>
             Live triage and volunteer dispatch for Milwaukee requests. AI sorts by urgency, you decide.
-            {isDemoQueue && (
-              <span style={{ marginLeft: 8, fontSize: '0.75rem', fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'var(--amber-wash, #fef3c7)', color: 'var(--amber-ink, #92400e)' }}>
-                Demo Fixtures (Sample Data)
-              </span>
-            )}
+            {isDemoQueue && <span className="demo-flag">Demo Fixtures (Sample Data)</span>}
           </p>
         </div>
       </div>

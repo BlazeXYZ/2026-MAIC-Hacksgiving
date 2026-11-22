@@ -402,3 +402,194 @@ def test_reset_goes_back_to_the_seed() -> None:
     store.reset()
     ids = {t["id"] for t in threads("food-pantry")["threads"]}
     assert ids == {"food-welcome", "food-formula", "food-bread", "food-porch"}
+
+
+# ---------- missing-person cases and lead threads ----------
+
+LEAD = "lead-case-jordan"
+# A street corner, not a home: synthetic sighting text.
+CORNER_TIP = "Saw a navy jacket at 27th & W Wisconsin Ave by the bus shelter, about 8:40."
+
+
+def tip(body: str = CORNER_TIP, thread_id: str = LEAD, **extra: object) -> dict:
+    res = client.post(
+        f"{BASE}/threads/{thread_id}/replies", json={"body": body, **extra}
+    )
+    assert res.status_code == 201, res.text
+    return res.json()
+
+
+def review_post(post_id: str, action: str, **extra: object) -> dict:
+    res = client.post(
+        f"{BASE}/admin/held/{post_id}/review",
+        json={"action": action, **extra},
+        headers=COORD,
+    )
+    assert res.status_code == 200, res.text
+    return res.json()
+
+
+def lead_threads(case_id: str) -> list[dict]:
+    return [
+        t for t in threads("missing-persons")["threads"] if t["case_id"] == case_id
+    ]
+
+
+def test_seed_case_has_exactly_one_pinned_lead_thread() -> None:
+    cases = client.get(f"{BASE}/cases").json()
+    assert [c["id"] for c in cases] == ["case-jordan"]
+    case = cases[0]
+    assert case["status"] == "active"
+    assert case["display_name"] == "Jordan, 19"
+    assert "27th" in case["last_known_point"]
+    lead = lead_threads(case["id"])
+    assert len(lead) == 1
+    assert lead[0]["id"] == case["thread_id"] == LEAD
+    assert lead[0]["pinned"] is True and lead[0]["locked"] is False
+    assert rules.LEAD_TIP_NOTICE in lead[0]["body"]
+
+
+def test_opening_a_case_creates_one_pinned_lead_thread() -> None:
+    res = client.post(
+        f"{BASE}/admin/cases",
+        json={"display_name": "A.R., 15", "last_known_point": "Sherman Park pavilion"},
+        headers=COORD,
+    )
+    assert res.status_code == 201, res.text
+    case = res.json()
+    lead = lead_threads(case["id"])
+    assert len(lead) == 1 and lead[0]["pinned"]
+    assert len(client.get(f"{BASE}/cases").json()) == 2
+
+
+def test_case_routes_need_the_coordinator_key_and_reject_an_address() -> None:
+    body = {"display_name": "A.R.", "last_known_point": "Sherman Park pavilion"}
+    assert client.post(f"{BASE}/admin/cases", json=body).status_code == 403
+    assert client.post(f"{BASE}/admin/cases/case-jordan/resolve").status_code == 403
+    assert client.get(f"{BASE}/admin/private-tips").status_code == 403
+    res = client.post(
+        f"{BASE}/admin/cases",
+        json={"display_name": "A.R.", "last_known_point": FAKE_ADDRESS},
+        headers=COORD,
+    )
+    assert res.status_code == 422
+
+
+def test_every_lead_tip_is_held_even_a_clean_one() -> None:
+    posted = tip("Someone matching the description walked past the library around 9.")
+    assert posted["status"] == "held"
+    assert posted["held_reason"].startswith(rules.LEAD_TIP_REASON)
+    detail = client.get(f"{BASE}/threads/{LEAD}").json()
+    assert detail["replies"] == [] and detail["reply_count"] == 0
+    assert threads("missing-persons")["held_count"] == 1
+    rows = client.get(f"{BASE}/admin/held", headers=COORD).json()
+    row = next(r for r in rows if r["id"] == posted["reply"]["id"])
+    assert row["case_id"] == "case-jordan"
+
+
+def test_a_corner_tip_is_held_not_rejected_and_keeps_its_sector() -> None:
+    posted = tip(CORNER_TIP, sector="c2")
+    assert posted["status"] == "held"
+    assert posted["reply"]["sector"] == "C2"
+    rows = client.get(f"{BASE}/admin/held", headers=COORD).json()
+    row = next(r for r in rows if r["id"] == posted["reply"]["id"])
+    assert row["sector"] == "C2"
+
+
+def test_bad_sector_is_422_and_sector_is_ignored_off_lead_threads() -> None:
+    res = client.post(
+        f"{BASE}/threads/{LEAD}/replies", json={"body": "Saw them", "sector": "nowhere"}
+    )
+    assert res.status_code == 422
+    other = tip("On my way.", thread_id="food-bread", sector="C2")
+    assert other["status"] == "published" and other["reply"]["sector"] is None
+
+
+def test_publish_a_lead_tip_scrubs_it_and_marks_it_verified() -> None:
+    posted = tip(f"Saw them by the bus shelter. Call me at {FAKE_PHONE}.", sector="C2")
+    assert "phone" in posted["held_reason"]
+    result = review_post(posted["reply"]["id"], "publish")
+    assert FAKE_PHONE not in result["body"]
+    replies = client.get(f"{BASE}/threads/{LEAD}").json()["replies"]
+    published = next(r for r in replies if r["id"] == posted["reply"]["id"])
+    assert published["flair"] == "Verified"
+    assert published["sector"] == "C2"
+    assert FAKE_PHONE not in published["body"]
+    assert REDACTION_PLACEHOLDER in published["body"]
+
+
+def test_keep_private_never_reaches_a_public_route() -> None:
+    secret = f"I think they are staying with a cousin at {FAKE_ADDRESS}."
+    reply_id = tip(secret)["reply"]["id"]
+    assert review_post(reply_id, "keep_private")["action"] == "keep_private"
+    detail = client.get(f"{BASE}/threads/{LEAD}").json()
+    assert reply_id not in [r["id"] for r in detail["replies"]]
+    assert detail["reply_count"] == 0
+    listing = threads("missing-persons")
+    assert listing["held_count"] == 0
+    assert all(FAKE_ADDRESS not in t["body"] for t in listing["threads"])
+    assert client.post(f"{BASE}/replies/{reply_id}/helpful").status_code == 404
+    nested = client.post(
+        f"{BASE}/threads/{LEAD}/replies", json={"body": "Me too", "parent_id": reply_id}
+    )
+    assert nested.status_code == 404
+    held = client.get(f"{BASE}/admin/held", headers=COORD).json()
+    assert reply_id not in [r["id"] for r in held]
+    private = client.get(f"{BASE}/admin/private-tips", headers=COORD).json()
+    assert [p["id"] for p in private] == [reply_id]
+    assert private[0]["case_id"] == "case-jordan"
+    assert private[0]["body"] == secret
+
+
+def test_keep_private_only_applies_to_lead_tips() -> None:
+    held = client.post(
+        f"{BASE}/threads/food-bread/replies", json={"body": f"Call {FAKE_PHONE}"}
+    ).json()
+    res = client.post(
+        f"{BASE}/admin/held/{held['reply']['id']}/review",
+        json={"action": "keep_private"},
+        headers=COORD,
+    )
+    assert res.status_code == 409
+    held_thread = post_thread(body=f"At {FAKE_ADDRESS}")
+    res = client.post(
+        f"{BASE}/admin/held/{held_thread['thread']['id']}/review",
+        json={"action": "keep_private"},
+        headers=COORD,
+    )
+    assert res.status_code == 409
+
+
+def test_remove_a_lead_tip() -> None:
+    reply_id = tip()["reply"]["id"]
+    assert review_post(reply_id, "remove")["body"] is None
+    assert client.get(f"{BASE}/admin/held", headers=COORD).json() == []
+    assert client.get(f"{BASE}/admin/private-tips", headers=COORD).json() == []
+    assert client.get(f"{BASE}/threads/{LEAD}").json()["replies"] == []
+
+
+def test_coordinator_update_on_a_lead_thread_goes_up_directly() -> None:
+    res = client.post(
+        f"{BASE}/threads/{LEAD}/replies",
+        json={"body": "Sector C2 is being searched now."},
+        headers=COORD,
+    )
+    assert res.json()["status"] == "published"
+    assert res.json()["reply"]["role"] == "coordinator"
+
+
+def test_resolved_case_locks_and_unpins_its_lead_thread() -> None:
+    res = client.post(f"{BASE}/admin/cases/case-jordan/resolve", headers=COORD)
+    assert res.status_code == 200
+    assert res.json()["status"] == "resolved" and res.json()["resolved_at"]
+    detail = client.get(f"{BASE}/threads/{LEAD}").json()
+    assert detail["locked"] is True and detail["pinned"] is False
+    for headers in ({}, COORD):
+        blocked = client.post(
+            f"{BASE}/threads/{LEAD}/replies",
+            json={"body": "Any news?"},
+            headers=headers,
+        )
+        assert blocked.status_code == 409
+    missing = client.post(f"{BASE}/admin/cases/nope/resolve", headers=COORD)
+    assert missing.status_code == 404

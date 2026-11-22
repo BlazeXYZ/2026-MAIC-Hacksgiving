@@ -10,16 +10,16 @@
 .why { display: flex; gap: 8px; font-family: var(--f-voice); font-style: italic; font-size: 15px; line-height: 1.4; color: var(--ink-2); }
 .why .ic { width: 15px; height: 15px; margin-top: 3px; color: var(--green); }
 
-.app { min-height: 100vh; display: flex; flex-direction: column; background: var(--paper); }
+.app { min-height: 100vh; min-height: 100dvh; display: flex; flex-direction: column; background: var(--paper); }
 
 /* ---------- top nav ---------- */
-.dnav { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 32px; height: 72px; padding: 0 48px; background: var(--card); border-bottom: 1px solid var(--line); }
+.dnav { position: sticky; top: 0; z-index: 40; display: flex; align-items: center; gap: 32px; min-height: calc(72px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 48px 0; background: var(--card); border-bottom: 1px solid var(--line); }
 .dnav .logo { display: flex; align-items: center; gap: 10px; color: var(--ink); background: none; border: 0; padding: 0; cursor: pointer; }
 .dnav .logo svg { width: 30px; height: 30px; flex: none; }
 .dnav .logo b { font-weight: 800; font-stretch: 85%; font-size: 20px; letter-spacing: -.01em; white-space: nowrap; }
 .dnav .logo b span { color: var(--green); }
 .dnav nav { display: flex; align-items: center; gap: 28px; flex: 1; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-.dnav nav button { border: 0; background: none; padding: 8px 0; font-weight: 600; font-size: 15px; color: var(--ink-2); white-space: nowrap; cursor: pointer; }
+.dnav nav button { border: 0; background: none; min-height: 44px; padding: 8px 0; font-weight: 600; font-size: 15px; color: var(--ink-2); white-space: nowrap; cursor: pointer; }
 .dnav nav button[aria-current="page"] { color: var(--ink); font-weight: 700; }
 .dnav nav button[aria-current="page"] span { background: linear-gradient(transparent 58%, var(--hivis) 58% 94%, transparent 94%); }
 .dnav nav .switch { margin-left: auto; color: var(--green); font-weight: 700; }
@@ -37,7 +37,7 @@
 
 /* ---------- page ---------- */
 .dpage { position: relative; isolation: isolate; flex: 1; width: 100%; max-width: 1280px; margin: 0 auto; padding: 32px 48px 64px; }
-.app::before { content: ""; position: absolute; left: 0; right: 0; top: 72px; height: 340px; z-index: 0; background: var(--fence-light); -webkit-mask-image: linear-gradient(#000 0%, transparent 100%); mask-image: linear-gradient(#000 0%, transparent 100%); pointer-events: none; }
+.app::before { content: ""; position: absolute; left: 0; right: 0; top: calc(72px + env(safe-area-inset-top)); height: 340px; z-index: 0; background: var(--fence-light); -webkit-mask-image: linear-gradient(#000 0%, transparent 100%); mask-image: linear-gradient(#000 0%, transparent 100%); pointer-events: none; }
 .app { position: relative; }
 .dpage .hub-page { max-width: none; margin: 0; padding: 0; }
 .g12 { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 24px; align-items: start; margin-bottom: 24px; }
@@ -115,22 +115,71 @@
 .kpi.bad b { color: var(--red); }
 
 /* footer */
-.dfoot { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; padding: 24px 48px; background-color: var(--green); background-image: var(--fence-dark); color: #DDEBE0; font-size: 13px; }
+.dfoot { display: flex; justify-content: space-between; align-items: center; gap: 12px 24px; flex-wrap: wrap; padding: 24px 48px calc(24px + env(safe-area-inset-bottom)); background-color: var(--green); background-image: var(--fence-dark); color: #DDEBE0; font-size: 13px; }
+
+.dnav-mobile-actions { display: none; }
+.mob-nav { display: none; }
 .dfoot b { color: #fff; font-weight: 700; }
 
 @media (max-width: 1000px) {
-  .dnav { gap: 16px; padding: 0 20px; }
+  .dnav { gap: 16px; padding-left: 20px; padding-right: 20px; }
   .dpage { padding: 24px 20px 48px; }
-  .dfoot { padding: 20px; }
+  .dfoot { padding: 20px 20px calc(20px + env(safe-area-inset-bottom)); }
   .c4, .c5, .c7, .c8 { grid-column: 1 / -1; }
   .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
-@media (max-width: 640px) {
-  .dnav { flex-wrap: wrap; height: auto; padding: 10px 16px; row-gap: 4px; }
-  .app::before { top: 100px; }
-  .dnav nav { order: 3; width: 100%; flex: none; gap: 20px; }
-  .greet h1 { font-size: 34px; }
+@media (max-width: 720px) {
+  .dnav { gap: 8px; min-height: calc(64px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 16px 0; }
+  .dnav .logo b { font-size: 18px; }
+  .dnav nav { display: none; }
+  .dnav-mobile-actions { display: flex; margin-left: auto; }
+  .dnav-mobile-actions button { min-height: 44px; padding: 0 4px; border: 0; background: none; color: var(--green); font-weight: 700; font-size: 15px; cursor: pointer; }
+  .dnav.staff .dnav-mobile-actions button { color: var(--hivis); }
+  .app::before { top: calc(56px + env(safe-area-inset-top)); }
+  .dpage { padding: 16px max(16px, env(safe-area-inset-left)) 32px max(16px, env(safe-area-inset-right)); }
+  .app { padding-bottom: calc(62px + env(safe-area-inset-bottom)); }
+  .dfoot { margin-bottom: 0; padding: 16px; }
+  .greet h1, .pagehead h1, .dpage .community-map > h2:first-child { font-size: clamp(28px, 8vw, 36px); }
+  .pagehead { flex-direction: column; align-items: flex-start; gap: 8px; }
   .hubs { grid-template-columns: 1fr; }
   .hubs button { min-height: 0; }
   .kpis { gap: 12px; }
+  .mod-h, .mod-b, .mod-sub, .hub-desc { padding-left: 16px; padding-right: 16px; }
+  .hubs, .hubtool, .hub-body { padding-left: 16px; padding-right: 16px; }
+  .hubtool { margin-left: 16px; margin-right: 16px; }
+  .needs button, .sos { padding-left: 16px; padding-right: 16px; }
+  .sos { flex-wrap: wrap; }
+  .mob-nav {
+    display: flex;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 45;
+    background: var(--card);
+    border-top: 1px solid var(--line);
+    padding: 2px 4px calc(2px + env(safe-area-inset-bottom));
+  }
+  .mob-nav button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 52px;
+    padding: 4px 2px;
+    border: 0;
+    background: none;
+    color: var(--ink-3);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.1;
+    cursor: pointer;
+  }
+  .mob-nav button span { white-space: nowrap; }
+  .mob-nav .ic { width: 22px; height: 22px; }
+  .mob-nav button[aria-current="page"] { color: var(--green); }
+  .mob-nav button[aria-current="page"] span { background: linear-gradient(transparent 62%, var(--hivis) 62% 92%, transparent 92%); }
 }

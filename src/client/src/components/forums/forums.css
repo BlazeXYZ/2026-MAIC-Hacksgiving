@@ -15,6 +15,9 @@
 .forum-compose input, .forum-compose textarea, .forum-held-card textarea { box-sizing: border-box; width: 100%; padding: 10px 12px; border: 1px solid var(--line-2); border-radius: 10px; background: var(--card); color: var(--ink); font: inherit; font-size: 15px; }
 .forum-compose input { min-height: 44px; }
 .forum-compose textarea, .forum-held-card textarea { resize: vertical; }
+.forum-compose input.forum-sector { width: 8em; text-transform: uppercase; }
+.forum-locked { display: flex; align-items: center; gap: 6px; }
+.forum-lead-notice { margin-top: 12px; }
 .forum-privacy { display: flex; gap: 8px; margin-top: 4px; }
 .forum-privacy .ic { width: 15px; height: 15px; flex: none; margin-top: 1px; }
 .forum-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 6px; }

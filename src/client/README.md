@@ -7,7 +7,7 @@ Cross-platform React and TypeScript client built with Vite, Tailwind CSS, OpenSt
 Install packages and start the Vite development server:
 
 ```bash
-npm ci
+npm install
 npm run dev
 ```
 
@@ -21,24 +21,14 @@ The mobile client is packaged using **Capacitor 6** to produce native Android an
 
 ### 1. Build and Sync
 
-Run `npm ci` in `src/client`. The lockfile includes both native platforms. Create
-`src/client/.env.local` with the public HTTPS origin the device can reach.
-
-```dotenv
-VITE_API_ORIGIN=https://api.example.org
-```
-
-Use the deployed ComForce origin that serves `/api`, with a trusted TLS
-certificate. The bundled WebView uses this origin for API requests. Its built-in
-origins are `https://localhost` on Android and `capacitor://localhost` on iOS.
-
-Build the frontend, then add or sync the relevant platform as described below.
+Compile the React frontend bundle and copy the distribution assets to native platforms:
 
 ```bash
 npm run build
+npx cap sync
 ```
 
-Rebuild and run `npx cap sync android` or `npx cap sync ios` after changing the API origin.
+This ensures `src/client/dist` is populated and synchronized with native platform assets.
 
 ### 2. Browser Mobile Emulation & Testing
 
@@ -52,42 +42,39 @@ For fast local testing of touch interactions, mobile safe areas, and responsive 
    - **Safe area insets:** The sticky emergency alert banner and navigation respect top notch / Dynamic Island and bottom gesture pill bar (`viewport-fit=cover` and `env(safe-area-inset-*)`).
    - **Touch targets:** All buttons, community selector pills, and ticket claim actions have a minimum touch target of 44x44px.
 
-### 3. Native Platform Export
+### 3. Native API and local demo modes
 
-#### Android
-Install Android Studio and the Android SDK specified by the generated Gradle project.
+To use the packaged hub on a phone, run `npm ci` in `src/client`, then set
+`VITE_API_ORIGIN` in `.env.local` to an HTTPS origin with a trusted certificate.
+For example, `VITE_API_ORIGIN=https://api.example.org`. This value is public and
+must contain only the origin. The app sends its API requests there and keeps the
+hub interface in the bundled WebView. The API allows the WebView origins
+`https://localhost` on Android and `capacitor://localhost` on iOS.
+
+After changing the origin, rebuild with `npm run build` and run
+`npx cap sync android` or `npx cap sync ios`. These projects are included in the
+repository. Open them with `npm run cap:android` or `npm run cap:ios`.
+
+For local demos, leave `VITE_API_ORIGIN` unset. The phone opens the server picker.
+Enter the demo server's IPv4 address and port and choose **Save and open**.
+Use sample data for this HTTP connection. A desktop browser can preview the
+picker at `http://localhost:3000/?shell=1`.
+
+On each native platform, verify that the packaged app opens the hub, loads map
+resources, accepts a synthetic help request, and signs in with a test staff key.
+
+### 4. Build pipeline
+
+From the repository root:
+
 ```bash
-# Add Android platform (first-time setup)
-npx cap add android
-
-# Sync assets and open in Android Studio
-npx cap sync android
-npm run cap:android
+bash scripts/mobile/build-android.sh
+bash scripts/mobile/build-ios.sh
 ```
-In Android Studio:
-- Select an active emulator or connected hardware device (with USB debugging enabled).
-- Click **Run 'app'** (`Shift+F10`).
 
-#### iOS (macOS only)
-Ensure Xcode and CocoaPods are installed:
-```bash
-# Add iOS platform (first-time setup)
-npx cap add ios
+- Android (Linux or macOS) writes `dist/mobile/ComForceMKE-arm64.apk`. It is a debug APK that contains only the arm64-v8a ABI. Install it on an arm64 phone with USB debugging or by copying the file over.
+- iOS needs macOS and Xcode. It writes `dist/mobile/ComForceMKE-unsigned.ipa` (arm64, unsigned). A device install needs a re-sign.
 
-# Sync assets and open in Xcode
-npx cap sync ios
-npm run cap:ios
-```
-In Xcode:
-- Select a simulator (e.g., iPhone 15 Pro).
-- Click **Play / Run** (`Cmd+R`).
+GitHub Actions workflow **Mobile apps** runs the same scripts and uploads both files. The script installs a local JDK 17 and Android SDK under `~/.cache/comforce-mobile` when the machine does not already have them.
 
-### 4. Device smoke test
-
-Run the app on an emulator or device against a test API deployment. Use sample
-details to verify these paths.
-
-1. Open **Map** and confirm the resource list loads from the configured API.
-2. Open **Ask for help**, submit a sample request, and confirm the API returns a request code.
-3. Open **Staff sign in** with a test coordinator key. Confirm the queue loads with the key and rejects an invalid key.
-4. Check the WebView network log for requests to the configured HTTPS origin.
+Android Studio and Xcode can still open the synced projects with `npm run cap:android` and `npm run cap:ios`.
