@@ -6,6 +6,7 @@ import re
 
 from src.server.ai.moderation import CRISIS_KEYWORDS, moderate
 from src.server.ai.pii import find_pii
+from src.server.forums import jev
 
 HubId = str
 
@@ -104,6 +105,22 @@ def hold_reason(text: str) -> str | None:
     if found:
         return _PII_REASONS.get(found[0].kind, _PII_REASONS["street_address"])
     if moderate(text).needs_review:
+        return MODERATION_REASON
+    return None
+
+
+async def model_hold(text: str) -> str | None:
+    """What the decision model adds on top of the local checks: a hold reason, or None.
+
+    The local checks run first, both because they are free and because text they
+    hold is never sent to the model. A model verdict only ever returns
+    `MODERATION_REASON`; "no verdict" (no key, mock mode, failure) means the post
+    keeps the local outcome.
+    """
+    if hold_reason(text) is not None:
+        return None
+    verdict = await jev.review(text)
+    if verdict is not None and verdict.held:
         return MODERATION_REASON
     return None
 

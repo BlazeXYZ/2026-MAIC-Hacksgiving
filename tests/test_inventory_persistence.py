@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import sys
 from collections.abc import Generator
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -16,8 +17,8 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.server.ai.hotspots import COORDINATOR_API_KEY
 from src.server.api.inventory import router
-from src.server.db import close_db, init_db
-from src.server.inventory import store
+from src.server.db import InventoryEntry, close_db, get_db, init_db
+from src.server.inventory import resolver, store
 
 PANTRY = "hunger-task-force-south"
 OTHER = "house-of-peace"
@@ -96,3 +97,52 @@ def test_alias_decision_persists_across_reinit(database: str) -> None:
     aliases = second.get(f"{BASE}/admin/aliases", headers=COORD).json()
     assert [entry["quantity"] for entry in detail["need"]] == [3]
     assert "warm blankets" in {alias["text"] for alias in aliases}
+
+
+def test_new_catalog_alias_is_available_without_a_database_reload(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(resolver.settings, "AI_MOCK_MODE", True)
+    client = make_app()
+    item = client.post(f"{BASE}/admin/items", json={"name": "Rubbish bin"}, headers=COORD)
+    assert item.status_code == 201
+
+    result = client.post(
+        f"{BASE}/entries",
+        json={"location_id": PANTRY, "kind": "need", "text": "rubish bn"},
+    )
+    assert result.status_code == 201
+    assert result.json()["via"] == "fuzzy"
+    assert result.json()["item"]["id"] == item.json()["id"]
+
+
+def test_placeholder_unmatched_entry_is_removed_on_reinit(database: str) -> None:
+    now = datetime.now(UTC)
+    session = next(get_db())
+    try:
+        session.add(
+            InventoryEntry(
+                id="en-1",
+                location_id=PANTRY,
+                kind="need",
+                quantity=1,
+                label="mystery thing",
+                item_id=None,
+                alias_id=None,
+                via="unmatched",
+                created_at=now,
+                expires_at=now + timedelta(days=30),
+                closed=False,
+                candidates=[],
+                none_fit=None,
+            )
+        )
+        session.commit()
+    finally:
+        session.close()
+
+    close_db()
+    init_db(database)
+    detail = make_app().get(f"{BASE}/locations/{PANTRY}").json()
+
+    assert detail["need"] == []

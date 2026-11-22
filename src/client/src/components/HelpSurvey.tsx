@@ -39,10 +39,11 @@ type OptionsState =
   | { kind: 'ready'; options: HelpOption[]; sample: boolean };
 
 interface HelpSurveyProps {
+  onCheckStatus: (code: string) => void;
   onViewInventoryPlace?: (placeId: string) => void;
 }
 
-export default function HelpSurvey({ onViewInventoryPlace }: HelpSurveyProps = {}) {
+export default function HelpSurvey({ onCheckStatus, onViewInventoryPlace }: HelpSurveyProps) {
   const { survey, t } = useSurvey();
   const [step, setStep] = useState<Step>('choose');
   const [needId, setNeedId] = useState<NeedId | null>(null);
@@ -258,7 +259,10 @@ export default function HelpSurvey({ onViewInventoryPlace }: HelpSurveyProps = {
             </button>
           )}
           {accepted.sample && <p className="help-survey-note">{t('intake.sampleRequest')}</p>}
-          <button className="help-survey-action" type="button" onClick={startOver}>
+          <button className="help-survey-action" type="button" onClick={() => onCheckStatus(accepted.token)}>
+            Check request status
+          </button>{' '}
+          <button className="help-survey-action secondary" type="button" onClick={startOver}>
             {t('status.new')}
           </button>
         </section>
