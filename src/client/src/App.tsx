@@ -10,6 +10,7 @@ import CoordinatorSignIn from './components/coordinator/CoordinatorSignIn';
 import CoordinatorDashboard from './screens/CoordinatorDashboard';
 import { StatusScreen } from './screens/StatusScreen';
 import InventoryHub from './components/inventory/InventoryHub';
+import NearbyInventoryRequests from './components/inventory/NearbyInventoryRequests';
 import InventoryReview from './components/inventory/review/InventoryReview';
 import HubForum from './components/forums/HubForum';
 import ForumReview from './components/forums/ForumReview';
@@ -122,6 +123,7 @@ export default function App(): ReactElement {
   const [askingForHelp, setAskingForHelp] = useState<boolean>(false);
   const [requestCode, setRequestCode] = useState<string | null>(null);
   const [inventoryAction, setInventoryAction] = useState<'request' | 'give' | 'remove' | null>(null);
+  const [inventoryPlaceId, setInventoryPlaceId] = useState<string | null>(null);
   // Held in memory only: a reload signs staff out.
   const [coordinatorKey, setCoordinatorKey] = useState<string | null>(null);
   // Forum pseudonym for this session. Memory only, so a reload drops it.
@@ -183,6 +185,12 @@ export default function App(): ReactElement {
     setRequestCode(code);
     if (code) setAskingForHelp(false);
     go('request-status');
+  }
+
+  function openRequestedPlaceInventory(placeId: string): void {
+    setInventoryPlaceId(placeId);
+    setInventoryAction('request');
+    go('inventory');
   }
 
   function navButton(tab: Tab, label: string): ReactElement {
@@ -317,7 +325,9 @@ export default function App(): ReactElement {
           <section className="mod" aria-labelledby="ask-title">
             <div className="mod-h"><h2 id="ask-title">Ask for help</h2></div>
             <p className="mod-sub">Say it however you like. Anything urgent goes to a real person at ComForce right away.</p>
-            <div className="mod-b"><HelpSurvey onCheckStatus={openRequestStatus} /></div>
+            <div className="mod-b">
+              <HelpSurvey onCheckStatus={openRequestStatus} onViewInventoryPlace={openRequestedPlaceInventory} />
+            </div>
           </section>
         )}
 
@@ -327,6 +337,11 @@ export default function App(): ReactElement {
               <h1>Help a neighbor</h1>
               <p>Take a request to say you&rsquo;ll handle it. You&rsquo;ll get the details privately and can hand it back anytime.</p>
             </div>
+            <NearbyInventoryRequests onOpenPlace={(placeId) => {
+              setInventoryPlaceId(placeId);
+              setInventoryAction(null);
+              go('inventory');
+            }} />
             <VolunteerTickets />
           </>
         )}
@@ -362,7 +377,14 @@ export default function App(): ReactElement {
         {activeTab === 'map' && <CommunityMap />}
 
         {activeTab === 'inventory' && (
-          <InventoryHub initialAction={inventoryAction} onActionHandled={() => setInventoryAction(null)} />
+          <InventoryHub
+            initialAction={inventoryAction}
+            initialPlaceId={inventoryPlaceId}
+            onActionHandled={() => {
+              setInventoryAction(null);
+              setInventoryPlaceId(null);
+            }}
+          />
         )}
 
         {activeTab === 'request-status' && (
@@ -413,7 +435,7 @@ export default function App(): ReactElement {
                 <button type="button" className="more" onClick={() => setAskingForHelp(false)}>Close</button>
               </div>
               <div className="mod-b">
-                <HelpSurvey onCheckStatus={openRequestStatus} />
+                <HelpSurvey onCheckStatus={openRequestStatus} onViewInventoryPlace={openRequestedPlaceInventory} />
               </div>
             </section>
           )}

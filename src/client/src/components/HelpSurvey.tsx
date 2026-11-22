@@ -2,6 +2,8 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { Car, Check, Coffee, Copy, LocateFixed, MessageCircle, MoreHorizontal, Shield, Utensils } from 'lucide-react';
 import type { SurveyAccepted, SurveyRequest, TriageResult } from '../contracts/intake';
 import { previewTriage, submitSurvey, type Sampled } from '../api/intake';
+import { postEntry } from '../api/inventory';
+import { inventoryTextForNeed } from './inventory/sync';
 import {
   DEFAULT_ORIGIN,
   loadHelpOptions,
@@ -48,7 +50,12 @@ type OptionsState =
   | { kind: 'loading' }
   | { kind: 'ready'; options: HelpOption[]; sample: boolean };
 
-export default function HelpSurvey({ onCheckStatus }: { onCheckStatus: (code: string) => void }) {
+interface HelpSurveyProps {
+  onCheckStatus: (code: string) => void;
+  onViewInventoryPlace?: (placeId: string) => void;
+}
+
+export default function HelpSurvey({ onCheckStatus, onViewInventoryPlace }: HelpSurveyProps) {
   const [step, setStep] = useState<Step>('choose');
   const [needId, setNeedId] = useState<NeedId | null>(null);
   const [choice, setChoice] = useState<HelpOption | null>(null);
@@ -149,7 +156,21 @@ export default function HelpSurvey({ onCheckStatus }: { onCheckStatus: (code: st
     setSending(true);
     setError(null);
     try {
-      setAccepted(await submitSurvey(request, triage));
+      const result = await submitSurvey(request, triage);
+      setAccepted(result);
+      if (choice) {
+        const inventoryText = needId ? inventoryTextForNeed(needId, note) : null;
+        if (inventoryText) {
+          void postEntry({
+            location_id: choice.id,
+            kind: 'need',
+            quantity: 1,
+            text: inventoryText.slice(0, 200),
+          }).catch(() => {
+            // The help request has still been sent; inventory matching is best-effort.
+          });
+        }
+      }
       setStep('sent');
     } catch {
       setError('Your request was not sent. Please try again, or call the ComForce hotline.');
@@ -226,6 +247,11 @@ export default function HelpSurvey({ onCheckStatus }: { onCheckStatus: (code: st
             )
           )}
           {choice && <PlaceLinks option={choice} />}
+          {choice && onViewInventoryPlace && (
+            <button className="help-survey-action secondary" type="button" onClick={() => onViewInventoryPlace(choice.id)}>
+              View this place&rsquo;s inventory
+            </button>
+          )}
           {accepted.sample && <p className="help-survey-note">Sample mode: the server wasn&rsquo;t reachable, so nothing was sent to ComForce.</p>}
           <button className="help-survey-action" type="button" onClick={() => onCheckStatus(accepted.token)}>
             Check request status
